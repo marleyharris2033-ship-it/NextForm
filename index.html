@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111318" />
+  <title>NextForm</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">NEXTFORM</div>
+        <h1 id="screenTitle">Dashboard</h1>
+      </div>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">◐</button>
+    </header>
+
+    <main>
+      <section class="screen active" id="home">
+        <div class="hero card">
+          <div class="hero-row">
+            <div>
+              <div class="muted">Current level</div>
+              <div class="level-line">LVL <span id="level">1</span></div>
+            </div>
+            <div class="grade-orb" id="latestGrade">—</div>
+          </div>
+          <div class="xp-meta">
+            <span><b id="xpNow">0</b> XP</span>
+            <span><b id="xpNext">500</b> XP to next level</span>
+          </div>
+          <div class="progress"><div id="xpBar"></div></div>
+        </div>
+
+        <div class="grid two">
+          <div class="card stat">
+            <span class="muted">Current weight</span>
+            <strong><span id="currentWeight">—</span> kg</strong>
+          </div>
+          <div class="card stat">
+            <span class="muted">Workouts</span>
+            <strong id="workoutCount">0</strong>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <h2>Attributes</h2>
+            <span class="muted">Built from your logs</span>
+          </div>
+          <div class="attributes">
+            <div><span>Strength</span><b id="attrStrength">0</b></div>
+            <div><span>Endurance</span><b id="attrEndurance">0</b></div>
+            <div><span>Consistency</span><b id="attrConsistency">0</b></div>
+            <div><span>Progression</span><b id="attrProgression">0</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <h2>Recent workouts</h2>
+            <button class="text-btn" data-go="workout">Log workout</button>
+          </div>
+          <div id="recentWorkouts" class="empty">No workouts yet.</div>
+        </div>
+      </section>
+
+      <section class="screen" id="workout">
+        <div class="card">
+          <h2>Log workout</h2>
+          <p class="muted small">Add your session. NextForm grades it using volume, effort, progression, duration and strength relative to bodyweight.</p>
+
+          <div class="form-grid">
+            <label>Workout type
+              <select id="workoutType">
+                <option>Strength</option>
+                <option>Boxing</option>
+                <option>Running</option>
+                <option>Mixed</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>Duration (minutes)
+              <input id="duration" type="number" min="1" value="45">
+            </label>
+            <label>Effort (1–10)
+              <input id="effort" type="number" min="1" max="10" value="7">
+            </label>
+            <label>Date
+              <input id="workoutDate" type="date">
+            </label>
+          </div>
+
+          <div class="section-head pad-top">
+            <h3>Exercises</h3>
+            <button id="addExercise" class="secondary">+ Add exercise</button>
+          </div>
+          <div id="exerciseList"></div>
+
+          <label class="full">Notes
+            <textarea id="notes" rows="3" placeholder="How did it feel? Any PBs?"></textarea>
+          </label>
+
+          <button id="saveWorkout" class="primary full-btn">Finish workout</button>
+        </div>
+
+        <div id="gradeResult" class="card hidden"></div>
+      </section>
+
+      <section class="screen" id="progressScreen">
+        <div class="card">
+          <div class="section-head">
+            <h2>Weight</h2>
+            <button id="addWeightBtn" class="secondary">+ Add</button>
+          </div>
+          <div class="weight-entry hidden" id="weightEntry">
+            <input id="weightValue" type="number" min="30" max="300" step="0.1" placeholder="kg">
+            <input id="weightDate" type="date">
+            <button id="saveWeight" class="primary">Save</button>
+          </div>
+          <canvas id="weightChart" height="220"></canvas>
+          <div id="weightHistory" class="history"></div>
+        </div>
+
+        <div class="card">
+          <h2>Personal bests</h2>
+          <div id="pbList" class="empty">No strength PBs yet.</div>
+        </div>
+      </section>
+
+      <section class="screen" id="profile">
+        <div class="card">
+          <h2>Your profile</h2>
+          <div class="form-grid">
+            <label>Name
+              <input id="profileName" type="text" placeholder="Your name">
+            </label>
+            <label>Age
+              <input id="profileAge" type="number" min="13" max="100" value="32">
+            </label>
+            <label>Height (cm)
+              <input id="profileHeight" type="number" min="120" max="230" value="185">
+            </label>
+            <label>Sex used for strength standards
+              <select id="profileSex">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unspecified">Prefer not to use</option>
+              </select>
+            </label>
+          </div>
+          <button id="saveProfile" class="primary full-btn">Save profile</button>
+          <p class="muted tiny">The app uses your age and bodyweight as context, but the grade is mainly based on your own progress. It is a fitness estimate, not a medical assessment.</p>
+        </div>
+
+        <div class="card danger-zone">
+          <h3>Data</h3>
+          <p class="muted small">Everything is stored only in this browser on this device.</p>
+          <div class="button-row">
+            <button id="exportData" class="secondary">Export backup</button>
+            <button id="resetData" class="danger">Reset all data</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav active" data-target="home"><span>⌂</span>Home</button>
+      <button class="nav" data-target="workout"><span>＋</span>Workout</button>
+      <button class="nav" data-target="progressScreen"><span>↗</span>Progress</button>
+      <button class="nav" data-target="profile"><span>◉</span>Profile</button>
+    </nav>
+  </div>
+
+  <template id="exerciseTemplate">
+    <div class="exercise-row">
+      <div class="exercise-grid">
+        <input class="ex-name" type="text" placeholder="Exercise e.g. Bench Press">
+        <input class="ex-sets" type="number" min="1" value="3" placeholder="Sets">
+        <input class="ex-reps" type="number" min="1" value="8" placeholder="Reps">
+        <input class="ex-weight" type="number" min="0" step="0.5" placeholder="kg">
+      </div>
+      <button class="remove-ex" aria-label="Remove exercise">×</button>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
