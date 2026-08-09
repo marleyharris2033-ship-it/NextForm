@@ -272,3 +272,18 @@ body.light nav{background:rgba(250,252,254,.94);border-color:var(--line)}
 .diaryRow select{min-width:0}
 .diaryStart{padding:10px 11px}
 #premadeWorkoutList .planCard{margin-bottom:11px}
+
+/* HOTBAR REPAIR */
+nav{
+  grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+  z-index:999 !important;
+  pointer-events:auto !important;
+}
+nav button{
+  pointer-events:auto !important;
+  touch-action:manipulation;
+  min-width:0;
+}
+nav button span{
+  pointer-events:none;
+}
