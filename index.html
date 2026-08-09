@@ -3,9 +3,41 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1015"><title>NextForm</title>
-<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=plannerfinal1">
+<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=profiletimer1">
 </head>
-<body><div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div><div id="app">
+<body>
+<div id="onboarding" class="onboarding hidden">
+  <div class="onboardCard">
+    <div class="onboardLogo">N</div>
+    <span class="eyebrowBadge">WELCOME TO NEXTFORM</span>
+    <h2>Build your profile</h2>
+    <p class="muted">This is saved only on this device and helps personalise your training stats.</p>
+
+    <label class="photoPicker">
+      <input id="setupPhoto" type="file" accept="image/*">
+      <div id="setupPhotoPreview" class="profileAvatar largeAvatar">+</div>
+      <span>Choose profile photo</span>
+    </label>
+
+    <div class="form2 onboardForm">
+      <label>Name<input id="setupName" type="text" placeholder="Your name"></label>
+      <label>Age<input id="setupAge" type="number" min="13" max="100" placeholder="Age"></label>
+      <label>Height (cm)<input id="setupHeight" type="number" min="120" max="230" placeholder="Height"></label>
+      <label>Current weight (kg)<input id="setupWeight" type="number" min="30" max="300" step=".1" placeholder="Weight"></label>
+      <label>Strength comparison
+        <select id="setupSex">
+          <option value="male">Male standards</option>
+          <option value="female">Female standards</option>
+          <option value="none">Don't use sex-based context</option>
+        </select>
+      </label>
+      <label>Goal weight (kg)<input id="setupGoalWeight" type="number" min="30" max="300" step=".1" placeholder="Optional"></label>
+    </div>
+    <button id="completeSetup" class="primary full">Start NextForm</button>
+    <p class="tiny muted setupPrivacy">Your profile and photo stay in this browser's local storage.</p>
+  </div>
+</div>
+<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div><div id="app">
 <header><div class="brandWrap"><div class="brandMark">N</div><div><small>NEXTFORM</small><h1 id="pageTitle">Home</h1></div></div><button class="round" id="themeBtn">◐</button></header>
 <main>
 <section id="home" class="page active">
@@ -19,7 +51,19 @@
 <div class="card"><div class="row between"><h2>Challenges</h2><button class="link" data-go="challenges">All challenges</button></div><div id="challengePreview"></div></div>
 </section>
 
+
 <section id="train" class="page">
+<div class="card workoutTimerCard">
+  <div class="row between">
+    <div><span class="eyebrowBadge">WORKOUT TIMER</span><div id="workoutTimerDisplay" class="timerDisplay">00:00:00</div></div>
+    <span id="timerState" class="timerState">READY</span>
+  </div>
+  <div class="timerButtons">
+    <button id="timerStartPause" class="primary">Start</button>
+    <button id="timerReset" class="secondary">Reset</button>
+    <button id="timerUseDuration" class="secondary">Use duration</button>
+  </div>
+</div>
 <div class="workoutBackRow">
   <button id="workoutBackBtn" class="secondary workoutBackBtn">← Back</button>
 </div>
@@ -61,10 +105,18 @@
 <div class="chips" id="challengeChips"></div></div>
 <div id="challengeList"></div>
 </section>
-<section id="profile" class="page"><div class="card"><h2>Profile</h2><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
+<section id="profile" class="page"><div class="card">
+<div class="profileHead">
+  <label class="photoPicker editPhoto">
+    <input id="profilePhotoInput" type="file" accept="image/*">
+    <div id="profilePhotoPreview" class="profileAvatar">N</div>
+    <span>Change photo</span>
+  </label>
+  <div><span class="eyebrowBadge">YOUR NEXTFORM</span><h2>Profile</h2></div>
+</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
 <nav><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="train">＋<span>Train</span></button><button data-page="planner">▦<span>Plan</span></button><button data-page="progress">↗<span>Progress</span></button><button data-page="learn">▶<span>Learn</span></button><button data-page="challenges">★<span>Quests</span></button><button data-page="profile">◉<span>Profile</span></button></nav>
 </div>
 <template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><input class="exsets" type="number" min="1" value="3"><input class="exreps" type="number" min="1" value="8"><input class="exweight" type="number" min="0" step=".5"><button class="x">×</button></div></template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=plannerfinal1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=profiletimer1"></script></body></html>

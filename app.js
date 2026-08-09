@@ -180,7 +180,7 @@ const CHALLENGES=[
 ];
 
 const Y=q=>"https://www.youtube.com/results?search_query="+encodeURIComponent(q);
-const defaults={profile:{name:"",age:32,height:185,sex:"male",goalWeight:null},weights:[],workouts:[],xp:0,theme:"dark",plans:[],schedule:{},claimedChallenges:[],version:3};
+const defaults={profile:{name:"",age:32,height:185,sex:"male",goalWeight:null,photo:"",setupComplete:false},weights:[],workouts:[],xp:0,theme:"dark",plans:[],schedule:{},claimedChallenges:[],version:3};
 let data=(()=>{try{let o=JSON.parse(localStorage.getItem(KEY)||"{}");return {...defaults,...o,profile:{...defaults.profile,...(o.profile||{})},plans:o.plans||[],schedule:o.schedule||{},claimedChallenges:o.claimedChallenges||[],version:3}}catch{return JSON.parse(JSON.stringify(defaults))}})();
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],today=()=>new Date().toISOString().slice(0,10);$("#date").value=today();$("#weightDate").value=today();
 function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
@@ -206,7 +206,7 @@ $("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if
 function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
 $("#trendMode").onchange=drawWeight;
 let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
-function renderProfile(){$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
+function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
 
 
 window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";p.exercises.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));$("#notes").value=`Plan: ${p.name}\nTargets: ${p.exercises.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;$("#finish").dataset.planId=p.id;go("train")};
@@ -275,6 +275,110 @@ if(workoutBackBtn){
   workoutBackBtn.addEventListener("click",leaveWorkout);
 }
 
+
+// ===== PROFILE SETUP + WORKOUT TIMER =====
+let pendingSetupPhoto="";
+let workoutTimerSeconds=0;
+let workoutTimerRunning=false;
+let workoutTimerInterval=null;
+
+function avatarMarkupData(photo,name){
+  return photo || "";
+}
+function setAvatar(el,photo,name){
+  if(!el)return;
+  if(photo){
+    el.style.backgroundImage=`url("${photo}")`;
+    el.textContent="";
+    el.classList.add("hasPhoto");
+  }else{
+    el.style.backgroundImage="";
+    el.textContent=(name||"N").trim().charAt(0).toUpperCase()||"N";
+    el.classList.remove("hasPhoto");
+  }
+}
+function compressPhoto(file,callback){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const size=320,canvas=document.createElement("canvas");
+      canvas.width=size;canvas.height=size;
+      const ctx=canvas.getContext("2d");
+      const scale=Math.max(size/img.width,size/img.height);
+      const w=img.width*scale,h=img.height*scale;
+      ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);
+      callback(canvas.toDataURL("image/jpeg",0.78));
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+$("#setupPhoto")?.addEventListener("change",e=>{
+  const f=e.target.files?.[0]; if(!f)return;
+  compressPhoto(f,dataUrl=>{pendingSetupPhoto=dataUrl;setAvatar($("#setupPhotoPreview"),dataUrl,$("#setupName").value)});
+});
+$("#profilePhotoInput")?.addEventListener("change",e=>{
+  const f=e.target.files?.[0];if(!f)return;
+  compressPhoto(f,dataUrl=>{data.profile.photo=dataUrl;save();setAvatar($("#profilePhotoPreview"),dataUrl,data.profile.name)});
+});
+$("#setupName")?.addEventListener("input",()=>{if(!pendingSetupPhoto)setAvatar($("#setupPhotoPreview"),"",$("#setupName").value)});
+
+$("#completeSetup")?.addEventListener("click",()=>{
+  const name=$("#setupName").value.trim();
+  const age=+$("#setupAge").value;
+  const height=+$("#setupHeight").value;
+  const wt=+$("#setupWeight").value;
+  if(!name||!age||!height||!wt){alert("Please add your name, age, height and current weight.");return}
+  data.profile={...data.profile,name,age,height,sex:$("#setupSex").value,goalWeight:+$("#setupGoalWeight").value||null,photo:pendingSetupPhoto||data.profile.photo||"",setupComplete:true};
+  if(!data.weights.length)data.weights.push({date:today(),value:wt});
+  save();
+  $("#onboarding").classList.add("hidden");
+});
+
+function showOnboardingIfNeeded(){
+  if(data.profile.setupComplete)return;
+  $("#setupName").value=data.profile.name||"";
+  $("#setupAge").value=data.profile.age||"";
+  $("#setupHeight").value=data.profile.height||"";
+  $("#setupSex").value=data.profile.sex||"male";
+  $("#setupGoalWeight").value=data.profile.goalWeight||"";
+  $("#setupWeight").value=currentWeight?.()||"";
+  pendingSetupPhoto=data.profile.photo||"";
+  setAvatar($("#setupPhotoPreview"),pendingSetupPhoto,data.profile.name);
+  $("#onboarding").classList.remove("hidden");
+}
+
+function formatTimer(sec){
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+function renderTimer(){
+  const display=$("#workoutTimerDisplay"),state=$("#timerState"),btn=$("#timerStartPause");
+  if(display)display.textContent=formatTimer(workoutTimerSeconds);
+  if(state)state.textContent=workoutTimerRunning?"RUNNING":workoutTimerSeconds?"PAUSED":"READY";
+  if(btn)btn.textContent=workoutTimerRunning?"Pause":workoutTimerSeconds?"Resume":"Start";
+}
+function startPauseTimer(){
+  workoutTimerRunning=!workoutTimerRunning;
+  clearInterval(workoutTimerInterval);
+  if(workoutTimerRunning){
+    workoutTimerInterval=setInterval(()=>{workoutTimerSeconds++;renderTimer()},1000);
+  }
+  renderTimer();
+}
+$("#timerStartPause")?.addEventListener("click",startPauseTimer);
+$("#timerReset")?.addEventListener("click",()=>{
+  if(workoutTimerSeconds&&!confirm("Reset the workout timer?"))return;
+  clearInterval(workoutTimerInterval);workoutTimerRunning=false;workoutTimerSeconds=0;renderTimer();
+});
+$("#timerUseDuration")?.addEventListener("click",()=>{
+  const mins=Math.max(1,Math.round(workoutTimerSeconds/60));
+  const input=$("#duration");
+  if(input)input.value=mins;
+});
+renderTimer();
+
 function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile()}const titles={home:"Home",train:"Train",planner:"Planner",progress:"Progress",learn:"Learn",challenges:"Challenges",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));$("#pageTitle").textContent=titles[p];if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
   $$("nav button").forEach(b=>{
     b.onclick=null;
@@ -287,4 +391,5 @@ function renderAll(){document.body.classList.toggle("light",data.theme==="light"
 }
 bindNavigation();
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-try{renderAll();}catch(err){console.error("NextForm startup error:",err);}
+try{renderAll();
+showOnboardingIfNeeded();}catch(err){console.error("NextForm startup error:",err);}
