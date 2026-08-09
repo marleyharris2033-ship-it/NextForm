@@ -74,6 +74,7 @@ const SUBS={
 "Bench Press":["Incline Dumbbell Press","Push-Up"],"Romanian Deadlift":["Deadlift","Hip Thrust"],"Deadlift":["Romanian Deadlift","Hip Thrust"],
 "Seated Cable Row":["Barbell Row","Pull-Up"],"Triceps Pushdown":["Push-Up","Skull Crusher"]
 };
+let chosenDuration=60;
 const CHALLENGES=[
 ["first","Starter","Complete 1 workout",1,100,d=>d.workouts.length],
 ["three","Three Strong","Complete 3 workouts",3,150,d=>d.workouts.length],
@@ -133,181 +134,24 @@ function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).
 $("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
 function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
 $("#trendMode").onchange=drawWeight;
-function learnOptions(selected=""){
-  let cats=[...new Set(EXERCISES.map(e=>e.cat))];
-  return `<option value="">Choose exercise</option>`+cats.map(cat=>`<optgroup label="${cat}">${EXERCISES.filter(e=>e.cat===cat).map(e=>`<option value="${e.name}" ${e.name===selected?"selected":""}>${e.name}</option>`).join("")}</optgroup>`).join("");
-}
-function renderLearn(){
-  let sel=$("#learnExerciseSelect");
-  if(!sel)return;
-  let current=sel.value;
-  sel.innerHTML=learnOptions(current);
-  if(current)sel.value=current;
-  let name=sel.value;
-  if(!name){
-    $("#exerciseLibrary").innerHTML=`<div class="card"><p class="muted">Choose an exercise above to view technique guidance.</p></div>`;
-    return;
-  }
-  let e=EXERCISES.find(x=>x.name===name);
-  $("#exerciseLibrary").innerHTML=`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`;
-}
-
-$("#learnExerciseSelect").onchange=renderLearn;
+let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
 function renderProfile(){$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
 
 
-
-let activeSession=null,liveStartedAt=null,elapsedTimer=null,restTimer=null,restLeft=0;
-
-function targetRange(raw){
-  let s=String(raw),m=s.match(/(\d+)\s*-\s*(\d+)/);
-  return m?{lo:+m[1],hi:+m[2]}:{lo:+s||8,hi:+s||8};
-}
-function lastExercisePerformance(name){
-  for(let i=data.workouts.length-1;i>=0;i--){
-    let e=(data.workouts[i].exercises||[]).find(x=>x.name===name);
-    if(e)return {workout:data.workouts[i],exercise:e};
-  }
-  return null;
-}
-function incrementFor(name){return /squat|deadlift|hip thrust/i.test(name)?5:2.5}
-function suggestedWeight(name,target){
-  let last=lastExercisePerformance(name);
-  if(!last)return 0;
-  let e=last.exercise,wt=+(e.weight||0),range=targetRange(target);
-  if(e.setDetails?.length){
-    let sets=e.setDetails.filter(s=>s.done);
-    if(sets.length&&sets.every(s=>(+s.reps||0)>=range.hi))wt+=incrementFor(name);
-  }else if((+e.reps||0)>=range.hi)wt+=incrementFor(name);
-  return Math.max(0,wt);
-}
-function buildLiveSession(plan){
-  let exercises=plan.exercises.map(e=>{
-    let range=targetRange(e.reps),last=lastExercisePerformance(e.name),suggested=suggestedWeight(e.name,e.reps);
-    return {name:e.name,sets:e.sets,target:e.reps,range,last,suggested,
-      setDetails:Array.from({length:e.sets},(_,i)=>({set:i+1,weight:suggested||+(last?.exercise?.weight||0)||0,reps:range.lo,rir:2,done:false}))
-    };
-  });
-  return {planId:plan.id,planName:plan.name,type:plan.type,exercises};
-}
 window.startPremadePlan=id=>{
-  let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return;
-  activeSession=buildLiveSession(p);
-  liveStartedAt=Date.now();
-  $("#standardTrain").classList.add("hidden");
-  $("#liveWorkout").classList.remove("hidden");
-  $("#result").classList.add("hidden");
-  $("#livePlanName").textContent=p.name;
-  startElapsed();
-  renderLive();
+  let p=BUILTIN_PLANS.find(x=>x.id===id);
+  if(!p)return;
+  $("#type").value=p.type;
+  $("#type").onchange();
+  $("#exerciseRows").innerHTML="";
+  let maxPriority=chosenDuration<=45?1:chosenDuration<=60?2:3;
+  let chosen=p.exercises.filter(e=>(e.priority||1)<=maxPriority);
+  chosen.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));
+  $("#duration").value=chosenDuration;
+  $("#notes").value=`Plan: ${p.name}\nTargets: ${chosen.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;
+  $("#finish").dataset.planId=p.id;
   go("train");
 };
-function startElapsed(){
-  clearInterval(elapsedTimer);
-  let tick=()=>{
-    if(!liveStartedAt)return;
-    let s=Math.floor((Date.now()-liveStartedAt)/1000);
-    $("#liveElapsed").textContent=`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
-  };
-  tick();elapsedTimer=setInterval(tick,1000);
-}
-function exerciseSwapOptions(ex){
-  let base=EXERCISES.find(x=>x.name===ex.name);
-  let same=EXERCISES.filter(x=>x.cat===base?.cat).map(x=>x.name);
-  return [...new Set([...(SUBS[ex.name]||[]),...same])].filter(n=>n!==ex.name).slice(0,8);
-}
-function renderLive(){
-  if(!activeSession)return;
-  let total=activeSession.exercises.reduce((s,e)=>s+e.setDetails.length,0);
-  let complete=activeSession.exercises.reduce((s,e)=>s+e.setDetails.filter(x=>x.done).length,0);
-  $("#liveExerciseCount").textContent=`${activeSession.exercises.length} exercises · ${complete}/${total} sets`;
-  $("#liveProgress").style.width=(total?complete/total*100:0)+"%";
-  $("#liveExercises").innerHTML=activeSession.exercises.map((e,ei)=>{
-    let last=e.last?.exercise;
-    let lastText=last?`${last.weight||0} kg × ${last.reps||0}`:"No previous performance";
-    return `<div class="card liveExercise ${e.setDetails.every(s=>s.done)?"exerciseDone":""}">
-      <div class="liveExHead">
-        <div><span class="exCounter">${ei+1}/${activeSession.exercises.length}</span><h3>${e.name}</h3><div class="targetLine">Target ${e.sets} × ${e.target} · <b>${e.suggested?`Try ${e.suggested} kg`:"Choose a comfortable weight"}</b></div></div>
-        <button class="secondary compact" onclick="toggleSwap(${ei})">↻ Swap</button>
-      </div>
-      <div class="previousBox"><span>LAST TIME</span><b>${lastText}</b></div>
-      <div id="swap-${ei}" class="swapBox hidden"><select onchange="swapExercise(${ei},this.value)"><option value="">Choose substitute…</option>${exerciseSwapOptions(e).map(n=>`<option>${n}</option>`).join("")}</select></div>
-      <div class="setHeader"><span>SET</span><span>KG</span><span>REPS</span><span>RIR</span><span></span></div>
-      ${e.setDetails.map((s,si)=>`<div class="liveSet ${s.done?"setDone":""}">
-        <b>${si+1}</b>
-        <input type="number" step=".5" value="${s.weight}" onchange="updateSet(${ei},${si},'weight',this.value)">
-        <input type="number" value="${s.reps}" onchange="updateSet(${ei},${si},'reps',this.value)">
-        <select onchange="updateSet(${ei},${si},'rir',this.value)">${[0,1,2,3,4].map(v=>`<option ${s.rir===v?"selected":""}>${v}</option>`).join("")}</select>
-        <button class="setCheck ${s.done?"checked":""}" onclick="toggleSet(${ei},${si})">${s.done?"✓":"○"}</button>
-      </div>`).join("")}
-    </div>`;
-  }).join("");
-}
-window.updateSet=(ei,si,k,v)=>{activeSession.exercises[ei].setDetails[si][k]=+v||0};
-window.toggleSet=(ei,si)=>{
-  let s=activeSession.exercises[ei].setDetails[si];
-  s.done=!s.done;
-  if(s.done)startRest(/squat|deadlift|bench|row|press/i.test(activeSession.exercises[ei].name)?120:75);
-  renderLive();
-};
-window.toggleSwap=ei=>$("#swap-"+ei)?.classList.toggle("hidden");
-window.swapExercise=(ei,name)=>{
-  if(!name)return;
-  let e=activeSession.exercises[ei];
-  e.name=name;e.last=lastExercisePerformance(name);e.suggested=suggestedWeight(name,e.target);
-  e.setDetails.forEach(s=>{s.weight=e.suggested||+(e.last?.exercise?.weight||0)||0;s.done=false});
-  renderLive();
-};
-function startRest(seconds){
-  clearInterval(restTimer);restLeft=seconds;showRest();
-  restTimer=setInterval(()=>{restLeft--;showRest();if(restLeft<=0){clearInterval(restTimer);hideRest();if(navigator.vibrate)navigator.vibrate([150,100,150])}},1000);
-}
-function showRest(){
-  let el=$("#restFloat");
-  if(!el){el=document.createElement("div");el.id="restFloat";el.className="restFloat";document.body.appendChild(el)}
-  el.innerHTML=`<span>REST</span><b>${Math.floor(restLeft/60)}:${String(restLeft%60).padStart(2,"0")}</b><button onclick="restLeft+=30">+30s</button><button onclick="skipRest()">Skip</button>`;
-}
-window.skipRest=()=>{clearInterval(restTimer);hideRest()};
-function hideRest(){$("#restFloat")?.remove()}
-
-$("#exitLive").onclick=()=>{
-  if(confirm("Exit this workout? Unfinished live sets won't be saved.")){
-    activeSession=null;clearInterval(elapsedTimer);skipRest();
-    $("#liveWorkout").classList.add("hidden");$("#standardTrain").classList.remove("hidden");
-  }
-};
-function liveWorkoutRecord(){
-  let elapsed=Math.max(1,Math.round((Date.now()-liveStartedAt)/60000));
-  let exercises=activeSession.exercises.map(e=>{
-    let done=e.setDetails.filter(s=>s.done),best=(done.length?done:e.setDetails).slice().sort((a,b)=>(b.weight*b.reps)-(a.weight*a.reps))[0];
-    return {name:e.name,sets:done.length||e.setDetails.length,reps:best?.reps||e.range.lo,weight:best?.weight||0,setDetails:e.setDetails};
-  });
-  return {id:String(Date.now()),date:today(),type:activeSession.type,duration:elapsed,effort:+$("#liveRpe").value||8,notes:`Live workout: ${activeSession.planName}`,exercises,planId:activeSession.planId};
-}
-$("#finishLive").onclick=()=>{
-  if(!activeSession)return;
-  let w=liveWorkoutRecord(),oldLevel=levelInfo(data.xp).level;
-  w.result=grade(w);
-  let prog=w.result.pbs*75,cons=streak()>=2?50:0;
-  w.result.baseXp=w.result.xp;w.result.progressionBonus=prog;w.result.consistencyBonus=cons;w.result.xp+=prog+cons;
-  data.workouts.push(w);data.xp+=w.result.xp;save();
-  let newLevel=levelInfo(data.xp).level;
-  clearInterval(elapsedTimer);skipRest();activeSession=null;
-  $("#liveWorkout").classList.add("hidden");$("#standardTrain").classList.remove("hidden");
-  showCelebration(w,oldLevel,newLevel);
-};
-function showCelebration(w,oldLevel,newLevel){
-  $("#celebrateGrade").textContent=w.result.grade;$("#celebrateXp").textContent=`+${w.result.xp} XP`;
-  let lines=[`Workout +${w.result.baseXp} XP`];
-  if(w.result.progressionBonus)lines.push(`Progression +${w.result.progressionBonus} XP`);
-  if(w.result.consistencyBonus)lines.push(`Consistency +${w.result.consistencyBonus} XP`);
-  $("#celebrateLines").innerHTML=lines.map(x=>`<div>${x}</div>`).join("");
-  let li=levelInfo(data.xp);$("#celebrateBar").style.width=(li.into/li.need*100)+"%";
-  $("#celebrateLevel").textContent=newLevel>oldLevel?`LEVEL UP! Level ${newLevel}`:`Level ${newLevel} · ${li.need-li.into} XP to next level`;
-  $("#celebration").classList.remove("hidden");
-}
-$("#closeCelebration").onclick=()=>{$("#celebration").classList.add("hidden");go("home")};
-
 
 window.togglePremadeDetails=id=>{
   let el=document.getElementById("details-"+id);
@@ -338,6 +182,14 @@ function renderSimplePlanner(){
       </div>
     </div>
   `).join("");
+
+  $$(".plannerDuration button").forEach(b=>{
+    b.classList.toggle("active",+b.dataset.duration===chosenDuration);
+    b.onclick=()=>{
+      chosenDuration=+b.dataset.duration;
+      renderSimplePlanner();
+    };
+  });
 
   $("#weekPlanner").innerHTML=DAYS.map(d=>`
     <div class="dayrow diaryRow">
