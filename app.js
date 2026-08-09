@@ -213,11 +213,15 @@ window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return
 
 window.togglePremadeDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
 let activePlanCategory="Full Body";
-window.setPlanCategory=c=>{activePlanCategory=c;renderSimplePlanner()};
-
 function renderSimplePlanner(){
  const cats=["Full Body","Push / Pull","Upper / Lower","Bro Split"];
- $("#planCategoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activePlanCategory?"active":""}" onclick="setPlanCategory(\'${c}\')">${c}</button>`).join("");
+ $("#planCategoryChips").innerHTML=cats.map(c=>`<button type="button" class="chip ${c===activePlanCategory?"active":""}" data-plan-category="${c}">${c}</button>`).join("");
+ $("#planCategoryChips").querySelectorAll("[data-plan-category]").forEach(btn=>{
+   btn.addEventListener("click",()=>{
+     activePlanCategory=btn.dataset.planCategory;
+     renderSimplePlanner();
+   });
+ });
  const visible=BUILTIN_PLANS.filter(p=>p.category===activePlanCategory);
  $("#premadeWorkoutList").innerHTML=visible.map(p=>`
   <div class="planCard builtinPlan">
