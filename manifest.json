@@ -1,7 +1,7 @@
 {
   "name": "NextForm",
   "short_name": "NextForm",
-  "start_url": "./",
+  "start_url": "./?v=reset4",
   "display": "standalone",
   "background_color": "#0b0e13",
   "theme_color": "#0d1015",
