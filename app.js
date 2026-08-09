@@ -1,267 +1,61 @@
-
-const KEY = "nextform-v1";
-const today = () => new Date().toISOString().slice(0,10);
-const defaultData = {
-  profile:{name:"",age:32,height:185,sex:"male"},
-  weights:[],
-  workouts:[],
-  xp:0,
-  theme:"dark"
-};
-let data = load();
-function load(){
-  try { return {...defaultData, ...JSON.parse(localStorage.getItem(KEY)||"{}")}; }
-  catch(e){ return structuredClone(defaultData); }
-}
-function save(){ localStorage.setItem(KEY, JSON.stringify(data)); renderAll(); }
-
-const $ = s => document.querySelector(s);
-const $$ = s => [...document.querySelectorAll(s)];
-
-$("#workoutDate").value = today();
-$("#weightDate").value = today();
-
-function levelInfo(xp){
-  let level=1, need=500, spent=0;
-  while(xp-spent >= need){
-    spent += need; level++; need = Math.round(500*Math.pow(1.16,level-1)/25)*25;
-  }
-  return {level, into:xp-spent, need};
-}
-function currentWeight(){
-  if(!data.weights.length) return null;
-  return [...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).at(-1).value;
-}
-function previousExerciseBest(name){
-  let best=0;
-  for(const w of data.workouts){
-    for(const ex of w.exercises||[]){
-      if(ex.name.toLowerCase()===name.toLowerCase()){
-        best=Math.max(best, Number(ex.weight)||0);
-      }
-    }
-  }
-  return best;
-}
-
-function gradeWorkout(w){
-  const bw = currentWeight() || 85;
-  const age = Math.max(16, Number(data.profile.age)||30);
-  let volume = 0, heaviestRatio = 0, progressionCount=0, exerciseCount=0;
-
-  (w.exercises||[]).forEach(ex=>{
-    const wt=Number(ex.weight)||0, sets=Number(ex.sets)||0, reps=Number(ex.reps)||0;
-    if(ex.name.trim()) exerciseCount++;
-    volume += wt*sets*reps;
-    if(wt>0) heaviestRatio=Math.max(heaviestRatio, wt/bw);
-    const prev = previousExerciseBest(ex.name);
-    if(prev>0 && wt>prev) progressionCount++;
-  });
-
-  // Scores intentionally weight personal progression and effort more than raw strength.
-  const effortScore = Math.min(20, Math.max(0,(Number(w.effort)-4)*3.3));
-  const durationScore = Math.min(15, Number(w.duration)/4);
-  const volumeScore = Math.min(20, Math.log10(volume+10)*5);
-  const relativeStrength = Math.min(18, heaviestRatio*12);
-  const progressionScore = Math.min(17, progressionCount*8.5);
-  const consistencyDays = data.workouts.filter(x => (new Date(w.date)-new Date(x.date)) <= 1000*60*60*24*10 && x.date <= w.date).length;
-  const consistencyScore = Math.min(10, consistencyDays*2);
-
-  // Small age context: no harsh penalty; simply reduces expectations slightly after 40.
-  const ageAdj = age > 40 ? Math.min(4,(age-40)*0.12) : 0;
-  const score = Math.max(0, Math.min(100, effortScore+durationScore+volumeScore+relativeStrength+progressionScore+consistencyScore+ageAdj));
-
-  let grade="D";
-  if(score>=90) grade="S";
-  else if(score>=78) grade="A";
-  else if(score>=66) grade="B";
-  else if(score>=52) grade="C";
-
-  const xp = Math.round(70 + score*4 + progressionCount*40 + Math.min(80, exerciseCount*10));
-  return {grade, score:Math.round(score), xp, breakdown:{
-    Effort:Math.round(effortScore),
-    Duration:Math.round(durationScore),
-    Volume:Math.round(volumeScore),
-    "Relative strength":Math.round(relativeStrength),
-    Progression:Math.round(progressionScore),
-    Consistency:Math.round(consistencyScore)
-  }};
-}
-
-function attributes(){
-  let s=0,e=0,c=0,p=0;
-  const sorted=[...data.workouts].sort((a,b)=>a.date.localeCompare(b.date));
-  sorted.forEach(w=>{
-    const g=w.result||{score:0};
-    const t=(w.type||"").toLowerCase();
-    if(["strength","mixed"].includes(t)) s += g.score*.08;
-    if(["boxing","running","mixed"].includes(t)) e += g.score*.08;
-    c += 2;
-    const anyPb=(w.exercises||[]).some(ex=>{
-      const prior=sorted.filter(x=>x.date<w.date).flatMap(x=>x.exercises||[]).filter(y=>y.name.toLowerCase()===ex.name.toLowerCase());
-      return prior.length && Number(ex.weight)>Math.max(...prior.map(y=>Number(y.weight)||0));
-    });
-    if(anyPb) p+=4;
-  });
-  return {strength:Math.min(99,Math.round(s)),endurance:Math.min(99,Math.round(e)),consistency:Math.min(99,Math.round(c)),progression:Math.min(99,Math.round(p))};
-}
-
-function renderAll(){
-  document.body.classList.toggle("light", data.theme==="light");
-  const li=levelInfo(data.xp);
-  $("#level").textContent=li.level;
-  $("#xpNow").textContent=li.into;
-  $("#xpNext").textContent=li.need-li.into;
-  $("#xpBar").style.width=`${Math.min(100,li.into/li.need*100)}%`;
-  $("#currentWeight").textContent=currentWeight()?.toFixed(1) ?? "—";
-  $("#workoutCount").textContent=data.workouts.length;
-  $("#latestGrade").textContent=data.workouts.at(-1)?.result?.grade ?? "—";
-  const a=attributes();
-  $("#attrStrength").textContent=a.strength;
-  $("#attrEndurance").textContent=a.endurance;
-  $("#attrConsistency").textContent=a.consistency;
-  $("#attrProgression").textContent=a.progression;
-
-  const recent=[...data.workouts].reverse().slice(0,5);
-  $("#recentWorkouts").innerHTML = recent.length ? recent.map(w=>`
-    <div class="workout-item">
-      <div><b>${escapeHtml(w.type)}</b><div class="muted small">${w.date} · ${w.duration} min · ${w.exercises.length} exercises</div></div>
-      <b class="grade">${w.result.grade}</b>
-    </div>`).join("") : `<div class="empty">No workouts yet.</div>`;
-
-  $("#profileName").value=data.profile.name||"";
-  $("#profileAge").value=data.profile.age||32;
-  $("#profileHeight").value=data.profile.height||185;
-  $("#profileSex").value=data.profile.sex||"male";
-
-  renderWeight();
-  renderPBs();
-}
-function escapeHtml(v=""){ return v.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])); }
-
-function addExercise(defaults={}){
-  const node=$("#exerciseTemplate").content.cloneNode(true);
-  node.querySelector(".ex-name").value=defaults.name||"";
-  node.querySelector(".ex-sets").value=defaults.sets||3;
-  node.querySelector(".ex-reps").value=defaults.reps||8;
-  node.querySelector(".ex-weight").value=defaults.weight??"";
-  node.querySelector(".remove-ex").onclick=e=>e.currentTarget.closest(".exercise-row").remove();
-  $("#exerciseList").appendChild(node);
-}
-addExercise({name:"Bench Press"});
-addExercise({name:"Squat"});
-
-$("#addExercise").onclick=()=>addExercise();
-
-$("#saveWorkout").onclick=()=>{
-  const exercises=$$("#exerciseList .exercise-row").map(r=>({
-    name:r.querySelector(".ex-name").value.trim(),
-    sets:Number(r.querySelector(".ex-sets").value)||0,
-    reps:Number(r.querySelector(".ex-reps").value)||0,
-    weight:Number(r.querySelector(".ex-weight").value)||0
-  })).filter(x=>x.name);
-  const w={
-    id:crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-    date:$("#workoutDate").value||today(),
-    type:$("#workoutType").value,
-    duration:Number($("#duration").value)||0,
-    effort:Number($("#effort").value)||0,
-    notes:$("#notes").value.trim(),
-    exercises
-  };
-  if(!w.duration || w.effort<1 || w.effort>10){ alert("Add a valid duration and effort score."); return; }
-  const result=gradeWorkout(w);
-  w.result=result;
-  data.workouts.push(w); data.xp += result.xp;
-  save();
-  $("#gradeResult").classList.remove("hidden");
-  $("#gradeResult").innerHTML=`
-    <div class="grade-result">
-      <div class="muted">WORKOUT COMPLETE</div>
-      <div class="big-grade">${result.grade}</div>
-      <div class="xp-earned">+${result.xp} XP</div>
-      <p class="muted small">Session score ${result.score}/100</p>
-      <div class="breakdown">
-        ${Object.entries(result.breakdown).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}
-      </div>
-    </div>`;
-  $("#notes").value="";
-  window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
-};
-
-$("#addWeightBtn").onclick=()=>$("#weightEntry").classList.toggle("hidden");
-$("#saveWeight").onclick=()=>{
-  const value=Number($("#weightValue").value), date=$("#weightDate").value||today();
-  if(!value){ alert("Enter your weight in kg."); return; }
-  data.weights.push({date,value});
-  data.weights.sort((a,b)=>a.date.localeCompare(b.date));
-  save();
-  $("#weightValue").value="";
-  $("#weightEntry").classList.add("hidden");
-};
-
-function renderWeight(){
-  const list=[...data.weights].sort((a,b)=>b.date.localeCompare(a.date));
-  $("#weightHistory").innerHTML=list.slice(0,8).map(x=>`<div class="history-row"><span>${x.date}</span><b>${x.value.toFixed(1)} kg</b></div>`).join("");
-  drawChart();
-}
-function drawChart(){
-  const c=$("#weightChart"), dpr=window.devicePixelRatio||1;
-  const rect=c.getBoundingClientRect(); const w=Math.max(280,rect.width), h=220;
-  c.width=w*dpr; c.height=h*dpr; const ctx=c.getContext("2d"); ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,w,h);
-  const vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-12);
-  const styles=getComputedStyle(document.body), line=styles.getPropertyValue("--line").trim(), text=styles.getPropertyValue("--muted").trim(), accent=styles.getPropertyValue("--accent").trim();
-  ctx.strokeStyle=line; ctx.fillStyle=text; ctx.lineWidth=1; ctx.font="12px system-ui";
-  for(let i=1;i<5;i++){let y=i*h/5;ctx.beginPath();ctx.moveTo(12,y);ctx.lineTo(w-12,y);ctx.stroke();}
-  if(vals.length<2){ctx.textAlign="center";ctx.fillText(vals.length?"Add another weight to see a trend":"Add your first weight",w/2,h/2);return;}
-  const min=Math.min(...vals.map(v=>v.value))-2, max=Math.max(...vals.map(v=>v.value))+2;
-  ctx.strokeStyle=accent;ctx.lineWidth=3;ctx.beginPath();
-  vals.forEach((v,i)=>{const x=16+i*(w-32)/(vals.length-1);const y=h-18-(v.value-min)/(max-min)*(h-36); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-  ctx.stroke();
-  ctx.fillStyle=accent;
-  vals.forEach((v,i)=>{const x=16+i*(w-32)/(vals.length-1);const y=h-18-(v.value-min)/(max-min)*(h-36);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();});
-}
-
-function renderPBs(){
-  const pb={};
-  data.workouts.forEach(w=>(w.exercises||[]).forEach(ex=>{
-    if(Number(ex.weight)>0 && (!pb[ex.name] || Number(ex.weight)>pb[ex.name].weight)){
-      pb[ex.name]={weight:Number(ex.weight),date:w.date,reps:Number(ex.reps)||0};
-    }
-  }));
-  const entries=Object.entries(pb).sort((a,b)=>b[1].weight-a[1].weight);
-  $("#pbList").innerHTML=entries.length?entries.map(([name,v])=>`
-    <div class="pb-row"><div><b>${escapeHtml(name)}</b><div class="muted small">${v.date}</div></div><b>${v.weight} kg × ${v.reps}</b></div>`).join(""):`<div class="empty">No strength PBs yet.</div>`;
-}
-
-$("#saveProfile").onclick=()=>{
-  data.profile={name:$("#profileName").value.trim(),age:Number($("#profileAge").value)||32,height:Number($("#profileHeight").value)||185,sex:$("#profileSex").value};
-  save(); alert("Profile saved.");
-};
-
-$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save();};
-
-$("#exportData").onclick=()=>{
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const url=URL.createObjectURL(blob), a=document.createElement("a");
-  a.href=url;a.download="nextform-backup.json";a.click();URL.revokeObjectURL(url);
-};
-$("#resetData").onclick=()=>{
-  if(confirm("Delete all NextForm data from this device?")){ localStorage.removeItem(KEY); data=structuredClone(defaultData); save(); location.reload(); }
-};
-
-function go(target){
-  $$(".screen").forEach(s=>s.classList.toggle("active",s.id===target));
-  $$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.target===target));
-  const titles={home:"Dashboard",workout:"Workout",progressScreen:"Progress",profile:"Profile"};
-  $("#screenTitle").textContent=titles[target]||"NextForm";
-  if(target==="progressScreen") setTimeout(drawChart,50);
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-$$(".nav").forEach(n=>n.onclick=()=>go(n.dataset.target));
-$$("[data-go]").forEach(n=>n.onclick=()=>go(n.dataset.go));
-window.addEventListener("resize",()=>{ if($("#progressScreen").classList.contains("active")) drawChart(); });
-
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
-renderAll();
+const KEY="nextform-v1",DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const EXERCISES=[
+["Bench Press","Chest",["Plant your feet and keep your upper back stable.","Lower with control to the lower chest.","Keep wrists stacked over forearms."],"Jeff Nippard bench press technique"],
+["Incline Dumbbell Press","Chest",["Use a moderate incline.","Keep shoulder blades stable.","Lower under control."],"Jeff Nippard incline dumbbell press"],
+["Push-Up","Chest",["Keep body in a straight line.","Lower chest between hands.","Keep elbows at a comfortable angle."],"Jeff Nippard push up technique"],
+["Back Squat","Legs",["Brace before descending.","Keep your whole foot planted.","Use a controlled depth."],"Squat University squat form"],
+["Front Squat","Legs",["Keep elbows high.","Brace before each rep.","Drive through the full foot."],"Squat University front squat"],
+["Deadlift","Back",["Set the bar over mid-foot.","Brace before pulling.","Keep the bar close."],"Squat University deadlift form"],
+["Romanian Deadlift","Legs",["Push hips back.","Keep the load close.","Stop when position or hamstring tension limits range."],"Jeff Nippard Romanian deadlift"],
+["Leg Press","Legs",["Keep hips supported.","Control the lowering phase.","Let knees track comfortably."],"Renaissance Periodization leg press"],
+["Bulgarian Split Squat","Legs",["Use a stable stance.","Lower under control.","Drive through the working leg."],"Jeff Nippard Bulgarian split squat"],
+["Overhead Press","Shoulders",["Brace trunk and glutes.","Start with forearms near vertical.","Press smoothly overhead."],"Jeff Nippard overhead press"],
+["Lateral Raise","Shoulders",["Lead with the upper arm.","Avoid body swing.","Use a comfortable shoulder range."],"Jeff Nippard lateral raise"],
+["Barbell Row","Back",["Brace the torso.","Pull toward lower ribs.","Avoid excessive hip swing."],"Jeff Nippard barbell row"],
+["Lat Pulldown","Back",["Keep ribs controlled.","Drive elbows down.","Avoid excessive backward lean."],"Jeff Nippard lat pulldown"],
+["Pull-Up","Back",["Start from a controlled hang.","Pull elbows down.","Avoid kicking unless intended."],"Jeff Nippard pull up"],
+["Seated Cable Row","Back",["Keep torso controlled.","Pull elbows behind you.","Return slowly."],"Renaissance Periodization cable row"],
+["Barbell Curl","Arms",["Keep upper arms still.","Avoid hip drive.","Lower under control."],"Jeff Nippard biceps curl"],
+["Hammer Curl","Arms",["Use a neutral grip.","Keep elbows controlled.","Avoid swinging."],"Jeff Nippard hammer curl"],
+["Triceps Pushdown","Arms",["Keep elbows close.","Extend fully under control.","Avoid shoulder movement."],"Jeff Nippard triceps pushdown"],
+["Plank","Core",["Brace firmly.","Keep ribs and pelvis controlled.","Stop when position breaks down."],"Squat University plank"],
+["Hanging Leg Raise","Core",["Minimise swinging.","Curl the pelvis upward.","Use a controllable range."],"Jeff Nippard hanging leg raise"],
+["Hip Thrust","Glutes",["Keep upper back supported.","Finish with glutes.","Avoid excessive lower-back extension."],"Jeff Nippard hip thrust"],
+["Calf Raise","Legs",["Use a controlled stretch.","Rise through the ball of the foot.","Avoid bouncing."],"Renaissance Periodization calf raise"],
+["Boxing Heavy Bag","Boxing",["Return hands to guard.","Rotate through hips and shoulders.","Keep technique sharp as fatigue rises."],"Tony Jeffries heavy bag technique"],
+["Shadow Boxing","Boxing",["Stay balanced.","Use active footwork.","Visualise an opponent and return to guard."],"Tony Jeffries shadow boxing"],
+["Running","Cardio",["Stay relaxed.","Build distance gradually.","Keep easy runs easy enough to recover from."],"running form physiotherapist"]
+].map(([name,cat,cues,q])=>({name,cat,cues,q}));
+const Y=q=>"https://www.youtube.com/results?search_query="+encodeURIComponent(q);
+const defaults={profile:{name:"",age:32,height:185,sex:"male",goalWeight:null},weights:[],workouts:[],xp:0,theme:"dark",plans:[],schedule:{},version:2};
+let data=(()=>{try{let o=JSON.parse(localStorage.getItem(KEY)||"{}");return {...defaults,...o,profile:{...defaults.profile,...(o.profile||{})},plans:o.plans||[],schedule:o.schedule||{},version:2}}catch{return JSON.parse(JSON.stringify(defaults))}})();
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],today=()=>new Date().toISOString().slice(0,10);$("#date").value=today();$("#weightDate").value=today();
+function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function levelInfo(xp){let level=1,spent=0,need=500;while(xp-spent>=need){spent+=need;level++;need=Math.round(500*Math.pow(1.16,level-1)/25)*25}return{level,into:xp-spent,need}}
+function rankFor(l){return l>=30?"MASTER":l>=20?"ELITE":l>=14?"GOLD":l>=9?"SILVER":l>=5?"BRONZE":"NOVICE"}
+function weight(){return data.weights.length?[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).at(-1).value:null}
+function e1rm(w,r){return w&&r?w*(1+r/30):0}
+function priorBest(name,before){let best=0;for(const w of data.workouts){if(before&&w.date>=before)continue;for(const e of w.exercises||[])if(e.name.toLowerCase()===name.toLowerCase())best=Math.max(best,e1rm(+e.weight,+e.reps))}return best}
+function grade(w){const bw=weight()||85;let vol=0,ratio=0,pbs=0,exn=0;for(const e of w.exercises||[]){let wt=+e.weight||0,s=+e.sets||0,r=+e.reps||0;if(e.name)exn++;vol+=wt*s*r;if(wt)ratio=Math.max(ratio,e1rm(wt,r)/bw);let pb=priorBest(e.name,w.date);if(pb&&e1rm(wt,r)>pb*1.005)pbs++}let effort=Math.min(20,Math.max(0,(w.effort-3)*2.85)),duration=Math.min(15,w.duration/4),volume=Math.min(18,Math.log10(vol+10)*4.5),relative=Math.min(15,ratio*8),progress=Math.min(20,pbs*10),cons=Math.min(12,data.workouts.filter(x=>Math.abs(new Date(w.date)-new Date(x.date))<=14*86400000).length*2.5),activity=0;if(w.type==="Running"&&w.distance&&w.runMinutes){activity=Math.max(0,Math.min(23,32-(w.runMinutes/w.distance)*3.2));volume=relative=0}if(w.type==="Boxing"&&w.rounds){activity=Math.min(20,w.rounds*1.8);volume=relative=0}if(w.type==="Mobility"){activity=Math.min(18,w.duration/2.5);volume=relative=0}let score=Math.min(100,effort+duration+volume+relative+progress+cons+activity),g=score>=90?"S":score>=78?"A":score>=66?"B":score>=52?"C":"D",xp=Math.round(80+score*4.2+pbs*55+Math.min(60,exn*7));return{grade:g,score:Math.round(score),xp,pbs,volume:Math.round(vol),breakdown:{Effort:Math.round(effort),Duration:Math.round(duration),Volume:Math.round(volume),"Relative strength":Math.round(relative),Progression:Math.round(progress),Consistency:Math.round(cons),"Activity score":Math.round(activity)}}}
+function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
+function attrs(){let a={Strength:0,Endurance:0,Conditioning:0,Consistency:0,Progression:0,Mobility:0};data.workouts.forEach(w=>{let s=w.result?.score||50;if(["Strength","Mixed"].includes(w.type))a.Strength+=s*.06;if(["Running","Mixed"].includes(w.type))a.Endurance+=s*.065;if(["Boxing","Running","Mixed"].includes(w.type))a.Conditioning+=s*.055;if(w.type==="Mobility")a.Mobility+=s*.09;a.Consistency+=1.7;a.Progression+=(w.result?.pbs||0)*3.5});Object.keys(a).forEach(k=>a[k]=Math.min(100,Math.round(a[k])));return a}
+function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
+function renderHome(){let l=levelInfo(data.xp),w=week();$("#level").textContent=l.level;$("#rank").textContent=rankFor(l.level);$("#xpCurrent").textContent=l.into;$("#xpRemaining").textContent=`${l.need-l.into} to next level`;$("#xpBar").style.width=(l.into/l.need*100)+"%";$("#weightNow").textContent=weight()?.toFixed(1)||"—";$("#latestGrade").textContent=data.workouts.at(-1)?.result?.grade||"—";$("#streak").textContent=streak();$("#weekCount").textContent=w.ws.length;$("#weekMinutes").textContent=w.mins;$("#weekXP").textContent=w.xp;$("#weekVolume").textContent=w.vol.toLocaleString();$("#weekPBs").textContent=w.pbs;$("#weekGrade").textContent=w.g;$("#weekInsight").textContent=w.ws.length?`${w.ws.length} session${w.ws.length>1?"s":""} completed. ${w.pbs?`${w.pbs} PB${w.pbs>1?"s":""} this week. `:""}${w.mins>=150?"Excellent weekly training volume.":"Keep building your consistency."}`:"Log a workout to start your weekly report.";$("#attrs").innerHTML=Object.entries(attrs()).map(([k,v])=>`<div class="attr"><div class="row"><span>${k}</span><b>${v}</b></div><div class="tinybar"><i style="width:${v}%"></i></div></div>`).join("");let map={};data.workouts.forEach(x=>map[x.date]=(map[x.date]||0)+1);let h="";for(let i=34;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let k=d.toISOString().slice(0,10);h+=`<div class="heat ${map[k]?"on":""}" title="${k}"></div>`}$("#heatmap").innerHTML=h;renderAchievements()}
+const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Reach a 3-day streak",()=>streak()>=3],["🔥","On Fire","Reach a 7-day streak",()=>streak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
+function renderAchievements(){let cards=ACH.map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("");$("#achievements").innerHTML=cards;$("#achievementPreview").innerHTML=`<div class="achievementGrid">${ACH.slice(0,4).map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("")}</div>`}
+function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
+addEx({name:"Bench Press"});addEx({name:"Back Squat"});$("#addEx").onclick=()=>addEx();$("#type").onchange=()=>{$("#runningFields").classList.toggle("hidden",$("#type").value!=="Running");$("#boxingFields").classList.toggle("hidden",$("#type").value!=="Boxing")};
+$("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0})).filter(e=>e.name),w={id:String(Date.now()),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;save();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><span class="muted">WORKOUT COMPLETE</span><div class="bigGrade">${w.result.grade}</div><div class="bigXP">+${w.result.xp} XP</div><p>${w.result.score}/100</p><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`}
+let editPlanId=null;
+function planEx(e={}){let f=$("#planExTemplate").content.cloneNode(true),r=f.querySelector(".planex");r.querySelector(".pexname").value=e.name||"";r.querySelector(".pexsets").value=e.sets||3;r.querySelector(".pexreps").value=e.reps||8;r.querySelector(".x").onclick=()=>r.remove();$("#planExercises").appendChild(f)}
+$("#newPlan").onclick=()=>{editPlanId=null;$("#planName").value="";$("#planType").value="Strength";$("#planExercises").innerHTML="";planEx();$("#planEditor").classList.remove("hidden")};$("#addPlanEx").onclick=()=>planEx();$("#savePlan").onclick=()=>{let name=$("#planName").value.trim();if(!name)return alert("Name your plan.");let p={id:editPlanId||String(Date.now()),name,type:$("#planType").value,exercises:$$(".planex").map(r=>({name:r.querySelector(".pexname").value.trim(),sets:+r.querySelector(".pexsets").value||3,reps:+r.querySelector(".pexreps").value||8})).filter(e=>e.name)};if(editPlanId)data.plans=data.plans.map(x=>x.id===editPlanId?p:x);else data.plans.push(p);$("#planEditor").classList.add("hidden");save()}
+window.startPlan=id=>{let p=data.plans.find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";p.exercises.forEach(addEx);go("train")};window.editPlan=id=>{let p=data.plans.find(x=>x.id===id);editPlanId=id;$("#planName").value=p.name;$("#planType").value=p.type;$("#planExercises").innerHTML="";p.exercises.forEach(planEx);$("#planEditor").classList.remove("hidden")};window.deletePlan=id=>{if(confirm("Delete this plan?")){data.plans=data.plans.filter(p=>p.id!==id);save()}}
+function renderPlans(){$("#planList").innerHTML=data.plans.length?data.plans.map(p=>`<div class="planCard"><b>${p.name}</b><div class="tiny muted">${p.type} · ${p.exercises.length} exercises</div><div class="buttons"><button class="primary" onclick="startPlan('${p.id}')">Start</button><button class="secondary" onclick="editPlan('${p.id}')">Edit</button><button class="danger" onclick="deletePlan('${p.id}')">Delete</button></div></div>`).join(""):`<p class="muted">No plans yet.</p>`;$("#weekPlanner").innerHTML=DAYS.map(d=>`<div class="dayrow"><b>${d}</b><select data-day="${d}"><option value="">Rest / no plan</option>${data.plans.map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}</select></div>`).join("");$$("#weekPlanner select").forEach(s=>s.onchange=()=>{if(s.value)data.schedule[s.dataset.day]=s.value;else delete data.schedule[s.dataset.day];save()})}
+$("#loadPlanBtn").onclick=()=>go("planner");$("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
+function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`<div class="history"><div><b>${w.type}</b><small>${w.date} · ${w.duration} min · +${w.result?.xp||0} XP</small></div><span class="gradeTag">${w.result?.grade||"—"}</span></div>`).join("")||`<p class="muted">No workouts yet.</p>`;$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
+$("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
+function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
+$("#trendMode").onchange=drawWeight;
+let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
+function renderProfile(){$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
+function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderPlans();renderProgress();renderLearn();renderProfile()}const titles={home:"Home",train:"Train",planner:"Planner",progress:"Progress",learn:"Learn",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));$("#pageTitle").textContent=titles[p];if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}$$("nav button").forEach(b=>b.onclick=()=>go(b.dataset.page));$$("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});renderAll();

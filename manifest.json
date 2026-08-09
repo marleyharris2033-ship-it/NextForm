@@ -1,10 +1,10 @@
 {
-  "name": "NextForm",
+  "name": "NextForm V2",
   "short_name": "NextForm",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0c0e12",
-  "theme_color": "#111318",
+  "background_color": "#0b0e13",
+  "theme_color": "#0d1015",
   "icons": [
     {
       "src": "icon.svg",
