@@ -11,6 +11,8 @@
 <section id="home" class="page active">
 <div class="hero card"><div class="heroGlow"></div><div class="row between"><div><span class="muted">OVERALL RANK</span><div class="rank" id="rank">NOVICE</div></div><div class="level">LVL <b id="level">1</b></div></div>
 <div class="xptext"><span><b id="xpCurrent">0</b> XP</span><span id="xpRemaining">500 to next level</span></div><div class="bar"><i id="xpBar"></i></div></div>
+
+<div id="todayCard" class="card todayCard"></div>
 <div class="grid4"><div class="mini"><b id="streak">0</b><span>day streak</span></div><div class="mini"><b id="weekCount">0</b><span>this week</span></div><div class="mini"><b id="weightNow">—</b><span>kg</span></div><div class="mini"><b id="latestGrade">—</b><span>last grade</span></div></div>
 <div class="card"><div class="row between"><h2>Attributes</h2><span class="muted">0–100</span></div><div class="attrs" id="attrs"></div></div>
 <div class="card"><div class="row between"><h2>This week</h2><b id="weekGrade">—</b></div><div class="summaryGrid"><div><b id="weekMinutes">0</b><span>minutes</span></div><div><b id="weekXP">0</b><span>XP earned</span></div><div><b id="weekVolume">0</b><span>kg volume</span></div><div><b id="weekPBs">0</b><span>PBs</span></div></div><p id="weekInsight" class="insight">Log a workout to start your weekly report.</p></div>
@@ -19,13 +21,52 @@
 <div class="card"><div class="row between"><h2>Challenges</h2><button class="link" data-go="challenges">All challenges</button></div><div id="challengePreview"></div></div>
 </section>
 
+
 <section id="train" class="page">
-<div class="card"><div class="row between"><h2>Start workout</h2><button class="secondary" id="loadPlanBtn">From plan</button></div>
-<div class="form2"><label>Type<select id="type"><option>Strength</option><option>Boxing</option><option>Running</option><option>Mixed</option><option>Mobility</option><option>Other</option></select></label><label>Date<input id="date" type="date"></label><label>Duration (min)<input id="duration" type="number" value="45" min="1"></label><label>Effort / RPE<input id="effort" type="number" value="7" min="1" max="10"></label></div>
-<div id="runningFields" class="form2 hidden"><label>Distance (km)<input id="distance" type="number" step=".01" min="0"></label><label>Time (min)<input id="runMinutes" type="number" step=".1" min="0"></label></div>
-<div id="boxingFields" class="form2 hidden"><label>Rounds<input id="rounds" type="number" min="0"></label><label>Round length (min)<input id="roundLength" type="number" value="3" step=".5"></label></div>
-<div class="row between topgap"><h3>Exercises</h3><button class="secondary" id="addEx">+ Exercise</button></div><div class="exerciseHeaders"><span>Exercise</span><span>Sets</span><span>Reps</span><span>kg</span></div><div id="exerciseRows"></div>
-<label class="topgap">Notes<textarea id="notes" rows="3" placeholder="How did the session feel?"></textarea></label><button class="primary full" id="finish">Finish & grade workout</button></div><div id="result" class="card hidden"></div>
+  <div id="trainIdle">
+    <div class="card trainLaunch">
+      <div class="eyebrowBadge">READY WHEN YOU ARE</div>
+      <h2>Start training</h2>
+      <p class="muted">Use today's scheduled workout or choose one from your full-body rotation.</p>
+      <button class="primary full" id="startTodayBtn">Start today's workout</button>
+      <button class="secondary full" data-go="planner">Choose another workout</button>
+    </div>
+    <div class="card">
+      <div class="row between"><h2>Quick manual workout</h2><button class="link" id="toggleManual">Open</button></div>
+      <div id="manualWorkout" class="hidden">
+        <div class="form2">
+          <label>Type<select id="type"><option>Strength</option><option>Boxing</option><option>Running</option><option>Mixed</option><option>Mobility</option><option>Other</option></select></label>
+          <label>Date<input id="date" type="date"></label>
+          <label>Duration (min)<input id="duration" type="number" value="45" min="1"></label>
+          <label>Effort / RPE<input id="effort" type="number" value="7" min="1" max="10"></label>
+        </div>
+        <div id="runningFields" class="form2 hidden"><label>Distance (km)<input id="distance" type="number" step=".01"></label><label>Time (min)<input id="runMinutes" type="number" step=".1"></label></div>
+        <div id="boxingFields" class="form2 hidden"><label>Rounds<input id="rounds" type="number"></label><label>Round length (min)<input id="roundLength" type="number" value="3" step=".5"></label></div>
+        <div class="row between topgap"><h3>Exercises</h3><button class="secondary" id="addEx">+ Exercise</button></div>
+        <div class="exerciseHeaders"><span>Exercise</span><span>Sets</span><span>Reps</span><span>kg</span></div>
+        <div id="exerciseRows"></div>
+        <label class="topgap">Notes<textarea id="notes" rows="3"></textarea></label>
+        <button class="primary full" id="finish">Finish & grade workout</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="liveWorkout" class="hidden">
+    <div class="card liveHeader">
+      <div class="row between">
+        <div><span class="eyebrowBadge" id="livePlanIndex">LIVE WORKOUT</span><h2 id="livePlanName">Workout</h2></div>
+        <button class="danger compact" id="exitLive">Exit</button>
+      </div>
+      <div class="liveMeta"><span id="liveExerciseCount">0 exercises</span><span id="liveElapsed">00:00</span></div>
+      <div class="bar"><i id="liveProgress"></i></div>
+    </div>
+    <div id="liveExercises"></div>
+    <div class="card finishLiveCard">
+      <label>Session effort / RPE<input id="liveRpe" type="number" min="1" max="10" value="8"></label>
+      <button class="primary full" id="finishLive">Finish workout</button>
+    </div>
+  </div>
+  <div id="result" class="card hidden"></div>
 </section>
 
 
@@ -71,10 +112,38 @@
 <div class="chips" id="challengeChips"></div></div>
 <div id="challengeList"></div>
 </section>
+
+<section id="more" class="page">
+  <div class="card"><div class="eyebrowBadge">NEXTFORM</div><h2>More</h2><p class="muted">Learning, challenges and settings.</p></div>
+  <div class="moreGrid">
+    <button class="moreTile" data-go="learn"><span>▶</span><b>Learn</b><small>Exercise form & videos</small></button>
+    <button class="moreTile" data-go="challenges"><span>★</span><b>Quests</b><small>Challenges & bonus XP</small></button>
+    <button class="moreTile" data-go="profile"><span>◉</span><b>Profile</b><small>Settings & backups</small></button>
+  </div>
+</section>
 <section id="profile" class="page"><div class="card"><h2>Profile</h2><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
-<nav><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="train">＋<span>Train</span></button><button data-page="planner">▦<span>Plan</span></button><button data-page="progress">↗<span>Progress</span></button><button data-page="learn">▶<span>Learn</span></button><button data-page="challenges">★<span>Quests</span></button><button data-page="profile">◉<span>Profile</span></button></nav>
+<nav>
+<button class="active" data-page="home">⌂<span>Home</span></button>
+<button data-page="train">＋<span>Train</span></button>
+<button data-page="planner">▦<span>Plan</span></button>
+<button data-page="progress">↗<span>Progress</span></button>
+<button data-page="more">•••<span>More</span></button>
+</nav>
+
+<div id="celebration" class="celebration hidden">
+  <div class="celebrateCard">
+    <div id="celebrateBurst">✦</div>
+    <span class="muted">WORKOUT COMPLETE</span>
+    <div id="celebrateGrade" class="bigGrade">A</div>
+    <div id="celebrateXp" class="celebrateXp">+0 XP</div>
+    <div id="celebrateLines"></div>
+    <div class="bar"><i id="celebrateBar"></i></div>
+    <p id="celebrateLevel" class="muted"></p>
+    <button class="primary full" id="closeCelebration">Nice</button>
+  </div>
+</div>
 </div>
 <template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><input class="exsets" type="number" min="1" value="3"><input class="exreps" type="number" min="1" value="8"><input class="exweight" type="number" min="0" step=".5"><button class="x">×</button></div></template>
 <datalist id="exerciseNames"></datalist><script src="app.js"></script></body></html>
