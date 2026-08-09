@@ -127,15 +127,9 @@ const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.l
 function renderAchievements(){let cards=ACH.map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("");$("#achievements").innerHTML=cards;$("#achievementPreview").innerHTML=`<div class="achievementGrid">${ACH.slice(0,4).map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("")}</div>`}
 function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
 addEx({name:"Bench Press"});addEx({name:"Back Squat"});$("#addEx").onclick=()=>addEx();$("#type").onchange=()=>{$("#runningFields").classList.toggle("hidden",$("#type").value!=="Running");$("#boxingFields").classList.toggle("hidden",$("#type").value!=="Boxing")};
+$("#loadPlanBtn").onclick=()=>go("planner");
 $("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0})).filter(e=>e.name),w={id:String(Date.now()),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><span class="muted">WORKOUT COMPLETE</span><div class="bigGrade">${w.result.grade}</div><div class="bigXP">+${w.result.xp} XP</div><p>${w.result.score}/100</p><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`}
-let editPlanId=null;
-function exerciseOptions(selected=""){
- let cats=[...new Set(EXERCISES.map(e=>e.cat))];
- return `<option value="">Choose exercise</option>`+cats.map(cat=>`<optgroup label="${cat}">${EXERCISES.filter(e=>e.cat===cat).map(e=>`<option value="${e.name}" ${e.name===selected?"selected":""}>${e.name}</option>`).join("")}</optgroup>`).join("");
-}
-function planEx(e={}){let f=$("#planExTemplate").content.cloneNode(true),r=f.querySelector(".planex");r.querySelector(".pexname").innerHTML=exerciseOptions(e.name||"");r.querySelector(".pexsets").value=e.sets||3;r.querySelector(".pexreps").value=e.reps||8;r.querySelector(".x").onclick=()=>r.remove();$("#planExercises").appendChild(f)}
-$("#newPlan").onclick=()=>{editPlanId=null;$("#planName").value="";$("#planType").value="Strength";$("#planExercises").innerHTML="";planEx();$("#planEditor").classList.remove("hidden")};$("#addPlanEx").onclick=()=>planEx();$("#savePlan").onclick=()=>{let name=$("#planName").value.trim();if(!name)return alert("Name your plan.");let p={id:editPlanId||String(Date.now()),name,type:$("#planType").value,exercises:$$(".planex").map(r=>({name:r.querySelector(".pexname").value.trim(),sets:+r.querySelector(".pexsets").value||3,reps:+r.querySelector(".pexreps").value||8})).filter(e=>e.name)};if(editPlanId)data.plans=data.plans.map(x=>x.id===editPlanId?p:x);else data.plans.push(p);$("#planEditor").classList.add("hidden");save()}
-$("#loadPlanBtn").onclick=()=>go("planner");$("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
+$("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
 function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`<div class="history"><div><b>${w.type}</b><small>${w.date} · ${w.duration} min · +${w.result?.xp||0} XP</small></div><span class="gradeTag">${w.result?.grade||"—"}</span></div>`).join("")||`<p class="muted">No workouts yet.</p>`;$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
 $("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
 function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
@@ -143,22 +137,79 @@ $("#trendMode").onchange=drawWeight;
 let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
 function renderProfile(){$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
 
-function allPlans(){return [...BUILTIN_PLANS,...data.plans]}
-window.editPlan=id=>{let p=data.plans.find(x=>x.id===id);if(!p)return;editPlanId=id;$("#planName").value=p.name;$("#planType").value=p.type;$("#planExercises").innerHTML="";p.exercises.forEach(planEx);$("#planEditor").classList.remove("hidden")};
-window.deletePlan=id=>{if(confirm("Delete this plan?")){data.plans=data.plans.filter(p=>p.id!==id);Object.keys(data.schedule).forEach(d=>{if(data.schedule[d]===id)delete data.schedule[d]});save()}};
 
-window.startPlan=id=>{let p=allPlans().find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";let maxPriority=chosenDuration<=45?1:chosenDuration<=60?2:3,chosen=p.exercises.filter(e=>(e.priority||1)<=maxPriority);chosen.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));$("#duration").value=chosenDuration;$("#notes").value=`Plan: ${p.name}\nTargets: ${chosen.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;$("#finish").dataset.planId=p.id;go("train")};
-function renderPlansV3(){
- let pick=`<div class="pickCard"><h3>Pick my workout</h3><p class="muted">Chooses a full-body session you haven't done recently.</p><div class="durationBtns"><button class="secondary ${chosenDuration===45?"active":""}" onclick="setDur(45)">45 min</button><button class="secondary ${chosenDuration===60?"active":""}" onclick="setDur(60)">60 min</button><button class="secondary ${chosenDuration===75?"active":""}" onclick="setDur(75)">75 min</button></div><button class="primary full" onclick="pickWorkout()">Pick for me</button></div>`;
- let built=BUILTIN_PLANS.map(p=>`<div class="planCard builtinPlan"><div class="row between"><div><span class="premadeBadge">PRE-MADE FULL BODY</span><b style="display:block;margin-top:5px">${p.name}</b></div><span class="planNumber">${p.id.replace("builtin","")}/6</span></div><div class="tiny muted">${p.desc}</div><div class="planExercisePreview">${p.exercises.slice(0,4).map(e=>`<span>${e.name}</span>`).join("")}${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}</div><div class="tiny muted">${p.exercises.length} exercises · scales to 45 / 60 / 75 min</div><div class="buttons"><button class="primary" onclick="startPlan('${p.id}')">Start workout</button><button class="secondary" onclick="togglePlanDetails('${p.id}')">View exercises</button></div><div id="details-${p.id}" class="planDetails hidden">${p.exercises.map(e=>`<div><b>${e.name}</b><span>${e.sets} × ${e.reps}</span></div>`).join("")}</div></div>`).join("");
- let custom=data.plans.length?`<h3 class="topgap">Your plans</h3>`+data.plans.map(p=>`<div class="planCard"><b>${p.name}</b><div class="tiny muted">${p.type} · ${p.exercises.length} exercises</div><div class="buttons"><button class="primary" onclick="startPlan('${p.id}')">Start</button><button class="secondary" onclick="editPlan('${p.id}')">Edit</button><button class="danger" onclick="deletePlan('${p.id}')">Delete</button></div></div>`).join(""):"";
- $("#planList").innerHTML=pick+"<h3>Full-body rotation</h3>"+built+custom;
- $("#weekPlanner").innerHTML=DAYS.map(d=>`<div class="dayrow"><b>${d}</b><select data-day="${d}"><option value="">Rest / no plan</option>${allPlans().map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}</select></div>`).join("");
- $$("#weekPlanner select").forEach(s=>s.onchange=()=>{if(s.value)data.schedule[s.dataset.day]=s.value;else delete data.schedule[s.dataset.day];save()});
+window.startPremadePlan=id=>{
+  let p=BUILTIN_PLANS.find(x=>x.id===id);
+  if(!p)return;
+  $("#type").value=p.type;
+  $("#type").onchange();
+  $("#exerciseRows").innerHTML="";
+  let maxPriority=chosenDuration<=45?1:chosenDuration<=60?2:3;
+  let chosen=p.exercises.filter(e=>(e.priority||1)<=maxPriority);
+  chosen.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));
+  $("#duration").value=chosenDuration;
+  $("#notes").value=`Plan: ${p.name}\nTargets: ${chosen.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;
+  $("#finish").dataset.planId=p.id;
+  go("train");
+};
+
+window.togglePremadeDetails=id=>{
+  let el=document.getElementById("details-"+id);
+  if(el)el.classList.toggle("hidden");
+};
+
+function renderSimplePlanner(){
+  $("#premadeWorkoutList").innerHTML=BUILTIN_PLANS.map(p=>`
+    <div class="planCard builtinPlan">
+      <div class="row between">
+        <div>
+          <span class="premadeBadge">PRE-MADE FULL BODY</span>
+          <b style="display:block;margin-top:5px">${p.name}</b>
+          <div class="tiny muted">${p.desc}</div>
+        </div>
+        <span class="planNumber">${p.id.replace("builtin","")}/6</span>
+      </div>
+      <div class="planExercisePreview">
+        ${p.exercises.slice(0,4).map(e=>`<span>${e.name}</span>`).join("")}
+        ${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}
+      </div>
+      <div class="buttons">
+        <button class="primary" onclick="startPremadePlan('${p.id}')">Start workout</button>
+        <button class="secondary" onclick="togglePremadeDetails('${p.id}')">View exercises</button>
+      </div>
+      <div id="details-${p.id}" class="planDetails hidden">
+        ${p.exercises.map(e=>`<div><b>${e.name}</b><span>${e.sets} × ${e.reps}</span></div>`).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  $$(".plannerDuration button").forEach(b=>{
+    b.classList.toggle("active",+b.dataset.duration===chosenDuration);
+    b.onclick=()=>{
+      chosenDuration=+b.dataset.duration;
+      renderSimplePlanner();
+    };
+  });
+
+  $("#weekPlanner").innerHTML=DAYS.map(d=>`
+    <div class="dayrow diaryRow">
+      <b>${d}</b>
+      <select data-day="${d}">
+        <option value="">Rest / no workout</option>
+        ${BUILTIN_PLANS.map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}
+      </select>
+      ${data.schedule[d]?`<button class="secondary diaryStart" data-start="${data.schedule[d]}">Start</button>`:""}
+    </div>
+  `).join("");
+
+  $$("#weekPlanner select").forEach(s=>s.onchange=()=>{
+    if(s.value)data.schedule[s.dataset.day]=s.value;
+    else delete data.schedule[s.dataset.day];
+    save();
+  });
+  $$(".diaryStart").forEach(b=>b.onclick=()=>startPremadePlan(b.dataset.start));
 }
-window.togglePlanDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
-window.setDur=n=>{chosenDuration=n;renderPlansV3()};
-window.pickWorkout=()=>{let recent=data.workouts.slice(-3).map(w=>w.planId).filter(Boolean);let opts=BUILTIN_PLANS.filter(p=>!recent.includes(p.id));if(!opts.length)opts=BUILTIN_PLANS;startPlan(opts[Math.floor(Math.random()*opts.length)].id)};
+
 let activeChallengeCat="All";
 function challengeStatus(c){let cur=Math.max(0,c[5](data)),target=c[3];return{cur:Math.min(cur,target),target,done:cur>=target,pct:Math.min(100,cur/target*100)}}
 function claimChallenge(id){let c=CHALLENGES.find(x=>x[0]===id),s=c&&challengeStatus(c);if(!c||!s.done||data.claimedChallenges.includes(id))return;data.claimedChallenges.push(id);data.xp+=c[4];save()}

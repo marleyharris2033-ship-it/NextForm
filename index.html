@@ -28,10 +28,34 @@
 <label class="topgap">Notes<textarea id="notes" rows="3" placeholder="How did the session feel?"></textarea></label><button class="primary full" id="finish">Finish & grade workout</button></div><div id="result" class="card hidden"></div>
 </section>
 
+
 <section id="planner" class="page">
-<div class="card plannerHero"><div class="eyebrowBadge">6 BUILT-IN FULL-BODY WORKOUTS</div><div class="row between"><h2>Workout planner</h2><button class="primary" id="newPlan">+ New</button></div><p class="muted">Build reusable sessions and schedule them for the week.</p><div id="planList"></div></div>
-<div class="card"><h2>Weekly schedule</h2><div id="weekPlanner"></div></div>
-<div id="planEditor" class="card hidden"><h2 id="planEditorTitle">New plan</h2><label>Plan name<input id="planName" placeholder="e.g. Upper Body"></label><label class="topgap">Workout type<select id="planType"><option>Strength</option><option>Boxing</option><option>Running</option><option>Mixed</option><option>Mobility</option></select></label><div class="row between topgap"><h3>Exercises</h3><button class="secondary" id="addPlanEx">+ Exercise</button></div><div id="planExercises"></div><button class="primary full" id="savePlan">Save plan</button></div>
+  <div class="card plannerHero">
+    <div class="eyebrowBadge">FULL-BODY ROTATION</div>
+    <div class="row between">
+      <div>
+        <h2>Pre-made workouts</h2>
+        <p class="muted">Choose from six realistic full-body sessions. Pick 45, 60 or 75 minutes and start straight away.</p>
+      </div>
+    </div>
+    <div class="durationBtns plannerDuration">
+      <button class="secondary active" data-duration="45">45 min</button>
+      <button class="secondary" data-duration="60">60 min</button>
+      <button class="secondary" data-duration="75">75 min</button>
+    </div>
+  </div>
+
+  <div id="premadeWorkoutList"></div>
+
+  <div class="card">
+    <div class="row between">
+      <div>
+        <h2>Weekly diary</h2>
+        <p class="muted">Assign one of the six workouts to each day so you can see exactly what you're doing this week.</p>
+      </div>
+    </div>
+    <div id="weekPlanner"></div>
+  </div>
 </section>
 
 <section id="progress" class="page">
@@ -53,5 +77,4 @@
 <nav><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="train">＋<span>Train</span></button><button data-page="planner">▦<span>Plan</span></button><button data-page="progress">↗<span>Progress</span></button><button data-page="learn">▶<span>Learn</span></button><button data-page="challenges">★<span>Quests</span></button><button data-page="profile">◉<span>Profile</span></button></nav>
 </div>
 <template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><input class="exsets" type="number" min="1" value="3"><input class="exreps" type="number" min="1" value="8"><input class="exweight" type="number" min="0" step=".5"><button class="x">×</button></div></template>
-<template id="planExTemplate"><div class="planex"><select class="pexname"></select><input class="pexsets" type="number" value="3"><input class="pexreps" type="number" value="8"><button class="x">×</button></div></template>
 <datalist id="exerciseNames"></datalist><script src="app.js"></script></body></html>
