@@ -53,7 +53,53 @@ const EXERCISES=[
 ["Shadow Boxing","Boxing",["Stay balanced.","Use active footwork.","Visualise an opponent and return to guard."],"Tony Jeffries shadow boxing"],
 ["Jump Rope","Cardio",["Stay light on the feet.","Use small wrist turns.","Keep jumps low and relaxed."],"jump rope boxing technique"],
 ["Running","Cardio",["Stay relaxed.","Build distance gradually.","Keep easy runs easy enough to recover from."],"running form physiotherapist"]
-].map(([name,cat,cues,q])=>({name,cat,cues,q}));
+,
+["Box Squat","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Box Squat exercise form"],
+["Concentration Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Concentration Curl exercise form"],
+["Cossack Squat","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Cossack Squat exercise form"],
+["Cross-Body Hammer Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Cross-Body Hammer Curl exercise form"],
+["Decline Push-Up","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Decline Push-Up exercise form"],
+["Dumbbell Pullover","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Dumbbell Pullover exercise form"],
+["Dumbbell Romanian Deadlift","Hamstrings",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Dumbbell Romanian Deadlift exercise form"],
+["Dumbbell Row","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Dumbbell Row exercise form"],
+["Dumbbell Squeeze Press","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Dumbbell Squeeze Press exercise form"],
+["Dumbbell Step-Back Lunge","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Dumbbell Step-Back Lunge exercise form"],
+["Dumbbell Tate Press","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Dumbbell Tate Press exercise form"],
+["EZ-Bar Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"EZ-Bar Curl exercise form"],
+["Floor Press","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Floor Press exercise form"],
+["Front Raise","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Front Raise exercise form"],
+["Good Morning","Hamstrings",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Good Morning exercise form"],
+["Incline Barbell Press","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Incline Barbell Press exercise form"],
+["Incline Push-Up","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Incline Push-Up exercise form"],
+["Inverted Row","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Inverted Row exercise form"],
+["JM Press","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"JM Press exercise form"],
+["Landmine Press","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Landmine Press exercise form"],
+["Lean-Away Lateral Raise","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Lean-Away Lateral Raise exercise form"],
+["Low-to-High Cable Fly","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Low-to-High Cable Fly exercise form"],
+["Meadows Row","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Meadows Row exercise form"],
+["Neutral-Grip Pull-Up","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Neutral-Grip Pull-Up exercise form"],
+["Pendlay Row","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Pendlay Row exercise form"],
+["Plate Squeeze","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Plate Squeeze exercise form"],
+["Prone Y Raise","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Prone Y Raise exercise form"],
+["Push Press","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Push Press exercise form"],
+["Rack Pull","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Rack Pull exercise form"],
+["Rear Delt Row","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Rear Delt Row exercise form"],
+["Reverse Fly","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Reverse Fly exercise form"],
+["Seal Row","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Seal Row exercise form"],
+["Seated Calf Raise","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Seated Calf Raise exercise form"],
+["Seated Dumbbell Press","Chest",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Seated Dumbbell Press exercise form"],
+["Single-Leg Glute Bridge","Glutes",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Single-Leg Glute Bridge exercise form"],
+["Single-Leg Romanian Deadlift","Hamstrings",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Single-Leg Romanian Deadlift exercise form"],
+["Spider Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Spider Curl exercise form"],
+["Standing Calf Raise","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Standing Calf Raise exercise form"],
+["Straight-Arm Pulldown","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Straight-Arm Pulldown exercise form"],
+["Sumo Deadlift","Hamstrings",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Sumo Deadlift exercise form"],
+["T-Bar Row","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"T-Bar Row exercise form"],
+["Upright Row","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Upright Row exercise form"],
+["Wide-Grip Pull-Up","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Wide-Grip Pull-Up exercise form"],
+["Z Press","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Z Press exercise form"],
+["Zercher Squat","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Zercher Squat exercise form"],
+["Zottman Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Zottman Curl exercise form"]].map(([name,cat,cues,q])=>({name,cat,cues,q}));
 
 const BUILTIN_PLANS=[
 {category:"Full Body",id:"fb1",name:"Full Body A — Classic",type:"Strength",desc:"Balanced compounds with simple equipment.",exercises:[
@@ -167,11 +213,11 @@ window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return
 
 window.togglePremadeDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
 let activePlanCategory="Full Body";
+window.setPlanCategory=c=>{activePlanCategory=c;renderSimplePlanner()};
 
 function renderSimplePlanner(){
  const cats=["Full Body","Push / Pull","Upper / Lower","Bro Split"];
- $("#planCategoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activePlanCategory?"active":""}" data-plan-cat="${c}">${c}</button>`).join("");
- $$("[data-plan-cat]").forEach(b=>b.onclick=()=>{activePlanCategory=b.dataset.planCat;renderSimplePlanner()});
+ $("#planCategoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activePlanCategory?"active":""}" onclick="setPlanCategory(\'${c}\')">${c}</button>`).join("");
  const visible=BUILTIN_PLANS.filter(p=>p.category===activePlanCategory);
  $("#premadeWorkoutList").innerHTML=visible.map(p=>`
   <div class="planCard builtinPlan">

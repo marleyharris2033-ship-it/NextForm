@@ -306,3 +306,10 @@ nav button span{
 .plannerCats{margin-top:12px;padding-bottom:2px}
 .plannerCats .chip{flex:0 0 auto}
 #premadeWorkoutList .planCard{margin-bottom:11px}
+
+.plannerCats .chip{
+  pointer-events:auto !important;
+  touch-action:manipulation;
+  position:relative;
+  z-index:2;
+}
