@@ -360,3 +360,46 @@ nav button span{
  .timerButtons{grid-template-columns:1fr 1fr}
  .timerButtons #timerUseDuration{grid-column:1/-1}
 }
+
+/* EDITABLE TRAINING LOG */
+.logEditor{
+  margin:14px 0;padding:14px;border-radius:16px;background:var(--card2);
+  border:1px solid var(--line)
+}
+.logExRow{
+  display:grid;grid-template-columns:2fr .55fr .55fr .7fr 30px;
+  gap:5px;align-items:center;margin:7px 0
+}
+.logWorkoutCard{
+  background:linear-gradient(160deg,var(--card2),rgba(17,23,34,.88));
+  border:1px solid rgba(255,255,255,.05);border-radius:15px;padding:13px;margin:9px 0
+}
+.logWorkoutCard small{display:block;color:var(--muted);margin-top:3px}
+.logMeta{
+  margin-top:8px;padding:7px 9px;border-radius:10px;background:rgba(255,255,255,.035);
+  color:var(--muted);font-size:11px
+}
+.logExercises{margin-top:10px}
+.logExerciseItem{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)
+}
+.logExerciseItem:last-child{border-bottom:0}
+.logExerciseItem b{display:block;font-size:12px}
+.logExerciseItem span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.miniDelete{
+  border:0;background:transparent;color:var(--danger);font-size:10px;font-weight:800;padding:7px
+}
+.logActions{display:flex;gap:7px;margin-top:10px}
+.inlineExerciseEditor{
+  margin-top:10px;display:grid;grid-template-columns:2fr .55fr .55fr .7fr auto auto;
+  gap:5px;align-items:center;padding:10px;border-radius:12px;background:rgba(0,0,0,.12)
+}
+.inlineExerciseEditor button{padding:9px}
+@media(max-width:560px){
+  .logExRow{grid-template-columns:1fr 1fr 1fr 1fr 30px}
+  .logExName{grid-column:1/-2}
+  .inlineExerciseEditor{grid-template-columns:1fr 1fr 1fr}
+  .inlineExName{grid-column:1/-1}
+  .inlineExerciseEditor .inlineSave,.inlineExerciseEditor .inlineCancel{width:100%}
+}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1015"><title>NextForm</title>
-<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=profiletimer1">
+<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=editablelog1">
 </head>
 <body>
 <div id="onboarding" class="onboarding hidden">
@@ -94,7 +94,50 @@
 
 <section id="progress" class="page">
 <div class="card"><div class="row between"><h2>Body weight</h2><button class="secondary" id="showWeight">+ Add</button></div><div id="weightEntry" class="form3 hidden"><input id="weightValue" type="number" step=".1" placeholder="kg"><input id="weightDate" type="date"><button id="saveWeight" class="primary">Save</button></div><canvas id="weightChart" height="230"></canvas><div class="form2 topgap"><label>Goal weight<input id="goalWeight" type="number" step=".1" placeholder="kg"></label><label>Weight trend<select id="trendMode"><option value="raw">Raw weights</option><option value="avg">Smoothed average</option></select></label></div><button class="secondary full" id="saveGoal">Save goal</button></div>
-<div class="card"><h2>Personal bests</h2><div id="pbs"></div></div><div class="card"><h2>Exercise history</h2><select id="historyExercise"></select><div id="exerciseHistory"></div></div><div class="card"><h2>Achievements</h2><div id="achievements" class="achievementGrid"></div></div><div class="card"><h2>Workout history</h2><div id="history"></div></div>
+<div class="card"><h2>Personal bests</h2><div id="pbs"></div></div><div class="card"><h2>Exercise history</h2><select id="historyExercise"></select><div id="exerciseHistory"></div></div><div class="card"><h2>Achievements</h2><div id="achievements" class="achievementGrid"></div></div>
+<div class="card">
+  <div class="row between">
+    <div><h2>Training log</h2><p class="muted small">Add, review or correct past workout entries.</p></div>
+    <button id="showAddWorkout" class="primary">+ Add</button>
+  </div>
+
+  <div id="addWorkoutForm" class="logEditor hidden">
+    <div class="form2">
+      <label>Date<input id="logDate" type="date"></label>
+      <label>Type
+        <select id="logType">
+          <option>Strength</option><option>Boxing</option><option>Running</option>
+          <option>Mixed</option><option>Mobility</option><option>Other</option>
+        </select>
+      </label>
+      <label>Duration (min)<input id="logDuration" type="number" min="1" value="45"></label>
+      <label>Effort / RPE<input id="logEffort" type="number" min="1" max="10" value="7"></label>
+    </div>
+
+    <div id="logBoxingFields" class="form2 hidden topgap">
+      <label>Rounds<input id="logRounds" type="number" min="0"></label>
+      <label>Round length (min)<input id="logRoundLength" type="number" min="0" step=".5" value="3"></label>
+    </div>
+
+    <div id="logRunningFields" class="form2 hidden topgap">
+      <label>Distance (km)<input id="logDistance" type="number" min="0" step=".01"></label>
+      <label>Run time (min)<input id="logRunMinutes" type="number" min="0" step=".1"></label>
+    </div>
+
+    <label class="topgap">Notes<textarea id="logNotes" rows="2" placeholder="Optional"></textarea></label>
+
+    <div class="row between topgap"><h3>Exercises</h3><button id="addLogExercise" class="secondary">+ Exercise</button></div>
+    <div id="logExerciseRows"></div>
+
+    <div class="row topgap">
+      <button id="saveLogWorkout" class="primary">Save workout</button>
+      <button id="cancelLogWorkout" class="secondary">Cancel</button>
+    </div>
+  </div>
+
+  <div id="history"></div>
+</div>
+
 </section>
 
 <section id="learn" class="page"><div class="card"><h2>Exercise library</h2><p class="muted">Technique cues plus YouTube demonstrations. Start light when learning a movement.</p><input id="learnSearch" placeholder="Search exercises..."><div class="chips" id="categoryChips"></div></div><div id="exerciseLibrary"></div></section>
@@ -119,4 +162,14 @@
 <nav><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="train">＋<span>Train</span></button><button data-page="planner">▦<span>Plan</span></button><button data-page="progress">↗<span>Progress</span></button><button data-page="learn">▶<span>Learn</span></button><button data-page="challenges">★<span>Quests</span></button><button data-page="profile">◉<span>Profile</span></button></nav>
 </div>
 <template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><input class="exsets" type="number" min="1" value="3"><input class="exreps" type="number" min="1" value="8"><input class="exweight" type="number" min="0" step=".5"><button class="x">×</button></div></template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=grading1"></script></body></html>
+
+<template id="logExTemplate">
+  <div class="logExRow">
+    <select class="logExName"></select>
+    <input class="logExSets" type="number" min="1" value="3" placeholder="Sets">
+    <input class="logExReps" type="number" min="1" value="8" placeholder="Reps">
+    <input class="logExWeight" type="number" min="0" step=".5" placeholder="kg">
+    <button class="x logExRemove">×</button>
+  </div>
+</template>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=editablelog1"></script></body></html>

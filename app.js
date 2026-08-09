@@ -366,7 +366,163 @@ addEx({name:"Bench Press"});addEx({name:"Back Squat"});$("#addEx").onclick=()=>a
 $("#loadPlanBtn").onclick=()=>go("planner");
 $("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0})).filter(e=>e.name),w={id:String(Date.now()),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><span class="muted">WORKOUT COMPLETE</span><div class="bigGrade">${w.result.grade}</div><div class="bigXP">+${w.result.xp} XP</div><p>${w.result.score}/100</p><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`}
 $("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
-function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`<div class="history"><div><b>${w.type}</b><small>${w.date} · ${w.duration} min · +${w.result?.xp||0} XP</small></div><span class="gradeTag">${w.result?.grade||"—"}</span></div>`).join("")||`<p class="muted">No workouts yet.</p>`;$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
+
+// ===== EDITABLE TRAINING LOG =====
+function logExerciseOptions(selected=""){
+  const cats=[...new Set(EXERCISES.map(e=>e.cat))];
+  return `<option value="">Choose exercise</option>`+
+    cats.map(cat=>`<optgroup label="${cat}">${EXERCISES.filter(e=>e.cat===cat).map(e=>`<option value="${e.name}" ${e.name===selected?"selected":""}>${e.name}</option>`).join("")}</optgroup>`).join("");
+}
+
+function addLogExerciseRow(defaults={}){
+  const f=$("#logExTemplate").content.cloneNode(true);
+  const row=f.querySelector(".logExRow");
+  row.querySelector(".logExName").innerHTML=logExerciseOptions(defaults.name||"");
+  row.querySelector(".logExSets").value=defaults.sets||3;
+  row.querySelector(".logExReps").value=defaults.reps||8;
+  row.querySelector(".logExWeight").value=defaults.weight??"";
+  row.querySelector(".logExRemove").onclick=()=>row.remove();
+  $("#logExerciseRows").appendChild(f);
+}
+
+function updateLogTypeFields(){
+  const t=$("#logType")?.value;
+  $("#logBoxingFields")?.classList.toggle("hidden",t!=="Boxing");
+  $("#logRunningFields")?.classList.toggle("hidden",t!=="Running");
+}
+$("#logType")?.addEventListener("change",updateLogTypeFields);
+
+$("#showAddWorkout")?.addEventListener("click",()=>{
+  $("#addWorkoutForm").classList.remove("hidden");
+  $("#logDate").value=today();
+  $("#logExerciseRows").innerHTML="";
+  if($("#logType").value==="Strength") addLogExerciseRow();
+  updateLogTypeFields();
+  $("#addWorkoutForm").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("#cancelLogWorkout")?.addEventListener("click",()=>$("#addWorkoutForm").classList.add("hidden"));
+$("#addLogExercise")?.addEventListener("click",()=>addLogExerciseRow());
+
+function recalcWorkoutAndXp(w,oldXp=0){
+  w.result=grade(w);
+  data.xp=Math.max(0,data.xp-oldXp+(w.result?.xp||0));
+}
+
+$("#saveLogWorkout")?.addEventListener("click",()=>{
+  const type=$("#logType").value;
+  const duration=+$("#logDuration").value||0;
+  const effort=+$("#logEffort").value||0;
+  if(!duration||effort<1||effort>10){alert("Add a valid duration and effort score.");return}
+
+  const exercises=$$("#logExerciseRows .logExRow").map(r=>({
+    name:r.querySelector(".logExName").value,
+    sets:+r.querySelector(".logExSets").value||0,
+    reps:+r.querySelector(".logExReps").value||0,
+    weight:+r.querySelector(".logExWeight").value||0
+  })).filter(e=>e.name);
+
+  const w={
+    id:String(Date.now()),
+    date:$("#logDate").value||today(),
+    type,
+    duration,
+    effort,
+    notes:$("#logNotes").value.trim(),
+    exercises,
+    rounds:+$("#logRounds").value||0,
+    roundLength:+$("#logRoundLength").value||0,
+    distance:+$("#logDistance").value||0,
+    runMinutes:+$("#logRunMinutes").value||0
+  };
+  w.result=grade(w);
+  data.workouts.push(w);
+  data.xp+=w.result?.xp||0;
+  save();
+  $("#addWorkoutForm").classList.add("hidden");
+});
+
+window.deleteWorkoutEntry=id=>{
+  const w=data.workouts.find(x=>String(x.id)===String(id));
+  if(!w)return;
+  if(!confirm(`Delete this ${w.type} workout from ${w.date}?`))return;
+  data.xp=Math.max(0,data.xp-(w.result?.xp||0));
+  data.workouts=data.workouts.filter(x=>String(x.id)!==String(id));
+  save();
+};
+
+window.deleteExerciseEntry=(id,index)=>{
+  const w=data.workouts.find(x=>String(x.id)===String(id));
+  if(!w||!w.exercises?.[index])return;
+  const ex=w.exercises[index];
+  if(!confirm(`Delete ${ex.name} from this workout?`))return;
+  const oldXp=w.result?.xp||0;
+  w.exercises.splice(index,1);
+  recalcWorkoutAndXp(w,oldXp);
+  save();
+};
+
+window.openAddExerciseToWorkout=id=>{
+  const holder=document.getElementById("add-ex-"+id);
+  if(!holder)return;
+  if(!holder.classList.contains("hidden")){
+    holder.classList.add("hidden");
+    holder.innerHTML="";
+    return;
+  }
+  holder.innerHTML=`
+    <select class="inlineExName">${logExerciseOptions("")}</select>
+    <input class="inlineExSets" type="number" min="1" value="3" placeholder="Sets">
+    <input class="inlineExReps" type="number" min="1" value="8" placeholder="Reps">
+    <input class="inlineExWeight" type="number" min="0" step=".5" placeholder="kg">
+    <button class="primary inlineSave">Save</button>
+    <button class="secondary inlineCancel">Cancel</button>`;
+  holder.classList.remove("hidden");
+  holder.querySelector(".inlineCancel").onclick=()=>{holder.classList.add("hidden");holder.innerHTML=""};
+  holder.querySelector(".inlineSave").onclick=()=>{
+    const name=holder.querySelector(".inlineExName").value;
+    if(!name){alert("Choose an exercise.");return}
+    const w=data.workouts.find(x=>String(x.id)===String(id));
+    if(!w)return;
+    const oldXp=w.result?.xp||0;
+    w.exercises=w.exercises||[];
+    w.exercises.push({
+      name,
+      sets:+holder.querySelector(".inlineExSets").value||3,
+      reps:+holder.querySelector(".inlineExReps").value||8,
+      weight:+holder.querySelector(".inlineExWeight").value||0
+    });
+    recalcWorkoutAndXp(w,oldXp);
+    save();
+  };
+};
+
+function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`
+  <div class="logWorkoutCard">
+    <div class="row between">
+      <div>
+        <b>${w.type}</b>
+        <small>${w.date} · ${w.duration} min · +${w.result?.xp||0} XP</small>
+      </div>
+      <span class="gradeTag">${w.result?.grade||"—"}</span>
+    </div>
+
+    ${(w.type==="Boxing"&&(w.rounds||w.roundLength))?`<div class="logMeta">${w.rounds||0} rounds × ${w.roundLength||0} min</div>`:""}
+    ${(w.type==="Running"&&w.distance)?`<div class="logMeta">${(+w.distance).toFixed(1)} km · ${w.runMinutes||w.duration} min</div>`:""}
+
+    <div class="logExercises">
+      ${(w.exercises||[]).length?(w.exercises||[]).map((e,ei)=>`
+        <div class="logExerciseItem">
+          <div><b>${e.name}</b><span>${e.sets||0} sets · ${e.weight||0} kg × ${e.reps||0}</span></div>
+          <button class="miniDelete" onclick="deleteExerciseEntry('${w.id}',${ei})">Delete</button>
+        </div>`).join(""):`<div class="tiny muted">No exercises logged.</div>`}
+    </div>
+
+    <div class="logActions">
+      <button class="secondary" onclick="openAddExerciseToWorkout('${w.id}')">+ Exercise</button>
+      <button class="danger" onclick="deleteWorkoutEntry('${w.id}')">Delete workout</button>
+    </div>
+    <div id="add-ex-${w.id}" class="inlineExerciseEditor hidden"></div>
+  </div>`).join("")||`<p class="muted">No workouts yet. Your completed sessions will appear here.</p>`;$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
 $("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
 function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
 $("#trendMode").onchange=drawWeight;
