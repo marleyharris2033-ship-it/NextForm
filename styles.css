@@ -309,3 +309,6 @@ body.light nav{background:rgba(250,252,254,.94);border-color:var(--line)}
   .liveSet input,.liveSet select{font-size:12px;padding:6px 3px}
   .liveHeader{top:74px}
 }
+
+#learnExerciseSelect{font-size:14px}
+#premadeWorkoutList .planCard{margin-bottom:11px}

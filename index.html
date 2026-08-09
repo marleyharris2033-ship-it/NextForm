@@ -66,31 +66,19 @@
 </section>
 
 
+
 <section id="planner" class="page">
   <div class="card plannerHero">
     <div class="eyebrowBadge">FULL-BODY ROTATION</div>
-    <div class="row between">
-      <div>
-        <h2>Pre-made workouts</h2>
-        <p class="muted">Choose from six realistic full-body sessions. Pick 45, 60 or 75 minutes and start straight away.</p>
-      </div>
-    </div>
-    <div class="durationBtns plannerDuration">
-      <button class="secondary active" data-duration="45">45 min</button>
-      <button class="secondary" data-duration="60">60 min</button>
-      <button class="secondary" data-duration="75">75 min</button>
-    </div>
+    <h2>Pre-made workouts</h2>
+    <p class="muted">Six realistic full-body sessions you can rotate through. Tap any workout to view the exercises or start it.</p>
   </div>
 
   <div id="premadeWorkoutList"></div>
 
   <div class="card">
-    <div class="row between">
-      <div>
-        <h2>Weekly diary</h2>
-        <p class="muted">Assign one of the six workouts to each day so you can see exactly what you're doing this week.</p>
-      </div>
-    </div>
+    <h2>Weekly diary</h2>
+    <p class="muted">Assign one of the six workouts to each day so you can see your week at a glance.</p>
     <div id="weekPlanner"></div>
   </div>
 </section>
@@ -100,7 +88,17 @@
 <div class="card"><h2>Personal bests</h2><div id="pbs"></div></div><div class="card"><h2>Exercise history</h2><select id="historyExercise"></select><div id="exerciseHistory"></div></div><div class="card"><h2>Achievements</h2><div id="achievements" class="achievementGrid"></div></div><div class="card"><h2>Workout history</h2><div id="history"></div></div>
 </section>
 
-<section id="learn" class="page"><div class="card"><h2>Exercise library</h2><p class="muted">Technique cues plus YouTube demonstrations. Start light when learning a movement.</p><input id="learnSearch" placeholder="Search exercises..."><div class="chips" id="categoryChips"></div></div><div id="exerciseLibrary"></div></section>
+
+<section id="learn" class="page">
+  <div class="card">
+    <h2>Exercise library</h2>
+    <p class="muted">Choose an exercise to see technique cues and a YouTube form guide.</p>
+    <label>Exercise
+      <select id="learnExerciseSelect"></select>
+    </label>
+  </div>
+  <div id="exerciseLibrary"></div>
+</section>
 
 
 <section id="challenges" class="page">
