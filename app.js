@@ -222,6 +222,32 @@ function renderChallenges(){
 }
 window.setChallengeCat=c=>{activeChallengeCat=c;renderChallenges()};
 
+
+function workoutHasInput(){
+  const note=$("#notes")?.value?.trim()||"";
+  const rows=$$("#exerciseRows .exrow");
+  const exerciseChanged=rows.some(r=>{
+    const name=r.querySelector(".exname")?.value?.trim()||"";
+    const weight=+(r.querySelector(".exweight")?.value||0);
+    return weight>0 || (name && !["Bench Press","Back Squat"].includes(name));
+  });
+  const customDuration=+($("#duration")?.value||45)!==45;
+  const customEffort=+($("#effort")?.value||7)!==7;
+  return !!(note || exerciseChanged || customDuration || customEffort);
+}
+
+function leaveWorkout(){
+  if(workoutHasInput()){
+    if(!confirm("Leave this workout? Unsaved changes will be lost.")) return;
+  }
+  go("home");
+}
+
+const workoutBackBtn=$("#workoutBackBtn");
+if(workoutBackBtn){
+  workoutBackBtn.addEventListener("click",leaveWorkout);
+}
+
 function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile()}const titles={home:"Home",train:"Train",planner:"Planner",progress:"Progress",learn:"Learn",challenges:"Challenges",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));$("#pageTitle").textContent=titles[p];if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
   $$("nav button").forEach(b=>{
     b.onclick=null;

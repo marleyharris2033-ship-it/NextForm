@@ -287,3 +287,18 @@ nav button{
 nav button span{
   pointer-events:none;
 }
+
+/* WORKOUT BACK BUTTON */
+.workoutBackRow{
+  display:flex;
+  justify-content:flex-start;
+  margin:0 0 10px;
+}
+.workoutBackBtn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:40px;
+  padding:8px 12px;
+  font-size:12px;
+}
