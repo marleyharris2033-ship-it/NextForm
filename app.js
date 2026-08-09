@@ -189,7 +189,172 @@ function rankFor(l){return l>=30?"MASTER":l>=20?"ELITE":l>=14?"GOLD":l>=9?"SILVE
 function weight(){return data.weights.length?[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).at(-1).value:null}
 function e1rm(w,r){return w&&r?w*(1+r/30):0}
 function priorBest(name,before){let best=0;for(const w of data.workouts){if(before&&w.date>=before)continue;for(const e of w.exercises||[])if(e.name.toLowerCase()===name.toLowerCase())best=Math.max(best,e1rm(+e.weight,+e.reps))}return best}
-function grade(w){const bw=weight()||85;let vol=0,ratio=0,pbs=0,exn=0;for(const e of w.exercises||[]){let wt=+e.weight||0,s=+e.sets||0,r=+e.reps||0;if(e.name)exn++;vol+=wt*s*r;if(wt)ratio=Math.max(ratio,e1rm(wt,r)/bw);let pb=priorBest(e.name,w.date);if(pb&&e1rm(wt,r)>pb*1.005)pbs++}let effort=Math.min(20,Math.max(0,(w.effort-3)*2.85)),duration=Math.min(15,w.duration/4),volume=Math.min(18,Math.log10(vol+10)*4.5),relative=Math.min(15,ratio*8),progress=Math.min(20,pbs*10),cons=Math.min(12,data.workouts.filter(x=>Math.abs(new Date(w.date)-new Date(x.date))<=14*86400000).length*2.5),activity=0;if(w.type==="Running"&&w.distance&&w.runMinutes){activity=Math.max(0,Math.min(23,32-(w.runMinutes/w.distance)*3.2));volume=relative=0}if(w.type==="Boxing"&&w.rounds){activity=Math.min(20,w.rounds*1.8);volume=relative=0}if(w.type==="Mobility"){activity=Math.min(18,w.duration/2.5);volume=relative=0}let score=Math.min(100,effort+duration+volume+relative+progress+cons+activity),g=score>=90?"S":score>=78?"A":score>=66?"B":score>=52?"C":"D",xp=Math.round(80+score*4.2+pbs*55+Math.min(60,exn*7));return{grade:g,score:Math.round(score),xp,pbs,volume:Math.round(vol),breakdown:{Effort:Math.round(effort),Duration:Math.round(duration),Volume:Math.round(volume),"Relative strength":Math.round(relative),Progression:Math.round(progress),Consistency:Math.round(cons),"Activity score":Math.round(activity)}}}
+function grade(w){
+  const type=(w.type||"Strength").toLowerCase();
+  const bw=weight()||85;
+  const age=+data.profile.age||30;
+  const clamp=(v,min=0,max=100)=>Math.max(min,Math.min(max,v));
+  const scoreToGrade=s=>s>=90?"S":s>=78?"A":s>=66?"B":s>=52?"C":"D";
+  const priorSame=data.workouts.filter(x=>(x.type||"").toLowerCase()===type && x.date<=w.date);
+  const recentSame=priorSame.slice(-6);
+
+  const duration=+w.duration||0;
+  const effort=+w.effort||0;
+  const consistencyCount=data.workouts.filter(x=>Math.abs(new Date(w.date)-new Date(x.date))<=14*86400000).length;
+  const consistencyScore=clamp(consistencyCount*2.5,0,10);
+
+  let volume=0,bestRatio=0,pbs=0,exerciseCount=0;
+  for(const e of w.exercises||[]){
+    const wt=+e.weight||0,sets=+e.sets||0,reps=+e.reps||0;
+    if(e.name)exerciseCount++;
+    volume+=wt*sets*reps;
+    if(wt)bestRatio=Math.max(bestRatio,e1rm(wt,reps)/bw);
+    const pb=priorBest(e.name,w.date);
+    if(pb&&e1rm(wt,reps)>pb*1.005)pbs++;
+  }
+
+  let breakdown={},score=0,insight=[];
+
+  if(type==="boxing"){
+    const rounds=+w.rounds||0;
+    const roundLength=+w.roundLength||0;
+    const activeMinutes=rounds*roundLength;
+
+    const durationScore=clamp(duration/60*20,0,20);
+    const activeScore=clamp(activeMinutes/30*25,0,25);
+    const effortScore=clamp((effort-4)/5*20,0,20);
+    const roundScore=clamp(rounds/8*15,0,15);
+
+    let progressionScore=0;
+    if(recentSame.length){
+      const prevBestActive=Math.max(...recentSame.map(x=>(+x.rounds||0)*(+x.roundLength||0)),0);
+      const prevBestRounds=Math.max(...recentSame.map(x=>+x.rounds||0),0);
+      if(activeMinutes>prevBestActive) progressionScore+=6;
+      if(rounds>prevBestRounds) progressionScore+=4;
+    }
+    progressionScore=clamp(progressionScore,0,10);
+
+    score=durationScore+activeScore+effortScore+roundScore+progressionScore+consistencyScore;
+    breakdown={
+      "Total duration":Math.round(durationScore),
+      "Active boxing":Math.round(activeScore),
+      "Intensity":Math.round(effortScore),
+      "Round volume":Math.round(roundScore),
+      "Progression":Math.round(progressionScore),
+      "Consistency":Math.round(consistencyScore)
+    };
+    insight.push(`${rounds} rounds × ${roundLength} min = ${activeMinutes} active min`);
+  } else if(type==="running"){
+    const distance=+w.distance||0;
+    const runMinutes=+w.runMinutes||duration||0;
+    const pace=distance>0?runMinutes/distance:0;
+
+    const durationScore=clamp(duration/60*20,0,20);
+    const distanceScore=clamp(distance/5*20,0,20);
+    const effortScore=clamp((effort-3)/7*10,0,10);
+
+    let paceScore=10,progressionScore=0;
+    const priorRuns=recentSame.filter(x=>(+x.distance||0)>0 && (+x.runMinutes||0)>0);
+    if(priorRuns.length && distance>0){
+      const comparable=priorRuns.filter(x=>Math.abs((+x.distance||0)-distance)<=Math.max(1,distance*.25));
+      if(comparable.length){
+        const avgPace=comparable.reduce((s,x)=>s+(+x.runMinutes/+x.distance),0)/comparable.length;
+        const improvement=(avgPace-pace)/avgPace;
+        paceScore=clamp(10+improvement*100,0,20);
+        if(improvement>0) progressionScore+=clamp(improvement*100,0,12);
+      } else {
+        paceScore=12;
+      }
+      const prevMaxDistance=Math.max(...priorRuns.map(x=>+x.distance||0));
+      if(distance>prevMaxDistance) progressionScore+=8;
+    } else if(distance>0){
+      paceScore=12;
+    }
+
+    progressionScore=clamp(progressionScore,0,20);
+    score=durationScore+distanceScore+paceScore+progressionScore+effortScore+consistencyScore;
+    breakdown={
+      "Duration":Math.round(durationScore),
+      "Distance":Math.round(distanceScore),
+      "Pace vs history":Math.round(paceScore),
+      "Progression":Math.round(progressionScore),
+      "Intensity":Math.round(effortScore),
+      "Consistency":Math.round(consistencyScore)
+    };
+    if(distance>0&&pace>0) insight.push(`${distance.toFixed(1)} km at ${pace.toFixed(2)} min/km`);
+  } else if(type==="mobility"){
+    const durationScore=clamp(duration/30*30,0,30);
+    const exerciseVariety=Math.max(exerciseCount,(w.notes||"").trim()?1:0);
+    const varietyScore=clamp(exerciseVariety/6*20,0,20);
+    const effortScore=clamp(15-Math.abs(effort-5)*3,0,15);
+    const completenessScore=clamp((duration>=20?15:duration/20*15)+(exerciseVariety>=3?10:exerciseVariety/3*10),0,25);
+
+    score=durationScore+completenessScore+varietyScore+effortScore+consistencyScore;
+    breakdown={
+      "Duration":Math.round(durationScore),
+      "Session completeness":Math.round(completenessScore),
+      "Movement variety":Math.round(varietyScore),
+      "Appropriate effort":Math.round(effortScore),
+      "Consistency":Math.round(consistencyScore)
+    };
+    insight.push("Mobility rewards controlled, consistent work rather than maximum intensity");
+  } else if(type==="mixed"){
+    const durationScore=clamp(duration/60*20,0,20);
+    const effortScore=clamp((effort-3)/7*15,0,15);
+    const varietyScore=clamp(exerciseCount/6*15,0,15);
+    const strengthScore=clamp(Math.log10(volume+10)*4,0,15);
+    const cardioMinutes=(+w.rounds||0)*(+w.roundLength||0);
+    const cardioScore=clamp(((+w.distance||0)/5*10)+(cardioMinutes/20*10),0,20);
+    const progressionScore=clamp(pbs*5,0,5);
+
+    score=durationScore+effortScore+varietyScore+strengthScore+cardioScore+progressionScore+consistencyScore;
+    breakdown={
+      "Duration":Math.round(durationScore),
+      "Intensity":Math.round(effortScore),
+      "Training variety":Math.round(varietyScore),
+      "Strength work":Math.round(strengthScore),
+      "Conditioning work":Math.round(cardioScore),
+      "Progression":Math.round(progressionScore),
+      "Consistency":Math.round(consistencyScore)
+    };
+  } else {
+    const durationScore=clamp(duration/60*20,0,20);
+    const effortScore=clamp((effort-3)/7*25,0,25);
+    const volumeScore=clamp(Math.log10(volume+10)*5,0,20);
+    const relativeScore=clamp(bestRatio*10,0,15);
+    const progressionScore=clamp(pbs*7.5,0,15);
+    const strengthConsistency=clamp(consistencyScore/2,0,5);
+
+    score=durationScore+effortScore+volumeScore+relativeScore+progressionScore+strengthConsistency;
+    breakdown={
+      "Effort":Math.round(effortScore),
+      "Duration":Math.round(durationScore),
+      "Training volume":Math.round(volumeScore),
+      "Relative strength":Math.round(relativeScore),
+      "Progression / PBs":Math.round(progressionScore),
+      "Consistency":Math.round(strengthConsistency)
+    };
+    if(pbs) insight.push(`${pbs} strength PB${pbs>1?"s":""}`);
+  }
+
+  if((type==="strength"||type==="other") && age>45){
+    score+=Math.min(2,(age-45)*.05);
+  }
+
+  score=clamp(score,0,100);
+  const grade=scoreToGrade(score);
+  const xp=Math.round(80+score*4.2+pbs*45+Math.min(50,exerciseCount*6));
+
+  return{
+    grade,
+    score:Math.round(score),
+    xp,
+    pbs,
+    volume:Math.round(volume),
+    insight:insight.join(" · "),
+    breakdown
+  };
+}
 function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
 function attrs(){let a={Strength:0,Endurance:0,Conditioning:0,Consistency:0,Progression:0,Mobility:0};data.workouts.forEach(w=>{let s=w.result?.score||50;if(["Strength","Mixed"].includes(w.type))a.Strength+=s*.06;if(["Running","Mixed"].includes(w.type))a.Endurance+=s*.065;if(["Boxing","Running","Mixed"].includes(w.type))a.Conditioning+=s*.055;if(w.type==="Mobility")a.Mobility+=s*.09;a.Consistency+=1.7;a.Progression+=(w.result?.pbs||0)*3.5});Object.keys(a).forEach(k=>a[k]=Math.min(100,Math.round(a[k])));return a}
 function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
