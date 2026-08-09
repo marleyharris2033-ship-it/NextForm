@@ -74,7 +74,6 @@ const SUBS={
 "Bench Press":["Incline Dumbbell Press","Push-Up"],"Romanian Deadlift":["Deadlift","Hip Thrust"],"Deadlift":["Romanian Deadlift","Hip Thrust"],
 "Seated Cable Row":["Barbell Row","Pull-Up"],"Triceps Pushdown":["Push-Up","Skull Crusher"]
 };
-let chosenDuration=60;
 const CHALLENGES=[
 ["first","Starter","Complete 1 workout",1,100,d=>d.workouts.length],
 ["three","Three Strong","Complete 3 workouts",3,150,d=>d.workouts.length],
@@ -134,7 +133,26 @@ function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).
 $("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
 function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
 $("#trendMode").onchange=drawWeight;
-let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
+function learnOptions(selected=""){
+  let cats=[...new Set(EXERCISES.map(e=>e.cat))];
+  return `<option value="">Choose exercise</option>`+cats.map(cat=>`<optgroup label="${cat}">${EXERCISES.filter(e=>e.cat===cat).map(e=>`<option value="${e.name}" ${e.name===selected?"selected":""}>${e.name}</option>`).join("")}</optgroup>`).join("");
+}
+function renderLearn(){
+  let sel=$("#learnExerciseSelect");
+  if(!sel)return;
+  let current=sel.value;
+  sel.innerHTML=learnOptions(current);
+  if(current)sel.value=current;
+  let name=sel.value;
+  if(!name){
+    $("#exerciseLibrary").innerHTML=`<div class="card"><p class="muted">Choose an exercise above to view technique guidance.</p></div>`;
+    return;
+  }
+  let e=EXERCISES.find(x=>x.name===name);
+  $("#exerciseLibrary").innerHTML=`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`;
+}
+
+$("#learnExerciseSelect").onchange=renderLearn;
 function renderProfile(){$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
 
 
@@ -164,8 +182,7 @@ function suggestedWeight(name,target){
   return Math.max(0,wt);
 }
 function buildLiveSession(plan){
-  let maxPriority=chosenDuration<=45?1:chosenDuration<=60?2:3;
-  let exercises=plan.exercises.filter(e=>(e.priority||1)<=maxPriority).map(e=>{
+  let exercises=plan.exercises.map(e=>{
     let range=targetRange(e.reps),last=lastExercisePerformance(e.name),suggested=suggestedWeight(e.name,e.reps);
     return {name:e.name,sets:e.sets,target:e.reps,range,last,suggested,
       setDetails:Array.from({length:e.sets},(_,i)=>({set:i+1,weight:suggested||+(last?.exercise?.weight||0)||0,reps:range.lo,rir:2,done:false}))
@@ -321,14 +338,6 @@ function renderSimplePlanner(){
       </div>
     </div>
   `).join("");
-
-  $$(".plannerDuration button").forEach(b=>{
-    b.classList.toggle("active",+b.dataset.duration===chosenDuration);
-    b.onclick=()=>{
-      chosenDuration=+b.dataset.duration;
-      renderSimplePlanner();
-    };
-  });
 
   $("#weekPlanner").innerHTML=DAYS.map(d=>`
     <div class="dayrow diaryRow">
