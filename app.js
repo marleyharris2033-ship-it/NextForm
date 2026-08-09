@@ -56,25 +56,50 @@ const EXERCISES=[
 ].map(([name,cat,cues,q])=>({name,cat,cues,q}));
 
 const BUILTIN_PLANS=[
-{id:"builtin1",name:"Full Body 1 — Classic",type:"Strength",desc:"Balanced barbell and dumbbell full body session.",exercises:[
-{name:"Back Squat",sets:3,reps:"6-8",priority:1},{name:"Bench Press",sets:3,reps:"6-8",priority:1},{name:"Lat Pulldown",sets:3,reps:"8-12",priority:1},{name:"Romanian Deadlift",sets:3,reps:"8-10",priority:1},{name:"Lateral Raise",sets:2,reps:"12-15",priority:2},{name:"Barbell Curl",sets:2,reps:"10-12",priority:3}]},
-{id:"builtin2",name:"Full Body 2 — Dumbbell",type:"Strength",desc:"Minimal equipment and unilateral work.",exercises:[
-{name:"Bulgarian Split Squat",sets:3,reps:"8-10",priority:1},{name:"Incline Dumbbell Press",sets:3,reps:"8-12",priority:1},{name:"Barbell Row",sets:3,reps:"8-12",priority:1},{name:"Romanian Deadlift",sets:3,reps:"8-12",priority:1},{name:"Overhead Press",sets:2,reps:"8-12",priority:2},{name:"Plank",sets:3,reps:"30",priority:3}]},
-{id:"builtin3",name:"Full Body 3 — Strength",type:"Strength",desc:"Lower-rep compounds with sensible accessory volume.",exercises:[
-{name:"Back Squat",sets:3,reps:"5-6",priority:1},{name:"Bench Press",sets:3,reps:"5-8",priority:1},{name:"Barbell Row",sets:3,reps:"6-8",priority:1},{name:"Romanian Deadlift",sets:2,reps:"6-8",priority:1},{name:"Overhead Press",sets:2,reps:"6-8",priority:2},{name:"Hanging Leg Raise",sets:3,reps:"8-12",priority:3}]},
-{id:"builtin4",name:"Full Body 4 — Unilateral",type:"Strength",desc:"Single-limb emphasis for balance and variation.",exercises:[
-{name:"Bulgarian Split Squat",sets:3,reps:"8-12",priority:1},{name:"Incline Dumbbell Press",sets:3,reps:"8-12",priority:1},{name:"Seated Cable Row",sets:3,reps:"8-12",priority:1},{name:"Romanian Deadlift",sets:3,reps:"8-12",priority:1},{name:"Lateral Raise",sets:2,reps:"12-15",priority:2},{name:"Hammer Curl",sets:2,reps:"10-15",priority:3},{name:"Plank",sets:2,reps:"45",priority:3}]},
-{id:"builtin5",name:"Full Body 5 — Posterior",type:"Strength",desc:"Extra posterior-chain and pulling emphasis.",exercises:[
-{name:"Deadlift",sets:3,reps:"5",priority:1},{name:"Bench Press",sets:3,reps:"8-10",priority:1},{name:"Pull-Up",sets:3,reps:"6-10",priority:1},{name:"Bulgarian Split Squat",sets:3,reps:"8-10",priority:1},{name:"Overhead Press",sets:2,reps:"8-10",priority:2},{name:"Barbell Curl",sets:2,reps:"10-12",priority:3},{name:"Triceps Pushdown",sets:2,reps:"10-12",priority:3}]},
-{id:"builtin6",name:"Full Body 6 — Higher Rep",type:"Strength",desc:"Higher-rep hypertrophy-style session without fancy machines.",exercises:[
-{name:"Back Squat",sets:3,reps:"10-12",priority:1},{name:"Incline Dumbbell Press",sets:3,reps:"10-15",priority:1},{name:"Lat Pulldown",sets:3,reps:"10-15",priority:1},{name:"Romanian Deadlift",sets:3,reps:"10-12",priority:1},{name:"Lateral Raise",sets:3,reps:"12-20",priority:2},{name:"Barbell Row",sets:2,reps:"10-15",priority:2},{name:"Hammer Curl",sets:2,reps:"12-15",priority:3},{name:"Triceps Pushdown",sets:2,reps:"12-15",priority:3}]}
+{category:"Full Body",id:"fb1",name:"Full Body A — Classic",type:"Strength",desc:"Balanced compounds with simple equipment.",exercises:[
+{name:"Back Squat",sets:3,reps:"6-8"},{name:"Bench Press",sets:3,reps:"6-8"},{name:"One-Arm Dumbbell Row",sets:3,reps:"8-12"},{name:"Romanian Deadlift",sets:3,reps:"8-10"},{name:"Lateral Raise",sets:2,reps:"12-15"},{name:"Plank",sets:3,reps:"30-60s"}]},
+{category:"Full Body",id:"fb2",name:"Full Body B — Dumbbell",type:"Strength",desc:"Minimal-machine variation.",exercises:[
+{name:"Goblet Squat",sets:3,reps:"10-12"},{name:"Incline Dumbbell Press",sets:3,reps:"8-12"},{name:"Chest-Supported Dumbbell Row",sets:3,reps:"8-12"},{name:"Hip Thrust",sets:3,reps:"8-12"},{name:"Dumbbell Shoulder Press",sets:2,reps:"8-12"},{name:"Dead Bug",sets:3,reps:"8-12"}]},
+{category:"Full Body",id:"fb3",name:"Full Body C — Strength",type:"Strength",desc:"Lower-rep strength bias.",exercises:[
+{name:"Front Squat",sets:3,reps:"5-6"},{name:"Close-Grip Bench Press",sets:3,reps:"5-8"},{name:"Pull-Up",sets:3,reps:"6-10"},{name:"Deadlift",sets:3,reps:"4-6"},{name:"Arnold Press",sets:2,reps:"8-10"},{name:"Hanging Leg Raise",sets:3,reps:"8-12"}]},
+{category:"Full Body",id:"fb4",name:"Full Body D — Unilateral",type:"Strength",desc:"Single-limb and stability focus.",exercises:[
+{name:"Bulgarian Split Squat",sets:3,reps:"8-10"},{name:"Push-Up",sets:3,reps:"10-20"},{name:"Seated Cable Row",sets:3,reps:"8-12"},{name:"Single-Leg Romanian Deadlift",sets:3,reps:"8-10"},{name:"Rear Delt Raise",sets:2,reps:"12-15"},{name:"Side Plank",sets:3,reps:"30-45s"}]},
+
+{category:"Push / Pull",id:"push1",name:"Push A",type:"Strength",desc:"Chest, shoulders and triceps.",exercises:[
+{name:"Dumbbell Bench Press",sets:3,reps:"6-10"},{name:"Overhead Press",sets:3,reps:"6-10"},{name:"Dumbbell Fly",sets:3,reps:"10-15"},{name:"Front Raise",sets:2,reps:"12-15"},{name:"Skull Crusher",sets:3,reps:"8-12"}]},
+{category:"Push / Pull",id:"pull1",name:"Pull A",type:"Strength",desc:"Back, rear delts and biceps.",exercises:[
+{name:"Barbell Row",sets:3,reps:"6-10"},{name:"Chin-Up",sets:3,reps:"6-10"},{name:"Dumbbell Pullover",sets:3,reps:"10-12"},{name:"Face Pull",sets:3,reps:"12-15"},{name:"Hammer Curl",sets:3,reps:"8-12"}]},
+{category:"Push / Pull",id:"push2",name:"Push B",type:"Strength",desc:"Second push variation.",exercises:[
+{name:"Floor Press",sets:3,reps:"8-12"},{name:"Landmine Press",sets:3,reps:"8-12"},{name:"Cable Fly",sets:3,reps:"10-15"},{name:"Upright Row",sets:2,reps:"10-12"},{name:"Overhead Triceps Extension",sets:3,reps:"10-15"}]},
+{category:"Push / Pull",id:"pull2",name:"Pull B",type:"Strength",desc:"Second pull variation.",exercises:[
+{name:"Pendlay Row",sets:3,reps:"5-8"},{name:"Lat Pulldown",sets:3,reps:"8-12"},{name:"Inverted Row",sets:3,reps:"8-15"},{name:"Reverse Fly",sets:3,reps:"12-15"},{name:"Incline Dumbbell Curl",sets:3,reps:"10-12"}]},
+
+{category:"Upper / Lower",id:"upperA",name:"Upper A",type:"Strength",desc:"Upper-body strength and balance.",exercises:[
+{name:"Incline Barbell Press",sets:3,reps:"6-10"},{name:"T-Bar Row",sets:3,reps:"6-10"},{name:"Neutral-Grip Pull-Up",sets:3,reps:"6-10"},{name:"Seated Dumbbell Press",sets:3,reps:"8-12"},{name:"EZ-Bar Curl",sets:2,reps:"10-12"}]},
+{category:"Upper / Lower",id:"lowerA",name:"Lower A",type:"Strength",desc:"Quad and posterior-chain focus.",exercises:[
+{name:"Walking Lunge",sets:3,reps:"10-12"},{name:"Good Morning",sets:3,reps:"8-10"},{name:"Step-Up",sets:3,reps:"8-12"},{name:"Glute Bridge",sets:3,reps:"10-15"},{name:"Standing Calf Raise",sets:3,reps:"12-20"}]},
+{category:"Upper / Lower",id:"upperB",name:"Upper B",type:"Strength",desc:"Alternative upper-body session.",exercises:[
+{name:"Decline Push-Up",sets:3,reps:"10-20"},{name:"Meadows Row",sets:3,reps:"8-12"},{name:"Straight-Arm Pulldown",sets:3,reps:"10-15"},{name:"Z Press",sets:3,reps:"6-10"},{name:"Concentration Curl",sets:2,reps:"10-15"}]},
+{category:"Upper / Lower",id:"lowerB",name:"Lower B",type:"Strength",desc:"Alternative lower-body session.",exercises:[
+{name:"Box Squat",sets:3,reps:"6-8"},{name:"Sumo Deadlift",sets:3,reps:"5-8"},{name:"Reverse Lunge",sets:3,reps:"8-12"},{name:"Single-Leg Glute Bridge",sets:3,reps:"10-15"},{name:"Seated Calf Raise",sets:3,reps:"12-20"}]},
+
+{category:"Bro Split",id:"broChest",name:"Chest Day",type:"Strength",desc:"Chest-focused session.",exercises:[
+{name:"Dumbbell Squeeze Press",sets:3,reps:"8-12"},{name:"Incline Push-Up",sets:3,reps:"10-20"},{name:"Low-to-High Cable Fly",sets:3,reps:"12-15"},{name:"Plate Squeeze",sets:3,reps:"20-30s"}]},
+{category:"Bro Split",id:"broBack",name:"Back Day",type:"Strength",desc:"Back-focused session.",exercises:[
+{name:"Rack Pull",sets:3,reps:"5-8"},{name:"Wide-Grip Pull-Up",sets:3,reps:"6-10"},{name:"Dumbbell Row",sets:3,reps:"8-12"},{name:"Seal Row",sets:3,reps:"8-12"}]},
+{category:"Bro Split",id:"broLegs",name:"Leg Day",type:"Strength",desc:"Leg-focused session.",exercises:[
+{name:"Zercher Squat",sets:3,reps:"6-10"},{name:"Dumbbell Romanian Deadlift",sets:3,reps:"8-12"},{name:"Cossack Squat",sets:3,reps:"8-10"},{name:"Dumbbell Step-Back Lunge",sets:3,reps:"10-12"}]},
+{category:"Bro Split",id:"broShoulders",name:"Shoulder Day",type:"Strength",desc:"Shoulder-focused session.",exercises:[
+{name:"Push Press",sets:3,reps:"5-8"},{name:"Lean-Away Lateral Raise",sets:3,reps:"12-15"},{name:"Rear Delt Row",sets:3,reps:"10-15"},{name:"Prone Y Raise",sets:3,reps:"12-15"}]},
+{category:"Bro Split",id:"broArms",name:"Arm Day",type:"Strength",desc:"Biceps and triceps-focused session.",exercises:[
+{name:"Spider Curl",sets:3,reps:"10-12"},{name:"Cross-Body Hammer Curl",sets:3,reps:"10-12"},{name:"Zottman Curl",sets:3,reps:"10-12"},{name:"JM Press",sets:3,reps:"8-12"},{name:"Dumbbell Tate Press",sets:3,reps:"10-12"}]}
 ];
 const SUBS={
 "Back Squat":["Bulgarian Split Squat","Goblet Squat","Front Squat"],"Lat Pulldown":["Pull-Up","Barbell Row","Seated Cable Row"],
 "Bench Press":["Incline Dumbbell Press","Push-Up"],"Romanian Deadlift":["Deadlift","Hip Thrust"],"Deadlift":["Romanian Deadlift","Hip Thrust"],
 "Seated Cable Row":["Barbell Row","Pull-Up"],"Triceps Pushdown":["Push-Up","Skull Crusher"]
 };
-let chosenDuration=60;
+
 const CHALLENGES=[
 ["first","Starter","Complete 1 workout",1,100,d=>d.workouts.length],
 ["three","Three Strong","Complete 3 workouts",3,150,d=>d.workouts.length],
@@ -138,76 +163,28 @@ let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.
 function renderProfile(){$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="nextform-v2-backup.json";a.click();URL.revokeObjectURL(u)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data={...defaults,...JSON.parse(r.result),version:2};save();alert("Backup imported.")}catch{alert("Backup could not be read.")}};r.readAsText(f)};$("#resetBtn").onclick=()=>{if(confirm("Delete all NextForm data?")){localStorage.removeItem(KEY);location.reload()}}
 
 
-window.startPremadePlan=id=>{
-  let p=BUILTIN_PLANS.find(x=>x.id===id);
-  if(!p)return;
-  $("#type").value=p.type;
-  $("#type").onchange();
-  $("#exerciseRows").innerHTML="";
-  let maxPriority=chosenDuration<=45?1:chosenDuration<=60?2:3;
-  let chosen=p.exercises.filter(e=>(e.priority||1)<=maxPriority);
-  chosen.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));
-  $("#duration").value=chosenDuration;
-  $("#notes").value=`Plan: ${p.name}\nTargets: ${chosen.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;
-  $("#finish").dataset.planId=p.id;
-  go("train");
-};
+window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";p.exercises.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));$("#notes").value=`Plan: ${p.name}\nTargets: ${p.exercises.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;$("#finish").dataset.planId=p.id;go("train")};
 
-window.togglePremadeDetails=id=>{
-  let el=document.getElementById("details-"+id);
-  if(el)el.classList.toggle("hidden");
-};
+window.togglePremadeDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
+let activePlanCategory="Full Body";
 
 function renderSimplePlanner(){
-  $("#premadeWorkoutList").innerHTML=BUILTIN_PLANS.map(p=>`
-    <div class="planCard builtinPlan">
-      <div class="row between">
-        <div>
-          <span class="premadeBadge">PRE-MADE FULL BODY</span>
-          <b style="display:block;margin-top:5px">${p.name}</b>
-          <div class="tiny muted">${p.desc}</div>
-        </div>
-        <span class="planNumber">${p.id.replace("builtin","")}/6</span>
-      </div>
-      <div class="planExercisePreview">
-        ${p.exercises.slice(0,4).map(e=>`<span>${e.name}</span>`).join("")}
-        ${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}
-      </div>
-      <div class="buttons">
-        <button class="primary" onclick="startPremadePlan('${p.id}')">Start workout</button>
-        <button class="secondary" onclick="togglePremadeDetails('${p.id}')">View exercises</button>
-      </div>
-      <div id="details-${p.id}" class="planDetails hidden">
-        ${p.exercises.map(e=>`<div><b>${e.name}</b><span>${e.sets} × ${e.reps}</span></div>`).join("")}
-      </div>
-    </div>
-  `).join("");
-
-  $$(".plannerDuration button").forEach(b=>{
-    b.classList.toggle("active",+b.dataset.duration===chosenDuration);
-    b.onclick=()=>{
-      chosenDuration=+b.dataset.duration;
-      renderSimplePlanner();
-    };
-  });
-
-  $("#weekPlanner").innerHTML=DAYS.map(d=>`
-    <div class="dayrow diaryRow">
-      <b>${d}</b>
-      <select data-day="${d}">
-        <option value="">Rest / no workout</option>
-        ${BUILTIN_PLANS.map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}
-      </select>
-      ${data.schedule[d]?`<button class="secondary diaryStart" data-start="${data.schedule[d]}">Start</button>`:""}
-    </div>
-  `).join("");
-
-  $$("#weekPlanner select").forEach(s=>s.onchange=()=>{
-    if(s.value)data.schedule[s.dataset.day]=s.value;
-    else delete data.schedule[s.dataset.day];
-    save();
-  });
-  $$(".diaryStart").forEach(b=>b.onclick=()=>startPremadePlan(b.dataset.start));
+ const cats=["Full Body","Push / Pull","Upper / Lower","Bro Split"];
+ $("#planCategoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activePlanCategory?"active":""}" data-plan-cat="${c}">${c}</button>`).join("");
+ $$("[data-plan-cat]").forEach(b=>b.onclick=()=>{activePlanCategory=b.dataset.planCat;renderSimplePlanner()});
+ const visible=BUILTIN_PLANS.filter(p=>p.category===activePlanCategory);
+ $("#premadeWorkoutList").innerHTML=visible.map(p=>`
+  <div class="planCard builtinPlan">
+   <span class="premadeBadge">${p.category.toUpperCase()}</span>
+   <b style="display:block;margin-top:5px">${p.name}</b>
+   <div class="tiny muted">${p.desc}</div>
+   <div class="planExercisePreview">${p.exercises.slice(0,4).map(e=>`<span>${e.name}</span>`).join("")}${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}</div>
+   <div class="buttons"><button class="primary" onclick="startPremadePlan('${p.id}')">Start workout</button><button class="secondary" onclick="togglePremadeDetails('${p.id}')">View exercises</button></div>
+   <div id="details-${p.id}" class="planDetails hidden">${p.exercises.map(e=>`<div><b>${e.name}</b><span>${e.sets} × ${e.reps}</span></div>`).join("")}</div>
+  </div>`).join("");
+ $("#weekPlanner").innerHTML=DAYS.map(d=>`<div class="dayrow diaryRow"><b>${d}</b><select data-day="${d}"><option value="">Rest / no workout</option>${cats.map(cat=>`<optgroup label="${cat}">${BUILTIN_PLANS.filter(p=>p.category===cat).map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}</optgroup>`).join("")}</select>${data.schedule[d]?`<button class="secondary diaryStart" data-start="${data.schedule[d]}">Start</button>`:""}</div>`).join("");
+ $$("#weekPlanner select").forEach(sel=>sel.onchange=()=>{if(sel.value)data.schedule[sel.dataset.day]=sel.value;else delete data.schedule[sel.dataset.day];save()});
+ $$(".diaryStart").forEach(b=>b.onclick=()=>startPremadePlan(b.dataset.start));
 }
 
 let activeChallengeCat="All";

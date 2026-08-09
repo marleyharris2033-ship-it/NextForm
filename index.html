@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1015"><title>NextForm</title>
-<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=back1">
+<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=splits3">
 </head>
 <body><div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div><div id="app">
 <header><div class="brandWrap"><div class="brandMark">N</div><div><small>NEXTFORM</small><h1 id="pageTitle">Home</h1></div></div><button class="round" id="themeBtn">◐</button></header>
@@ -32,31 +32,18 @@
 </section>
 
 
+
 <section id="planner" class="page">
   <div class="card plannerHero">
-    <div class="eyebrowBadge">FULL-BODY ROTATION</div>
-    <div class="row between">
-      <div>
-        <h2>Pre-made workouts</h2>
-        <p class="muted">Choose from six realistic full-body sessions. Pick 45, 60 or 75 minutes and start straight away.</p>
-      </div>
-    </div>
-    <div class="durationBtns plannerDuration">
-      <button class="secondary active" data-duration="45">45 min</button>
-      <button class="secondary" data-duration="60">60 min</button>
-      <button class="secondary" data-duration="75">75 min</button>
-    </div>
+    <div class="eyebrowBadge">PROGRAMME LIBRARY</div>
+    <h2>Pre-made workouts</h2>
+    <p class="muted">Choose a split, then rotate the sessions within it. Each session uses a different exercise selection.</p>
+    <div id="planCategoryChips" class="chips plannerCats"></div>
   </div>
-
   <div id="premadeWorkoutList"></div>
-
   <div class="card">
-    <div class="row between">
-      <div>
-        <h2>Weekly diary</h2>
-        <p class="muted">Assign one of the six workouts to each day so you can see exactly what you're doing this week.</p>
-      </div>
-    </div>
+    <h2>Weekly diary</h2>
+    <p class="muted">Assign any pre-made session to each day.</p>
     <div id="weekPlanner"></div>
   </div>
 </section>
@@ -80,4 +67,4 @@
 <nav><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="train">＋<span>Train</span></button><button data-page="planner">▦<span>Plan</span></button><button data-page="progress">↗<span>Progress</span></button><button data-page="learn">▶<span>Learn</span></button><button data-page="challenges">★<span>Quests</span></button><button data-page="profile">◉<span>Profile</span></button></nav>
 </div>
 <template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><input class="exsets" type="number" min="1" value="3"><input class="exreps" type="number" min="1" value="8"><input class="exweight" type="number" min="0" step=".5"><button class="x">×</button></div></template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=back1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=splits3"></script></body></html>

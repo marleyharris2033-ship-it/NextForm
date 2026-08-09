@@ -302,3 +302,7 @@ nav button span{
   padding:8px 12px;
   font-size:12px;
 }
+
+.plannerCats{margin-top:12px;padding-bottom:2px}
+.plannerCats .chip{flex:0 0 auto}
+#premadeWorkoutList .planCard{margin-bottom:11px}
