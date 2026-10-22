@@ -13,7 +13,8 @@
   function persist() { try { session ? localStorage.setItem(SESSION_KEY, JSON.stringify(session)) : localStorage.removeItem(SESSION_KEY); } catch {} }
   const usesSets = t => !['Running', 'Boxing'].includes(t);
   const mmss = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
-  const elapsed = () => session && !session.past ? (Date.now() - session.startedAt) / 1000 : 0;
+  const elapsed = () => session && !session.past && session.startedAt ? (Date.now() - session.startedAt) / 1000 : 0;
+  const started = () => !!(session && !session.past && session.startedAt);
   const targetReps = r => parseInt(String(r), 10) || 8;
 
   function lastSets(name) {
@@ -35,7 +36,7 @@
     if (session && sessionHasWork() && !confirm('Replace the workout you have in progress?')) return;
     const y = new Date(); y.setDate(y.getDate() - 1);
     session = {
-      startedAt: Date.now(), past, date: past ? localDate(y) : today(), duration: past ? 45 : null,
+      createdAt: Date.now(), startedAt: null, past, date: past ? localDate(y) : today(), duration: past ? 45 : null,
       type: plan?.type || type, planId: plan?.id || null, name: plan?.name || (type === 'Strength' ? 'Workout' : type),
       exercises: plan ? plan.exercises.map(e => newExercise(e.name, e)) : [],
       distance: '', runMinutes: '', rounds: '', roundLength: 3, restEnd: null
@@ -58,7 +59,10 @@
     $('#sessionName').textContent = session.name;
     $('#pastFields').classList.toggle('hidden', !session.past);
     if (session.past) { $('#pastDate').value = session.date; $('#pastDate').max = today(); $('#pastDuration').value = session.duration || ''; }
-    $('#sessionClock').textContent = session.past ? 'Logging a past workout' : mmss(elapsed());
+    $('#sessionClock').textContent = session.past ? 'Logging a past workout' : started() ? mmss(elapsed()) : 'Not started';
+    $('#sessionClock').classList.toggle('idle', !session.past && !started());
+    $('#startTimer').classList.toggle('hidden', session.past || started());
+    $('#finishBtn').classList.toggle('quiet', !session.past && !started());
     $('#sessionTypes').innerHTML = TYPES.map(t => `<button type="button" role="radio" aria-checked="${t === session.type}" class="chip${t === session.type ? ' active' : ''}" data-type="${t}" style="--c:${TYPE_COLORS[t]}">${t}</button>`).join('');
     renderCardio();
     const sets = usesSets(session.type);
@@ -66,10 +70,21 @@
     $('#addExerciseBtn').classList.toggle('hidden', !sets);
     if (sets) $('#sessionExercises').innerHTML = session.exercises.map(exerciseCard).join('') ||
       `<div class="card emptyCard"><p>Add your first exercise to start logging sets.</p></div>`;
-    startClock(); renderRest();
+    renderProgress(); startClock(); renderRest();
+  }
+  function renderProgress() {
+    const box = $('#setProgress'); if (!box) return;
+    const all = session && usesSets(session.type) ? session.exercises.flatMap(e => e.sets) : [];
+    const done = all.filter(s => s.done).length;
+    box.classList.toggle('hidden', !all.length || session.past);
+    $('#setProgressFill').style.width = all.length ? `${done / all.length * 100}%` : '0';
+    $('#setProgressText').textContent = `${done} of ${all.length} sets`;
   }
   function renderStart() {
     const day = DAYS[(new Date().getDay() + 6) % 7], planId = data.schedule?.[day], plan = BUILTIN_PLANS.find(p => p.id === planId);
+    const first = (data.profile.name || '').trim().split(' ')[0], st = streak();
+    $('#heroTitle').textContent = first ? `Ready to climb, ${first}?` : 'Ready to climb?';
+    $('#heroKicker').textContent = st > 1 ? `${st}-day streak. Keep it going.` : plan ? `Today: ${plan.name}` : 'Every set counts towards your skills';
     $('#todayPlan').innerHTML = plan ? `<div class="card todayCard"><p class="muted small">Today’s plan</p><h2>${esc(plan.name)}</h2><p class="muted small">${plan.exercises.map(e => esc(e.name)).join(', ')}</p><button type="button" class="primary full" data-plan="${plan.id}">Start ${esc(plan.name)}</button></div>` : '';
     $('#startEmpty').classList.toggle('secondary', !!plan);
     $('#startEmpty').classList.toggle('primary', !plan);
@@ -77,22 +92,24 @@
     // Suggest plans: the ones you've used most recently first, then the rest of your split.
     const recent = [...new Set([...data.workouts].reverse().map(w => w.planId).filter(Boolean))];
     const picks = [...recent.map(id => BUILTIN_PLANS.find(p => p.id === id)).filter(Boolean), ...BUILTIN_PLANS].filter((p, i, a) => a.indexOf(p) === i && p.id !== planId).slice(0, 4);
-    $('#planPicks').innerHTML = picks.map(p => `<button type="button" class="planPick" data-plan="${p.id}"><span><b>${esc(p.name)}</b><small>${p.exercises.length} exercises, ${esc(p.category)}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`).join('');
+    const CAT_COLOR = { 'Full Body': 'var(--pine)', 'Push / Pull': 'var(--glacier)', 'Upper / Lower': 'var(--amber)', 'Bro Split': 'var(--moss)' };
+    $('#planPicks').innerHTML = picks.map(p => `<button type="button" class="planPick" data-plan="${p.id}" style="--c:${CAT_COLOR[p.category] || 'var(--pine)'}"><span class="pickIcon">${icon('dumbbell')}</span><span class="pickText"><b>${esc(p.name)}</b><small>${p.exercises.length} exercises, ${esc(p.category)}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`).join('');
   }
   function renderResume() {
     const box = $('#resumeBanner'); if (!box) return;
-    box.innerHTML = session && !session.past ? `<button type="button" class="resumeBanner" id="resumeBtn"><span class="pulse" aria-hidden="true"></span><span><b>Workout in progress</b><small>${esc(session.name)}, ${mmss(elapsed())}</small></span><span class="resumeGo">Resume</span></button>` : '';
+    box.innerHTML = session && !session.past ? `<button type="button" class="resumeBanner" id="resumeBtn"><span class="pulse${started() ? '' : ' still'}" aria-hidden="true"></span><span><b>${started() ? 'Workout in progress' : 'Workout ready to start'}</b><small>${esc(session.name)}${started() ? `, ${mmss(elapsed())}` : ''}</small></span><span class="resumeGo">Resume</span></button>` : '';
   }
   function exerciseCard(e, i) {
     const last = lastSets(e.name), timed = e.unit === 's';
     const lastTxt = last ? `Last time: ${last.sets.slice(0, 4).map(s => timed ? `${s.reps}s` : `${g(s.kg)} kg × ${s.reps}`).join(', ')}` : e.target ? `Target: ${e.target}` : 'First time logging this';
-    return `<section class="card exCard" data-ex="${i}">
-      <div class="exHead"><div><h3>${esc(e.name)}</h3><p class="muted small">${esc(lastTxt)}</p></div>
+    const skill = skillForExercise(e.name), skillName = SKILLS.find(k => k.id === skill)?.name;
+    return `<section class="card exCard" data-ex="${i}" style="--c:${SKILL_COLORS[skill] || 'var(--stone)'}">
+      <div class="exHead"><div>${skillName ? `<span class="muscleTag">${esc(skillName)}</span>` : ''}<h3>${esc(e.name)}</h3><p class="muted small">${esc(lastTxt)}</p></div>
         <button type="button" class="iconBtn exRemove" data-remove="${i}" aria-label="Remove ${esc(e.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="setGrid${session.past ? ' past' : ''}"><span>Set</span><span>kg</span><span>${timed ? 'sec' : 'reps'}</span>${session.past ? '' : '<span aria-hidden="true"></span>'}
-        ${e.sets.map((s, j) => `<span class="setNo">${j + 1}</span>
-          <input type="number" inputmode="decimal" min="0" step="0.5" value="${s.kg}" placeholder="–" data-field="kg" data-set="${j}" aria-label="Set ${j + 1} kg">
-          <input type="number" inputmode="numeric" min="0" step="1" value="${s.reps}" placeholder="–" data-field="reps" data-set="${j}" aria-label="Set ${j + 1} ${timed ? 'seconds' : 'reps'}">
+        ${e.sets.map((s, j) => `<span class="setNo${s.done ? ' done' : ''}">${j + 1}</span>
+          <input type="number" inputmode="decimal" min="0" step="0.5" value="${s.kg}" placeholder="–" class="${s.done ? 'done' : ''}" data-field="kg" data-set="${j}" aria-label="Set ${j + 1} kg">
+          <input type="number" inputmode="numeric" min="0" step="1" value="${s.reps}" placeholder="–" class="${s.done ? 'done' : ''}" data-field="reps" data-set="${j}" aria-label="Set ${j + 1} ${timed ? 'seconds' : 'reps'}">
           ${session.past ? '' : `<button type="button" class="tick${s.done ? ' done' : ''}" data-tick="${j}" aria-pressed="${s.done}" aria-label="Set ${j + 1} done"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}`).join('')}
       </div>
       <div class="exFoot"><button type="button" class="link" data-addset="${i}">+ Add set</button>${e.sets.length > 1 ? `<button type="button" class="link muted" data-delset="${i}">Remove last set</button>` : ''}</div>
@@ -110,7 +127,7 @@
   // ---------- clock + rest ----------
   function startClock() {
     stopClock();
-    if (!session || session.past) return;
+    if (!started()) return;
     clockTimer = setInterval(() => { $('#sessionClock').textContent = mmss(elapsed()); renderResume(); renderRest(); }, 1000);
   }
   function stopClock() { clearInterval(clockTimer); clockTimer = null; }
@@ -127,6 +144,10 @@
     pill.classList.remove('hidden');
     $('#restTime').textContent = mmss(Math.ceil(left));
   }
+  $('#startTimer').addEventListener('click', () => {
+    if (!session || started()) return;
+    session.startedAt = Date.now(); persist(); render();
+  });
   $('#restPlus').addEventListener('click', () => { if (session?.restEnd) { session.restEnd += 15000; persist(); renderRest(); } });
   $('#restSkip').addEventListener('click', () => { if (session) { session.restEnd = null; persist(); renderRest(); } });
 
@@ -164,6 +185,10 @@
       if (!s.done && (s.reps === '' || +s.reps <= 0)) { card.querySelector(`[data-field=reps][data-set="${tick.dataset.tick}"]`).focus(); return; }
       s.done = !s.done; persist();
       tick.classList.toggle('done', s.done); tick.setAttribute('aria-pressed', s.done);
+      card.querySelectorAll(`[data-set="${tick.dataset.tick}"]`).forEach(x => x.classList.toggle('done', s.done));
+      card.querySelectorAll('.setNo')[+tick.dataset.tick]?.classList.toggle('done', s.done);
+      if (s.done) { tick.classList.remove('pop'); void tick.offsetWidth; tick.classList.add('pop'); }
+      renderProgress();
       if (s.done) { navigator.vibrate?.(15); startRest(); }
       return;
     }
@@ -221,7 +246,7 @@
     }
     const nSets = ex.reduce((a, x) => a + x.sets.length, 0);
     const vol = ex.reduce((a, x) => a + (x.e.unit === 's' ? 0 : x.sets.reduce((v, s) => v + (+s.kg || 0) * (+s.reps || 0), 0)), 0);
-    const mins = session.past ? (+session.duration || 45) : Math.max(1, Math.round(elapsed() / 60));
+    const mins = session.past ? (+session.duration || 45) : started() ? Math.max(1, Math.round(elapsed() / 60)) : '';
     $('#finishSummary').innerHTML = [
       ['Exercises', ex.length], ['Sets', nSets], ['Volume', `${fmt(vol)} kg`],
       session.type === 'Running' ? ['Distance', `${+session.distance || 0} km`] : null,
@@ -240,7 +265,7 @@
   $('#saveFinish').addEventListener('click', () => {
     if (!session || $('#saveFinish').disabled) return;
     const duration = Math.round(+$('#finishDuration').value || 0);
-    if (duration < 1) return alert('Add how long the workout took.');
+    if (duration < 1) { $('#finishDuration').focus(); return alert('Add how long the workout took.'); }
     const exercises = session.exercises.map(e => {
       const sets = countedSets(e).map(s => ({ kg: +s.kg || 0, reps: +s.reps || 0 }));
       if (!sets.length) return null;
@@ -253,7 +278,7 @@
     $('#saveFinish').disabled = true; setTimeout(() => { $('#saveFinish').disabled = false; }, 1500);
 
     const w = {
-      id: newId(), updatedAt: Date.now(), date: session.past ? (session.date || today()) : localDate(new Date(session.startedAt)),
+      id: newId(), updatedAt: Date.now(), date: session.past ? (session.date || today()) : localDate(new Date(session.startedAt || session.createdAt || Date.now())),
       type: session.type, duration, effort: +$('#finishEffort').value, notes: $('#finishNotes').value.trim(), exercises,
       distance: session.type === 'Running' ? +session.distance || 0 : 0, runMinutes: session.type === 'Running' ? +session.runMinutes || 0 : 0,
       rounds: session.type === 'Boxing' ? +session.rounds || 0 : 0, roundLength: session.type === 'Boxing' ? +session.roundLength || 0 : 0,
@@ -292,7 +317,7 @@
     const lvUp = $('#levelUp'); lvUp.classList.add('hidden');
 
     const gains = after.skills.map((s, i) => ({ s, b: before.ch.skills[i], gain: s.xp - before.ch.skills[i].xp })).filter(x => x.gain > 0).sort((a, b) => b.gain - a.gain);
-    $('#rewardSkills').innerHTML = gains.length ? `<p class="rewardHead">Skills</p>` + gains.map(x => `<div class="rSkill" data-to="${x.s.max ? 100 : x.s.into / x.s.need * 100}" data-up="${x.s.level > x.b.level ? x.s.level : ''}">
+    $('#rewardSkills').innerHTML = gains.length ? `<p class="rewardHead">Skills</p>` + gains.map(x => `<div style="--c:${SKILL_COLORS[x.s.id]}" class="rSkill" data-to="${x.s.max ? 100 : x.s.into / x.s.need * 100}" data-up="${x.s.level > x.b.level ? x.s.level : ''}">
         <span class="hex">${x.b.level}</span><div class="skillInfo"><div class="skillHead"><span>${x.s.name}</span><small>+${fmt(x.gain)} XP</small></div>
         <div class="tinybar"><i style="width:${x.s.level > x.b.level ? 0 : x.b.into / x.b.need * 100}%"></i></div></div></div>`).join('') : '';
     $('#rewardRecords').innerHTML = records.length ? `<p class="rewardHead">New records</p>` + records.map(rc => `<div class="rRecord"><span class="trophy" aria-hidden="true">★</span><span><b>${esc(rc.name)}</b><small>${g(rc.kg)} kg × ${rc.reps}, estimated 1-rep max ${fmt(rc.e1rm)} kg</small></span></div>`).join('') : '';

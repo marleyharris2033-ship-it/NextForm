@@ -536,3 +536,72 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;bac
 .reward.play .rewardXp{opacity:1;transform:none;transition:opacity .4s .3s,transform .4s .3s}
 @keyframes pop{0%{transform:scale(.7)}100%{transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.reward .rewardMedal,.reward .rewardXp,.rSkill{opacity:1;transform:none}.levelUp,.rSkill.levelled .hex,.pulse{animation:none}}
+
+/* ===== Visual lift: logo, icons, colour ===== */
+body{background:radial-gradient(130% 55% at 50% -12%,#dfeccf 0%,rgba(223,236,207,0) 62%) no-repeat,var(--snow)}
+.topbar{background:rgba(246,248,244,.88)}
+.logo{display:inline-block;width:34px;height:27px;flex-shrink:0;background:var(--pine);
+  -webkit-mask:url("logo-mark.png") center/contain no-repeat;mask:url("logo-mark.png") center/contain no-repeat}
+.titleWrap{display:flex;align-items:center;gap:12px;min-width:0}
+.titleWrap .logo{width:36px;height:29px}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.secTitle{display:flex;align-items:center;gap:10px}
+.secIcon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--c,var(--pine));
+  background:color-mix(in srgb,var(--c,var(--pine)) 13%,#fff)}
+.secIcon .ico{width:19px;height:19px}
+.tabbar button.active:not(.trainTab){background:var(--mist)}
+
+/* Tinted tiles */
+.tile{position:relative;overflow:hidden}
+.tileIcon{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;color:var(--c);background:#fff}
+.tileIcon .ico{width:20px;height:20px}
+.tint-amber{--c:#b9780f;background:linear-gradient(160deg,#fdf2db,#fff 70%)}
+.tint-glacier{--c:var(--glacier);background:linear-gradient(160deg,#e3f0f3,#fff 70%)}
+.tint-pine{--c:var(--pine);background:linear-gradient(160deg,#e2eee6,#fff 70%)}
+.tint-lichen{--c:#6f8f35;background:linear-gradient(160deg,#edf4dc,#fff 70%)}
+
+/* Week strip and skills in colour */
+.day.done .dayRing{background:var(--c,var(--pine));box-shadow:0 4px 10px -4px var(--c,var(--pine))}
+.skill .hex{background:var(--c,var(--pine))}
+.skill .tinybar i{background:var(--c,var(--pine))}
+.rSkill .tinybar i{background:var(--c,var(--lichen))}
+.skill.untrained .hex{background:var(--mist)}
+
+/* Train hero */
+.trainHero{position:relative;border-radius:28px;overflow:hidden;margin-bottom:14px;aspect-ratio:900/474;background:#e8e0c8;box-shadow:0 10px 30px -14px rgba(21,48,42,.35)}
+.trainHero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.heroShade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,48,42,0) 35%,rgba(21,48,42,.82) 100%)}
+.heroLogo{position:absolute;top:14px;left:16px;width:34px;height:27px;background:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}
+.heroText{position:absolute;left:18px;right:18px;bottom:14px;color:#fff}
+.heroText p{font-size:14px;color:rgba(255,255,255,.88)}
+.heroText h2{color:#fff;font-size:26px;letter-spacing:-.03em;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+.quickTypes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 16px}
+.quickTile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px 10px;border:0;border-radius:18px;font:600 13px var(--text);color:var(--pine-deep);
+  background:linear-gradient(170deg,color-mix(in srgb,var(--c) 16%,#fff),#fff);box-shadow:0 1px 2px rgba(21,48,42,.05),0 6px 18px -12px rgba(21,48,42,.18)}
+.quickTile .ico{width:26px;height:26px;color:var(--c)}
+.quickTile:active{transform:scale(.97)}
+.pickIcon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 13%,#fff);flex-shrink:0}
+.planPick{justify-content:flex-start}
+.planPick .pickText{flex:1}
+
+/* Live workout */
+.sessionActions{display:flex;gap:8px}
+.sessionBar .startTimer{background:var(--lichen);color:var(--pine-deep)}
+.sessionBar .primary.quiet{background:rgba(255,255,255,.16);color:#fff;min-width:0}
+.sessionClock.idle{font:600 18px var(--text);color:rgba(255,255,255,.8)}
+.setProgress{display:flex;align-items:center;gap:12px;margin:-2px 2px 12px;font-size:13px;color:var(--stone);font-variant-numeric:tabular-nums}
+.setProgressBar{flex:1;height:8px;border-radius:99px;background:var(--mist);overflow:hidden}
+.setProgressBar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--moss),var(--lichen));transition:width .35s ease-out}
+.exCard{position:relative;overflow:hidden}
+.exCard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.muscleTag{display:inline-block;margin-bottom:4px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:650;color:var(--c);background:color-mix(in srgb,var(--c) 12%,#fff)}
+.setGrid input.done{background:#e3efd3;color:var(--pine-deep)}
+.setNo.done{color:var(--pine)}
+.tick.pop{animation:tickPop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes tickPop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.pulse.still{animation:none;background:rgba(255,255,255,.6)}
+
+/* Reward logo */
+.rewardLogo{display:block;margin:0 auto 10px;width:44px;height:35px;background:#fff;opacity:.95}
+@media(prefers-reduced-motion:reduce){.tick.pop{animation:none}}
+@media(max-width:380px){.quickTile{font-size:12px}.heroText h2{font-size:22px}}

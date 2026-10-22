@@ -8,6 +8,7 @@
   const PRODUCT_CACHE = 'nextform-products'; // barcode lookups, kept on this device for offline re-use
   const DETECTOR_URL = 'https://cdn.jsdelivr.net/npm/barcode-detector@3.2.2/dist/es/ponyfill.min.js';
   const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
+  const MEAL_ICONS = { Breakfast: ['sunrise', 'var(--amber)'], Lunch: ['sun', 'var(--lichen)'], Dinner: ['moon', 'var(--glacier)'], Snacks: ['cookie', 'var(--moss)'] };
   const MACROS = [
     { key: 'protein', label: 'Protein', color: 'var(--glacier)' },
     { key: 'carbs', label: 'Carbs', color: 'var(--lichen)' },
@@ -79,7 +80,8 @@
 
     $('#mealList').innerHTML = MEALS.map(meal => {
       const items = list.filter(e => e.meal === meal), mt = totals(items);
-      return `<section class="card mealCard"><div class="sectionHead"><h2>${meal}</h2><div class="row"><span class="muted">${items.length ? `${fmt(mt.kcal)} kcal` : ''}</span><button type="button" class="iconBtn addMeal" data-meal="${meal}" aria-label="Add food to ${meal}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div></div>
+      const mi = MEAL_ICONS[meal];
+      return `<section class="card mealCard"><div class="sectionHead"><div class="secTitle"><span class="secIcon" style="--c:${mi[1]}">${icon(mi[0])}</span><h2>${meal}</h2></div><div class="row"><span class="muted">${items.length ? `${fmt(mt.kcal)} kcal` : ''}</span><button type="button" class="iconBtn addMeal" data-meal="${meal}" aria-label="Add food to ${meal}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div></div>
         ${items.length ? `<ul class="foodItems">${items.map(e => `<li><button type="button" class="foodItem" data-entry="${esc(e.id)}"><span><b>${esc(e.name)}</b><small>${esc(amountText(e))}${e.brand ? `, ${esc(e.brand)}` : ''}</small></span><span class="foodKcal">${fmt(e.kcal)}</span></button></li>`).join('')}</ul>` : `<p class="muted small emptyMeal">Nothing logged yet.</p>`}
       </section>`;
     }).join('');
