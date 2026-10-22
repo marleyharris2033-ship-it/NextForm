@@ -414,3 +414,125 @@ body.sheetOpen{overflow:hidden}
 .fieldLabel{font-size:13px;font-weight:600;color:var(--stone)}
 #pDelete{margin-top:10px}
 @media(max-width:380px){.kcalRing{width:120px;height:120px}.fuelTop{gap:14px}.portionTotals b{font-size:16px}}
+
+/* ---------- Train: start ---------- */
+.startBig{margin-top:0;min-height:60px;font-size:17px;border-radius:18px}
+.todayCard h2{font-size:24px;margin:2px 0 4px}
+.todayCard .full{margin-top:14px}
+.quickTypes{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+.quickTypes .chip{background:var(--card);box-shadow:0 0 0 1.5px var(--hairline) inset}
+.planPicks{display:grid}
+.planPick{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border:0;border-top:1px solid var(--hairline);background:none;text-align:left;font:inherit;color:inherit;min-height:56px}
+.planPick:first-child{border-top:0}
+.planPick b{display:block;font:700 16px var(--display)}
+.planPick small{display:block;color:var(--stone);font-size:13px}
+.planPick svg{width:18px;height:18px;fill:none;stroke:var(--stone);stroke-width:2;flex-shrink:0}
+.trainLinks{display:flex;justify-content:space-between;gap:12px;padding:0 4px}
+
+/* ---------- Train: live session ---------- */
+.sessionBar{position:sticky;top:calc(62px + env(safe-area-inset-top));z-index:15;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 -4px 12px;padding:12px 14px 12px 18px;border-radius:20px;background:var(--pine);color:#fff;box-shadow:0 10px 24px -14px rgba(21,48,42,.6)}
+.sessionInfo p:first-child{font-size:14px;color:rgba(255,255,255,.78)}
+.sessionClock{font:700 26px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.sessionBar .primary{background:#fff;color:var(--pine);min-width:96px}
+#pastFields{margin-bottom:12px}
+#sessionTypes{margin-bottom:12px}
+.emptyCard p{color:var(--stone);text-align:center;padding:8px 0}
+.exCard{padding:16px 16px 10px}
+.exHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.exHead h3{font-size:18px}
+.exHead .iconBtn{width:34px;height:34px;background:transparent;color:var(--stone)}
+.exHead .iconBtn svg{width:18px;height:18px}
+.setGrid{display:grid;grid-template-columns:34px 1fr 1fr 48px;gap:8px;align-items:center}
+.setGrid.past{grid-template-columns:34px 1fr 1fr}
+.setGrid>span:not(.setNo){font-size:12px;font-weight:600;color:var(--stone);text-align:center}
+.setGrid>span:first-child{text-align:left}
+.setNo{font:700 15px var(--display);color:var(--stone);padding-left:4px}
+.setGrid input{text-align:center;min-height:46px;padding:8px 6px;font:600 17px var(--text)}
+.tick{width:48px;height:46px;border-radius:12px;border:0;background:var(--mist);display:grid;place-items:center;color:#9aa69d;transition:background .15s,color .15s,transform .1s}
+.tick svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.tick.done{background:var(--pine);color:#fff}
+.tick:active{transform:scale(.94)}
+.exFoot{display:flex;justify-content:space-between;margin-top:4px}
+.exFoot .muted{color:var(--stone);font-weight:500}
+#addExerciseBtn{margin-top:2px}
+.discardLink{display:block;margin:14px auto 0;color:var(--danger)}
+.restPill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));z-index:29;display:flex;align-items:center;gap:10px;
+  background:var(--pine-deep);color:#fff;border-radius:999px;padding:6px 6px 6px 18px;box-shadow:0 10px 24px -8px rgba(21,48,42,.5)}
+.restPill span{font-size:14px;color:rgba(255,255,255,.75)}
+.restPill b{font:700 20px var(--display);font-variant-numeric:tabular-nums;min-width:48px}
+.restPill button{border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-weight:600;font-size:14px;min-height:38px;padding:6px 14px}
+.resumeBanner{width:100%;display:flex;align-items:center;gap:12px;border:0;border-radius:18px;background:var(--pine);color:#fff;padding:14px 16px;margin-bottom:14px;text-align:left;font:inherit}
+.resumeBanner b{display:block;font:700 16px var(--display)}
+.resumeBanner small{display:block;color:rgba(255,255,255,.78);font-size:13px;font-variant-numeric:tabular-nums}
+.resumeGo{margin-left:auto;background:#fff;color:var(--pine);border-radius:999px;padding:6px 14px;font-weight:650;font-size:14px}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--lichen);box-shadow:0 0 0 0 rgba(166,196,111,.7);animation:pulse 1.8s infinite;flex-shrink:0}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(166,196,111,0)}100%{box-shadow:0 0 0 0 rgba(166,196,111,0)}}
+.exList{margin-top:10px}
+#exSearch{background:#fff;margin-bottom:4px}
+
+/* Finish sheet */
+.finishSummary{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.finishSummary div{background:#fff;border-radius:var(--r-sm);padding:12px;text-align:center}
+.finishSummary span{display:block;font-size:12px;color:var(--stone)}
+.finishSummary b{font:700 20px var(--display)}
+#finishSheet input:not([type=range]),#finishSheet textarea{background:#fff}
+.effortLabel{font-weight:700;color:var(--pine-deep)}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;border:0;padding:0;min-height:44px}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--lichen),var(--amber),var(--danger))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;margin-top:-10px;box-shadow:0 0 0 3px var(--pine),0 4px 10px rgba(21,48,42,.25)}
+input[type=range]::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--lichen),var(--amber),var(--danger))}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--pine)}
+
+/* ---------- Skills ---------- */
+.skillIntro{margin:-6px 0 12px}
+.skillList{display:grid;gap:12px}
+.skill,.rSkill{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:center}
+.hex{width:42px;height:46px;display:grid;place-items:center;font:750 17px var(--display);color:#fff;background:var(--pine);
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.skill.untrained .hex{background:var(--mist);color:var(--stone)}
+.skillHead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px;margin-bottom:6px}
+.skillHead small{font-size:12.5px;color:var(--stone);white-space:nowrap}
+.skill.untrained .skillHead span{color:var(--stone)}
+#ascentClass{color:var(--lichen);font-weight:650}
+
+/* ---------- Reward screen ---------- */
+.reward{position:fixed;inset:0;z-index:1300;overflow:auto;color:#fff;background:linear-gradient(170deg,#25563f 0%,var(--pine) 50%,#122b23 100%);
+  padding:calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom))}
+.reward .contours{position:fixed;inset:0;width:100%;height:100%;fill:none;stroke:rgba(166,196,111,.16);stroke-width:1}
+.rewardBody{position:relative;max-width:440px;margin:0 auto;text-align:center}
+.rewardKicker{font:700 15px var(--display);color:rgba(255,255,255,.75)}
+.rewardMedal{position:relative;width:160px;height:160px;margin:14px auto 8px}
+.rewardMedal svg{width:100%;height:100%}
+.rewardMedal .ringTrack{stroke:rgba(255,255,255,.14)}
+.rewardMedal span{position:absolute;inset:0;display:grid;place-items:center;font:800 76px/1 var(--display)}
+.rewardXp{font:700 22px var(--display);color:var(--amber)}
+.rewardXp b{font-size:40px;font-variant-numeric:tabular-nums}
+.rewardLevel{margin:20px 0 6px;text-align:left}
+.rewardLevelHead{display:flex;justify-content:space-between;font-size:14px;color:rgba(255,255,255,.8);margin-bottom:8px}
+.rewardLevelHead span:first-child{font:700 17px var(--display);color:#fff}
+.rewardBar{height:12px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.rewardBar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--lichen),#d9eab0)}
+.levelUp{margin-top:12px;padding:10px 14px;border-radius:14px;background:rgba(227,160,47,.18);color:#ffd88f;font:700 16px var(--display);text-align:center;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.rewardHead{margin:22px 0 10px;text-align:left;font:700 15px var(--display);color:rgba(255,255,255,.75)}
+.rewardSkills,.rewardRecords{text-align:left;display:grid;gap:12px}
+.rSkill{opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}
+.rSkill.show{opacity:1;transform:none}
+.rSkill .hex{background:rgba(255,255,255,.16)}
+.rSkill.levelled .hex{background:var(--amber);color:var(--pine-deep);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.rSkill .skillHead small{color:rgba(255,255,255,.75)}
+.rSkill.levelled .skillHead small{color:#ffd88f;font-weight:650}
+.rSkill .tinybar{background:rgba(255,255,255,.14)}
+.rSkill .tinybar i{background:var(--lichen);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.rRecord{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.08);border-radius:14px;padding:12px 14px}
+.rRecord b{display:block;font-size:15px}
+.rRecord small{display:block;color:rgba(255,255,255,.75);font-size:13px}
+.trophy{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:var(--pine-deep);font-size:18px;flex-shrink:0}
+.rewardQuests{margin-top:16px;color:#ffd88f;font-size:14px}
+.rewardQuests:empty{display:none}
+.rewardBtn{width:100%;margin-top:26px;min-height:54px;border:0;border-radius:16px;background:#fff;color:var(--pine);font:700 17px var(--display)}
+.reward .rewardMedal,.reward .rewardXp{opacity:0;transform:scale(.85)}
+.reward.play .rewardMedal{opacity:1;transform:none;transition:opacity .4s,transform .5s cubic-bezier(.2,1.4,.4,1)}
+.reward.play .rewardXp{opacity:1;transform:none;transition:opacity .4s .3s,transform .4s .3s}
+@keyframes pop{0%{transform:scale(.7)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.reward .rewardMedal,.reward .rewardXp,.rSkill{opacity:1;transform:none}.levelUp,.rSkill.levelled .hex,.pulse{animation:none}}
