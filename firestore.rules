@@ -1,0 +1,18 @@
+rules_version = '2';
+// NextForm cloud backup: each signed-in user can read and write only their own document.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['payload', 'updatedAt', 'schema'])
+        && request.resource.data.payload is string
+        && request.resource.data.payload.size() < 900000
+        && request.resource.data.updatedAt is int;
+    }
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
