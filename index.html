@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f7f7f0"><title>NextForm</title>
-<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=fix1">
+<meta name="theme-color" content="#f6f8f4"><title>NextForm</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="theme.css?v=fix1">
+<link rel="stylesheet" href="ui.css?v=ui1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -22,8 +23,7 @@
 <div id="onboarding" class="onboarding hidden">
   <div class="onboardCard">
     <div class="onboardLogo"><svg viewBox="340 80 100 85" role="img" aria-label="NextForm"><image href="welcome-art.webp" width="1024" height="1536"/></svg></div>
-    <span class="eyebrowBadge">WELCOME TO NEXTFORM</span>
-    <h2>Build your profile</h2>
+        <h2>Build your profile</h2>
     <p class="muted">This is saved only on this device and helps personalise your training stats.</p>
 
     <label class="photoPicker">
@@ -50,28 +50,56 @@
     <p class="tiny muted setupPrivacy">Your profile and photo stay in this browser's local storage.</p>
   </div>
 </div>
-<div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div><div id="app">
-<header><div class="brandWrap"><div class="brandMark"><svg viewBox="340 80 100 85" role="img" aria-label="NextForm"><image href="welcome-art.webp" width="1024" height="1536"/></svg></div><div><small>NEXTFORM</small><h1 id="pageTitle">Home</h1></div></div><button class="round" id="themeBtn" hidden aria-label="Theme">◐</button></header>
+<div id="app">
+<header class="topbar"><div><p id="pageKicker" class="pageKicker"></p><h1 id="pageTitle">Home</h1></div><button id="avatarBtn" class="avatarBtn profileAvatar" type="button" aria-label="Open profile">N</button><button id="themeBtn" hidden aria-hidden="true"></button></header>
 <main>
 <section id="home" class="page active">
 <div id="backupNudge" class="card backupNudge hidden"><h2>Back up your training</h2><p id="nudgeText" class="muted"></p><div class="row wrap"><button id="nudgeSignIn" class="primary" type="button">Sign in with Google</button><button id="nudgeExport" class="secondary" type="button">Export backup</button></div></div>
-<div class="hero card"><div class="heroGlow"></div><div class="row between"><div><span class="muted">OVERALL RANK</span><div class="rank" id="rank">NOVICE</div></div><div class="level">LVL <b id="level">1</b></div></div>
-<div class="xptext"><span><b id="xpCurrent">0</b> XP</span><span id="xpRemaining">500 to next level</span></div><div class="bar"><i id="xpBar"></i></div></div>
-<div class="grid4"><div class="mini"><b id="streak">0</b><span>day streak</span></div><div class="mini"><b id="weekCount">0</b><span>this week</span></div><div class="mini"><b id="weightNow">—</b><span>kg</span></div><div class="mini"><b id="latestGrade">—</b><span>last grade</span></div></div>
-<div class="card"><div class="row between"><h2>Attributes</h2><span class="muted">0–100</span></div><div class="attrs" id="attrs"></div></div>
-<div class="card"><div class="row between"><h2>This week</h2><b id="weekGrade">—</b></div><div class="summaryGrid"><div><b id="weekMinutes">0</b><span>minutes</span></div><div><b id="weekXP">0</b><span>XP earned</span></div><div><b id="weekVolume">0</b><span>kg volume</span></div><div><b id="weekPBs">0</b><span>PBs</span></div></div><p id="weekInsight" class="insight">Log a workout to start your weekly report.</p></div>
-<div class="card"><div class="row between"><h2>Activity</h2><span class="muted">Last 35 days</span></div><div id="heatmap" class="heatmap"></div></div>
-<div class="card"><div class="row between"><h2>Achievements</h2><button class="link" data-go="progress">View all</button></div><div id="achievementPreview"></div></div>
-<div class="card"><div class="row between"><h2>Challenges</h2><button class="link" data-go="challenges">All challenges</button></div><div id="challengePreview"></div></div>
+<div class="ascent" aria-label="Level progress">
+  <svg class="contours" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M-20 170 C60 150 90 120 150 128 S260 165 380 120"/><path d="M-20 145 C50 125 95 92 155 100 S255 140 380 92"/>
+    <path d="M-20 118 C45 100 100 64 160 72 S250 110 380 62"/><path d="M-20 92 C40 76 104 38 166 46 S246 82 380 34"/>
+    <path d="M-20 64 C38 50 110 14 172 22 S242 54 380 8"/><path d="M40 210 C80 190 120 186 170 196 S270 214 330 190"/>
+  </svg>
+  <div class="ascentHead">
+    <div><p class="ascentRank" id="rank">Novice</p><p class="ascentLevel">Level <b id="level">1</b></p></div>
+    <p class="ascentNext" id="xpRemaining">500 XP to level 2</p>
+  </div>
+  <svg class="ridge" id="ridge" viewBox="0 0 320 92" aria-hidden="true">
+    <path class="ridgeBase" id="ridgePath" d="M6 84 L44 70 L62 76 L98 52 L118 60 L150 38 L170 46 L204 26 L222 34 L254 16 L270 22 L300 8"/>
+    <path class="ridgeDone" id="ridgeDone" d="M6 84 L44 70 L62 76 L98 52 L118 60 L150 38 L170 46 L204 26 L222 34 L254 16 L270 22 L300 8"/>
+    <g class="summit"><path d="M300 8 V-10"/><path class="flag" d="M300 -10 L314 -5 L300 0 Z"/></g>
+    <circle class="climber" id="climber" r="6" cx="6" cy="84"/>
+  </svg>
+  <p class="ascentXp"><b id="xpCurrent">0</b> of <span id="xpNeed">500</span> XP this level</p>
+</div>
+
+<div class="weekStrip" id="weekStrip" aria-label="This week"></div>
+
+<div class="card weekCard">
+  <div class="sectionHead"><h2>This week</h2><span class="weekGrade">Grade <b id="weekGrade">–</b></span></div>
+  <div class="weekBody"><svg class="rings" id="weekRings" viewBox="0 0 120 120" aria-hidden="true"></svg><ul class="ringLegend" id="weekLegend"></ul></div>
+  <p id="weekInsight" class="insight">Log a workout to start your weekly report.</p>
+</div>
+
+<div class="tiles">
+  <div class="tile"><p class="tileLabel">Streak</p><p class="tileValue"><b id="streak">0</b> <span id="streakUnit">days</span></p><p class="tileSub" id="streakSub">Train today to start one</p></div>
+  <div class="tile"><p class="tileLabel">Body weight</p><p class="tileValue"><b id="weightNow">–</b> <span>kg</span></p><svg class="spark" id="weightSpark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"></svg><p class="tileSub" id="weightSub"></p></div>
+  <div class="tile"><p class="tileLabel">Volume this week</p><p class="tileValue"><b id="weekVolume">0</b> <span>kg</span></p><p class="tileSub" id="volumeSub">Weights × reps × sets</p></div>
+  <div class="tile"><p class="tileLabel">Personal bests</p><p class="tileValue"><b id="weekPBs">0</b> <span>this week</span></p><p class="tileSub" id="pbSub"></p></div>
+</div>
+
+<div class="card"><div class="sectionHead"><h2>Activity</h2><span class="muted">Minutes, last 14 days</span></div><div id="activityBars" class="bars"></div><ul class="typeKey" id="typeKey"></ul></div>
+<div class="card"><div class="sectionHead"><h2>Attributes</h2><span class="muted">Out of 100</span></div><div class="attrs" id="attrs"></div></div>
+<div class="card"><div class="sectionHead"><h2>Achievements</h2><button class="link" data-go="progress">See all</button></div><div id="achievementPreview"></div></div>
+<div class="card"><div class="sectionHead"><h2>Quests</h2><button class="link" data-go="challenges">See all</button></div><div id="challengePreview"></div></div>
 </section>
 
 
 <section id="train" class="page">
 <div class="card workoutTimerCard">
-  <div class="row between">
-    <div><span class="eyebrowBadge">WORKOUT TIMER</span><div id="workoutTimerDisplay" class="timerDisplay">00:00:00</div></div>
-    <span id="timerState" class="timerState">READY</span>
-  </div>
+  <div class="sectionHead"><h2>Session timer</h2><span id="timerState" class="timerState">Ready</span></div>
+  <div id="workoutTimerDisplay" class="timerDisplay">00:00:00</div>
   <div class="timerButtons">
     <button id="timerStartPause" class="primary">Start</button>
     <button id="timerReset" class="secondary">Reset</button>
@@ -81,11 +109,12 @@
 <div class="workoutBackRow">
   <button id="workoutBackBtn" class="secondary workoutBackBtn">← Back</button>
 </div>
-<div class="card"><div class="row between"><h2>Start workout</h2><button class="secondary" id="loadPlanBtn">From plan</button></div>
-<div class="form2"><label>Type<select id="type"><option>Strength</option><option>Boxing</option><option>Running</option><option>Mixed</option><option>Mobility</option><option>Other</option></select></label><label>Date<input id="date" type="date"></label><label>Duration (min)<input id="duration" type="number" value="45" min="1"></label><label>Effort / RPE<input id="effort" type="number" value="7" min="1" max="10"></label></div>
+<div class="card"><div class="sectionHead"><h2>Log workout</h2><button class="secondary small" id="loadPlanBtn">Use a plan</button></div>
+<div class="typeChips" id="typeChips" role="radiogroup" aria-label="Workout type"></div>
+<div class="form2"><label class="srOnly">Type<select id="type"><option>Strength</option><option>Boxing</option><option>Running</option><option>Mixed</option><option>Mobility</option><option>Other</option></select></label><label>Date<input id="date" type="date"></label><label>Duration (min)<input id="duration" type="number" value="45" min="1"></label><label>Effort / RPE<input id="effort" type="number" value="7" min="1" max="10"></label></div>
 <div id="runningFields" class="form2 hidden"><label>Distance (km)<input id="distance" type="number" step=".01" min="0"></label><label>Time (min)<input id="runMinutes" type="number" step=".1" min="0"></label></div>
 <div id="boxingFields" class="form2 hidden"><label>Rounds<input id="rounds" type="number" min="0"></label><label>Round length (min)<input id="roundLength" type="number" value="3" step=".5"></label></div>
-<div class="row between topgap"><h3>Exercises</h3><button class="secondary" id="addEx">+ Exercise</button></div><div class="exerciseHeaders"><span>Exercise</span><span>Sets</span><span>Reps</span><span>kg</span></div><div id="exerciseRows"></div>
+<div class="row between topgap"><h3>Exercises</h3><button class="secondary" id="addEx">+ Exercise</button></div><div id="exerciseRows"></div>
 <label class="topgap">Notes<textarea id="notes" rows="3" placeholder="How did the session feel?"></textarea></label><button class="primary full" id="finish">Finish & grade workout</button></div><div id="result" class="card hidden"></div>
 </section>
 
@@ -93,15 +122,13 @@
 
 <section id="planner" class="page">
   <div class="card plannerHero">
-    <div class="eyebrowBadge">PROGRAMME LIBRARY</div>
-    <h2>Pre-made workouts</h2>
-    <p class="muted">Choose a split, then rotate the sessions within it. Each session uses a different exercise selection.</p>
+    <p class="muted">Pick a split, then rotate through its sessions. Each one uses different exercises.</p>
     <div id="planCategoryChips" class="chips plannerCats"></div>
   </div>
   <div id="premadeWorkoutList"></div>
   <div class="card">
-    <h2>Weekly diary</h2>
-    <p class="muted">Assign any pre-made session to each day.</p>
+    <h2>Your week</h2>
+    <p class="muted">Choose a session for each training day.</p>
     <div id="weekPlanner"></div>
   </div>
 </section>
@@ -154,17 +181,16 @@
 
 </section>
 
-<section id="learn" class="page"><div class="card"><h2>Exercise library</h2><p class="muted">Technique cues plus YouTube demonstrations. Start light when learning a movement.</p><input id="learnSearch" placeholder="Search exercises..."><div class="chips" id="categoryChips"></div></div><div id="exerciseLibrary"></div></section>
+<section id="learn" class="page"><div class="card"><h2>Exercise library</h2><p class="muted">Technique cues and video demos. Start light while you learn a movement.</p><input id="learnSearch" placeholder="Search exercises..."><div class="chips" id="categoryChips"></div></div><div id="exerciseLibrary"></div></section>
 
 
 <section id="challenges" class="page">
-<div class="card"><h2>Challenge Hub</h2><p class="muted">Complete challenges for bonus XP. Progress is calculated automatically from your workout history.</p>
+<div class="card"><p class="muted">Finish quests for bonus XP. Progress updates from your workout history.</p>
 <div class="chips" id="challengeChips"></div></div>
 <div id="challengeList"></div>
 </section>
 <section id="profile" class="page">
 <div id="accountCard" class="card" hidden>
-<button id="backToWelcome" class="link" type="button">Back to welcome screen</button>
   <h2>Account</h2>
   <p id="accountIdentity" class="accountIdentity">Guest</p>
   <p id="accountStatus" class="muted" role="status" aria-live="polite"></p>
@@ -172,6 +198,7 @@
   <button id="googleSignIn" class="googleSignIn" type="button">Sign in with Google</button>
   <button id="googleSignOut" class="secondary" type="button" hidden>Sign out</button>
   <p id="accountHelp" class="tiny muted">Sign in to back up your workouts, weights and profile to your Google account and restore them on any device. As a guest, everything stays only in this browser.</p>
+  <button id="backToWelcome" class="link" type="button">Show welcome screen</button>
 </div>
 <div class="card">
 <div class="profileHead">
@@ -180,13 +207,13 @@
     <div id="profilePhotoPreview" class="profileAvatar">N</div>
     <span>Change photo</span>
   </label>
-  <div><span class="eyebrowBadge">YOUR NEXTFORM</span><h2>Profile</h2></div>
+  <div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
 </div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
-<nav><button class="active" data-page="home">⌂<span>Home</span></button><button data-page="train">＋<span>Train</span></button><button data-page="planner">▦<span>Plan</span></button><button data-page="progress">↗<span>Progress</span></button><button data-page="learn">▶<span>Learn</span></button><button data-page="challenges">★<span>Quests</span></button><button data-page="profile">◉<span>Profile</span></button></nav>
+<nav class="tabbar" aria-label="Main"><button type="button" data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button><button type="button" data-page="planner" aria-label="Plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Plan</span></button><button type="button" data-page="progress" aria-label="Progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg><span>Progress</span></button><button type="button" data-page="train" class="trainTab" aria-label="Train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg><span>Train</span></button><button type="button" data-page="learn" aria-label="Learn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M10.5 9.5v5l4-2.5z"/></svg><span>Learn</span></button><button type="button" data-page="challenges" aria-label="Quests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg><span>Quests</span></button><button type="button" data-page="profile" aria-label="Profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-3.5 3.7-5 7-5s6 1.5 7 5"/></svg><span>Profile</span></button></nav>
 </div>
-<template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><input class="exsets" type="number" min="1" value="3"><span class="repsWrap"><input class="exreps" type="number" min="1" value="8"></span><input class="exweight" type="number" min="0" step=".5"><button class="x">×</button></div></template>
+<template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><span class="unitWrap" data-unit="sets"><input class="exsets" type="number" min="1" value="3" aria-label="Sets"></span><span class="unitWrap repsWrap" data-unit="reps"><input class="exreps" type="number" min="1" value="8" aria-label="Reps"></span><span class="unitWrap" data-unit="kg"><input class="exweight" type="number" min="0" step=".5" aria-label="Weight in kg"></span><button class="x" aria-label="Remove exercise">×</button></div></template>
 
 <template id="logExTemplate">
   <div class="logExRow">
@@ -197,4 +224,4 @@
     <button class="x logExRemove">×</button>
   </div>
 </template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=fix1"></script><script src="welcome.js?v=fix1"></script><script type="module" src="auth.js?v=fix1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=ui1"></script><script src="welcome.js?v=ui1"></script><script type="module" src="auth.js?v=ui1"></script></body></html>

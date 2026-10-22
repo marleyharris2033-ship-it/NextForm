@@ -372,7 +372,71 @@ function bestStreak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort(),b
 function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
 function attrs(){let a={Strength:0,Endurance:0,Conditioning:0,Consistency:0,Progression:0,Mobility:0};data.workouts.forEach(w=>{let s=w.result?.score||50;if(["Strength","Mixed"].includes(w.type))a.Strength+=s*.06;if(["Running","Mixed"].includes(w.type))a.Endurance+=s*.065;if(["Boxing","Running","Mixed"].includes(w.type))a.Conditioning+=s*.055;if(w.type==="Mobility")a.Mobility+=s*.09;a.Consistency+=1.7;a.Progression+=(w.result?.pbs||0)*3.5});Object.keys(a).forEach(k=>a[k]=Math.min(100,Math.round(a[k])));return a}
 function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
-function renderHome(){let l=levelInfo(data.xp),w=week();$("#level").textContent=l.level;$("#rank").textContent=rankFor(l.level);$("#xpCurrent").textContent=l.into;$("#xpRemaining").textContent=`${l.need-l.into} to next level`;$("#xpBar").style.width=(l.into/l.need*100)+"%";$("#weightNow").textContent=weight()?.toFixed(1)||"—";$("#latestGrade").textContent=data.workouts.at(-1)?.result?.grade||"—";$("#streak").textContent=streak();$("#weekCount").textContent=w.ws.length;$("#weekMinutes").textContent=w.mins;$("#weekXP").textContent=w.xp;$("#weekVolume").textContent=w.vol.toLocaleString();$("#weekPBs").textContent=w.pbs;$("#weekGrade").textContent=w.g;$("#weekInsight").textContent=w.ws.length?`${w.ws.length} session${w.ws.length>1?"s":""} completed. ${w.pbs?`${w.pbs} PB${w.pbs>1?"s":""} this week. `:""}${w.mins>=150?"Excellent weekly training volume.":"Keep building your consistency."}`:"Log a workout to start your weekly report.";$("#attrs").innerHTML=Object.entries(attrs()).map(([k,v])=>`<div class="attr"><div class="row"><span>${k}</span><b>${v}</b></div><div class="tinybar"><i style="width:${v}%"></i></div></div>`).join("");let map={};data.workouts.forEach(x=>map[x.date]=(map[x.date]||0)+1);let h="";for(let i=34;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let k=localDate(d);h+=`<div class="heat ${map[k]?"on":""}" title="${k}"></div>`}$("#heatmap").innerHTML=h;renderBackupNudge();renderAchievements()}
+const WEEK_GOALS={sessions:4,minutes:150,xp:1500};
+const TYPE_COLORS={Strength:"var(--pine)",Running:"var(--glacier)",Boxing:"var(--amber)",Mobility:"var(--lichen)",Mixed:"var(--moss)",Other:"var(--stone)"};
+const titleCase=t=>t.charAt(0)+t.slice(1).toLowerCase();
+const GRADE_RANK={S:5,A:4,B:3,C:2,D:1};
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+const fmt=n=>Math.round(n).toLocaleString("en-GB");
+function ringsSvg(rings){
+  // Concentric progress rings; each {value 0..1+, color}
+  const C=60;return rings.map((r,i)=>{const rad=50-i*15,len=2*Math.PI*rad,v=Math.min(1,Math.max(0,r.value));
+    return `<circle cx="${C}" cy="${C}" r="${rad}" class="ringTrack"/>`+(v<=0?"":`<circle cx="${C}" cy="${C}" r="${rad}" class="ringFill" style="stroke:${r.color};stroke-dasharray:${len*v} ${len}" transform="rotate(-90 ${C} ${C})"/>`)}).join("")}
+function renderAscent(l){
+  const path=$("#ridgePath"),done=$("#ridgeDone"),dot=$("#climber");if(!path)return;
+  const total=path.getTotalLength(),frac=Math.min(1,l.into/l.need),pt=path.getPointAtLength(total*frac);
+  done.style.strokeDasharray=`${total*frac} ${total}`;dot.setAttribute("cx",pt.x);dot.setAttribute("cy",pt.y);
+  $("#rank").textContent=titleCase(rankFor(l.level));$("#level").textContent=l.level;
+  $("#xpCurrent").textContent=fmt(l.into);$("#xpNeed").textContent=fmt(l.need);
+  $("#xpRemaining").textContent=`${fmt(l.need-l.into)} XP to level ${l.level+1}`;
+}
+function renderWeekStrip(){
+  const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  const t=today();let h="";
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=localDate(d);
+    const ws=data.workouts.filter(w=>w.date===k);
+    const best=ws.map(w=>w.result?.grade).filter(Boolean).sort((a,b)=>(GRADE_RANK[b]||0)-(GRADE_RANK[a]||0))[0];
+    const state=ws.length?"done":k===t?"today":k>t?"future":"rest";
+    const label=d.toLocaleDateString("en-GB",{weekday:"long"});
+    h+=`<div class="day ${state}" title="${label}${ws.length?`: ${ws.length} workout${ws.length>1?"s":""}`:""}"><span class="dayRing">${ws.length?(best||"✓"):""}</span><span class="dayName">${DAYS[i].charAt(0)}</span></div>`}
+  $("#weekStrip").innerHTML=h;
+}
+function renderHome(){
+  const l=levelInfo(data.xp),w=week();
+  renderAscent(l);renderWeekStrip();
+  // Weekly goals
+  const rings=[{key:"Sessions",val:w.ws.length,goal:WEEK_GOALS.sessions,color:"var(--pine)"},{key:"Minutes",val:w.mins,goal:WEEK_GOALS.minutes,color:"var(--glacier)"},{key:"XP",val:w.xp,goal:WEEK_GOALS.xp,color:"var(--amber)"}];
+  $("#weekRings").innerHTML=ringsSvg(rings.map(r=>({value:r.val/r.goal,color:r.color})));
+  $("#weekLegend").innerHTML=rings.map(r=>`<li style="--c:${r.color}"><span>${r.key}</span><b>${fmt(r.val)}<small> / ${fmt(r.goal)}</small></b></li>`).join("");
+  $("#weekGrade").textContent=w.g;
+  $("#weekInsight").textContent=w.ws.length?`${w.ws.length} session${w.ws.length>1?"s":""} so far.${w.pbs?` ${w.pbs} new PB${w.pbs>1?"s":""}.`:""} ${w.mins>=WEEK_GOALS.minutes?"You've hit your weekly minutes.":`${WEEK_GOALS.minutes-w.mins} minutes to your weekly goal.`}`:"Log a workout to start your weekly report.";
+  // Tiles
+  const st=streak();$("#streak").textContent=st;$("#streakUnit").textContent=st===1?"day":"days";
+  $("#streakSub").textContent=st?`Best ever: ${bestStreak()} days`:"Train today to start one";
+  const ws=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)),cur=weight();
+  $("#weightNow").textContent=cur?cur.toFixed(1):"–";
+  const recent=ws.slice(-12);
+  if(recent.length>1){const vs=recent.map(x=>x.value),mn=Math.min(...vs),mx=Math.max(...vs),rg=mx-mn||1;
+    $("#weightSpark").innerHTML=`<polyline points="${vs.map((v,i)=>`${(i/(vs.length-1)*100).toFixed(1)},${(25-(v-mn)/rg*22).toFixed(1)}`).join(" ")}"/>`;
+    const diff=vs.at(-1)-vs[0],goal=data.profile.goalWeight;
+    $("#weightSub").textContent=goal?`${Math.abs(cur-goal).toFixed(1)} kg to goal`:`${diff>0?"+":""}${diff.toFixed(1)} kg recently`;
+  }else{$("#weightSpark").innerHTML="";$("#weightSub").textContent=cur?"Log again to see a trend":"Add one in Progress"}
+  $("#weekVolume").textContent=w.vol>=10000?(w.vol/1000).toFixed(1):fmt(w.vol);
+  $("#weekVolume").nextElementSibling.textContent=w.vol>=10000?"tonnes":"kg";
+  $("#weekPBs").textContent=w.pbs;
+  const allPbs=data.workouts.reduce((a,x)=>a+(x.result?.pbs||0),0);$("#pbSub").textContent=`${allPbs} all time`;
+  // Activity bars, 14 days, coloured by type
+  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d)}
+  const per=days.map(d=>{const k=localDate(d);return{d,k,ws:data.workouts.filter(x=>x.date===k)}});
+  const max=Math.max(60,...per.map(p=>p.ws.reduce((a,x)=>a+(+x.duration||0),0)));
+  $("#activityBars").innerHTML=per.map(p=>{const segs=p.ws.map(x=>`<i style="height:${(+x.duration||0)/max*100}%;background:${TYPE_COLORS[x.type]||TYPE_COLORS.Other}" title="${esc(x.type)}, ${x.duration} min"></i>`).join("");
+    return `<div class="barCol${p.k===today()?" isToday":""}"><div class="barStack">${segs}</div><span>${p.d.getDate()}</span></div>`}).join("");
+  const used=[...new Set(per.flatMap(p=>p.ws.map(x=>TYPE_COLORS[x.type]?x.type:"Other")))];
+  $("#typeKey").innerHTML=used.map(t=>`<li style="--c:${TYPE_COLORS[t]}">${t}</li>`).join("");
+  // Attributes
+  $("#attrs").innerHTML=Object.entries(attrs()).map(([k,v])=>`<div class="attr"><span>${k}</span><div class="tinybar"><i style="width:${v}%"></i></div><b>${v}</b></div>`).join("");
+  renderBackupNudge();renderAchievements();
+}
 // Guests: remind them their workouts only live on this device.
 function renderBackupNudge(){
   const el=$("#backupNudge");if(!el)return;
@@ -389,11 +453,17 @@ window.addEventListener("nextform-auth",renderBackupNudge);
 // Ask the browser not to clear NextForm's storage automatically (helps on Safari/Chrome when granted).
 navigator.storage?.persist?.().catch(()=>{});
 const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Reach a 3-day streak",()=>bestStreak()>=3],["🔥","On Fire","Reach a 7-day streak",()=>bestStreak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
-function renderAchievements(){let cards=ACH.map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("");$("#achievements").innerHTML=cards;$("#achievementPreview").innerHTML=`<div class="achievementGrid">${ACH.slice(0,4).map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("")}</div>`}
-function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");if(e.unit==="s"){r.querySelector(".repsWrap").dataset.unit="s";r.querySelector(".exreps").setAttribute("aria-label","Seconds")}r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
+function renderAchievements(){
+  const items=ACH.map(([ic,t,d,fn])=>({ic,t,d,on:fn()}));
+  const card=a=>`<div class="achievement ${a.on?"":"locked"}"><div class="icon">${a.ic}</div><strong>${a.t}</strong><span>${a.on?"Unlocked":a.d}</span></div>`;
+  $("#achievements").innerHTML=items.map(card).join("");
+  const sorted=[...items.filter(a=>a.on),...items.filter(a=>!a.on)];
+  $("#achievementPreview").innerHTML=`<div class="badgeStrip">${sorted.map(a=>`<div class="badge ${a.on?"":"locked"}"><span class="badgeIcon">${a.ic}</span><span>${a.t}</span></div>`).join("")}</div>`;
+}
+function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");if(e.unit==="s"){r.querySelector(".repsWrap").dataset.unit="sec";r.querySelector(".exreps").setAttribute("aria-label","Seconds")}r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
 addEx({name:"Bench Press"});addEx({name:"Back Squat"});$("#addEx").onclick=()=>addEx();$("#type").onchange=()=>{$("#runningFields").classList.toggle("hidden",$("#type").value!=="Running");$("#boxingFields").classList.toggle("hidden",$("#type").value!=="Boxing")};
 $("#loadPlanBtn").onclick=()=>go("planner");
-$("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0,...(r.querySelector(".repsWrap").dataset.unit==="s"?{unit:"s"}:{})})).filter(e=>e.name),w={id:newId(),updatedAt:Date.now(),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");if($("#finish").disabled)return;$("#finish").disabled=true;setTimeout(()=>{$("#finish").disabled=false},1500);w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();resetWorkoutForm();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><span class="muted">WORKOUT COMPLETE</span><div class="bigGrade">${w.result.grade}</div><div class="bigXP">+${w.result.xp} XP</div><p>${w.result.score}/100</p><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`}
+$("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0,...(r.querySelector(".repsWrap").dataset.unit==="sec"?{unit:"s"}:{})})).filter(e=>e.name),w={id:newId(),updatedAt:Date.now(),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");if($("#finish").disabled)return;$("#finish").disabled=true;setTimeout(()=>{$("#finish").disabled=false},1500);w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();resetWorkoutForm();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><p class="muted">Workout complete</p><div class="medal"><svg viewBox="0 0 120 120" aria-hidden="true">${ringsSvg([{value:w.result.score/100,color:"var(--pine)"}])}</svg><span class="bigGrade">${w.result.grade}</span></div><p class="resultScore">${w.result.score} out of 100</p><div class="bigXP">+${w.result.xp} XP</div><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`;$("#result").scrollIntoView({behavior:"smooth",block:"start"})}
 $("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
 
 // ===== EDITABLE TRAINING LOG =====
@@ -556,7 +626,37 @@ function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).
     <div id="add-ex-${w.id}" class="inlineExerciseEditor hidden"></div>
   </div>`).join("")||`<p class="muted">No workouts yet. Your completed sessions will appear here.</p>`;$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
 $("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
-function drawWeight(){let c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=230;c.width=w*dpr;c.height=h*dpr;let x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));let st=getComputedStyle(document.body),line=st.getPropertyValue("--line"),muted=st.getPropertyValue("--muted"),accent=st.getPropertyValue("--accent");x.strokeStyle=line;x.fillStyle=muted;x.font="12px system-ui";for(let i=1;i<5;i++){let y=i*h/5;x.beginPath();x.moveTo(12,y);x.lineTo(w-12,y);x.stroke()}if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight":"Add your first weight",w/2,h/2);return}let min=Math.min(...vals.map(v=>v.value))-2,max=Math.max(...vals.map(v=>v.value))+2;x.strokeStyle=accent;x.lineWidth=3;x.beginPath();vals.forEach((v,i)=>{let px=16+i*(w-32)/(vals.length-1),py=h-18-(v.value-min)/(max-min)*(h-36);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
+function drawWeight(){
+  const c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=220;
+  c.width=w*dpr;c.height=h*dpr;const x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);
+  let vals=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);
+  if($("#trendMode").value==="avg"&&vals.length>2)vals=vals.map((v,i,a)=>({...v,value:a.slice(Math.max(0,i-2),i+1).reduce((s,z)=>s+z.value,0)/Math.min(3,i+1)}));
+  const st=getComputedStyle(document.body),col=n=>st.getPropertyValue(n).trim();
+  const ink=col("--stone"),line=col("--hairline"),pine=col("--pine"),amber=col("--amber"),font=`12px ${st.fontFamily}`;
+  x.font=font;x.fillStyle=ink;
+  if(vals.length<2){x.textAlign="center";x.fillText(vals.length?"Add another weight to see your trend":"Add your first weight",w/2,h/2);return}
+  const goal=+data.profile.goalWeight||null,all=vals.map(v=>v.value).concat(goal?[goal]:[]);
+  let min=Math.floor(Math.min(...all)-1),max=Math.ceil(Math.max(...all)+1);
+  const L=40,R=12,T=14,B=26,pw=w-L-R,ph=h-T-B;
+  const t0=new Date(vals[0].date).getTime(),t1=new Date(vals.at(-1).date).getTime(),span=t1-t0||1;
+  const px=d=>L+(new Date(d).getTime()-t0)/span*pw,py=v=>T+(max-v)/(max-min)*ph;
+  // gridlines + labels
+  x.strokeStyle=line;x.lineWidth=1;x.textAlign="right";x.textBaseline="middle";
+  // whole-number ticks on an even step
+  const step=Math.max(1,Math.ceil((max-min)/3));min=Math.floor(min/step)*step;max=min+step*3;
+  for(let i=0;i<=3;i++){const v=min+step*i,y=py(v);x.beginPath();x.moveTo(L,y);x.lineTo(w-R,y);x.stroke();x.fillText(v.toFixed(0),L-8,y)}
+  x.textBaseline="alphabetic";x.textAlign="left";const dl=d=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  x.fillText(dl(vals[0].date),L,h-6);x.textAlign="right";x.fillText(dl(vals.at(-1).date),w-R,h-6);
+  // goal line
+  if(goal){const y=py(goal);x.setLineDash([5,5]);x.strokeStyle=amber;x.lineWidth=1.5;x.beginPath();x.moveTo(L,y);x.lineTo(w-R,y);x.stroke();x.setLineDash([]);
+    x.fillStyle=amber;x.textAlign="right";x.textBaseline="bottom";x.fillText(`Goal ${goal} kg`,w-R,y-4);x.textBaseline="alphabetic"}
+  // area + line
+  x.beginPath();vals.forEach((v,i)=>i?x.lineTo(px(v.date),py(v.value)):x.moveTo(px(v.date),py(v.value)));
+  x.strokeStyle=pine;x.lineWidth=2.5;x.lineJoin="round";x.stroke();
+  x.lineTo(px(vals.at(-1).date),T+ph);x.lineTo(px(vals[0].date),T+ph);x.closePath();
+  const g=x.createLinearGradient(0,T,0,T+ph);g.addColorStop(0,"rgba(31,74,58,.16)");g.addColorStop(1,"rgba(31,74,58,0)");x.fillStyle=g;x.fill();
+  const last=vals.at(-1);x.fillStyle=pine;x.beginPath();x.arc(px(last.date),py(last.value),4.5,0,Math.PI*2);x.fill();
+}
 $("#trendMode").onchange=drawWeight;
 let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
 function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`nextform-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);data.lastExport=Date.now();save()};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||!Array.isArray(o.workouts))throw 0;if(!confirm(`Replace this device's data with the backup (${o.workouts.length} workouts)?`))return;data=normalize(o);save();alert("Backup imported.")}catch{alert("That file isn't a NextForm backup.")}finally{e.target.value=""}};r.readAsText(f)};$("#resetBtn").onclick=async()=>{const cloud=window.NextFormCloud?.signedIn;if(!confirm(cloud?"Delete all NextForm data on this device AND in your Google account backup? This can't be undone.":"Delete all NextForm data on this device? Export a backup first if you might want it."))return;if(cloud){try{await window.NextFormCloud.deleteCloud()}catch{alert("Couldn't delete your cloud backup. Check your connection and try again.");return}}[KEY,DIRTY_KEY].forEach(k=>localStorage.removeItem(k));location.reload()}
@@ -578,8 +678,7 @@ function renderSimplePlanner(){
  const visible=BUILTIN_PLANS.filter(p=>p.category===activePlanCategory);
  $("#premadeWorkoutList").innerHTML=visible.map(p=>`
   <div class="planCard builtinPlan">
-   <span class="premadeBadge">${p.category.toUpperCase()}</span>
-   <b style="display:block;margin-top:5px">${p.name}</b>
+   <b class="planName">${p.name}</b>
    <div class="tiny muted">${p.desc}</div>
    <div class="planExercisePreview">${p.exercises.slice(0,4).map(e=>`<span>${e.name}</span>`).join("")}${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}</div>
    <div class="buttons"><button class="primary" onclick="startPremadePlan('${p.id}')">Start workout</button><button class="secondary" onclick="togglePremadeDetails('${p.id}')">View exercises</button></div>
@@ -713,7 +812,7 @@ function renderTimer(){
   const sec=timerSeconds(),running=!!timer.startedAt;
   const display=$("#workoutTimerDisplay"),state=$("#timerState"),btn=$("#timerStartPause");
   if(display)display.textContent=formatTimer(sec);
-  if(state)state.textContent=running?"RUNNING":sec?"PAUSED":"READY";
+  if(state)state.textContent=running?"Running":sec?"Paused":"Ready";state.dataset.state=running?"running":sec?"paused":"ready";
   if(btn)btn.textContent=running?"Pause":sec?"Resume":"Start";
 }
 function tickTimer(){
@@ -747,7 +846,21 @@ function resetWorkoutForm(){
 }
 tickTimer();
 
-function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile()}const titles={home:"Home",train:"Train",planner:"Planner",progress:"Progress",learn:"Learn",challenges:"Challenges",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));$("#pageTitle").textContent=titles[p];if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
+function setHeader(p=document.querySelector(".page.active")?.id||"home"){
+  const home=p==="home",name=(data.profile.name||"").trim().split(" ")[0];
+  $("#pageTitle").textContent=home?(name?`Hi ${name}`:"Welcome"):titles[p];
+  $("#pageKicker").textContent=home?new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}):"";
+  $("#pageKicker").hidden=!home;
+  setAvatar($("#avatarBtn"),data.profile.photo,data.profile.name);
+}
+$("#avatarBtn").addEventListener("click",()=>go("profile"));
+// Workout type as chips (the select stays as the source of truth)
+const WORKOUT_TYPES=["Strength","Running","Boxing","Mixed","Mobility","Other"];
+function syncTypeChips(){const v=$("#type").value;$("#typeChips").innerHTML=WORKOUT_TYPES.map(t=>`<button type="button" role="radio" aria-checked="${t===v}" class="chip${t===v?" active":""}" data-type="${t}" style="--c:${TYPE_COLORS[t]}">${t}</button>`).join("")}
+$("#typeChips").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;$("#type").value=b.dataset.type;$("#type").onchange()});
+{const orig=$("#type").onchange;$("#type").onchange=()=>{orig();syncTypeChips()}}
+syncTypeChips();
+function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile();setHeader()}const titles={home:"Home",train:"Train",planner:"Plans",progress:"Progress",learn:"Learn",challenges:"Quests",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));setHeader(p);if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
   $$("nav button").forEach(b=>{
     b.onclick=null;
     b.addEventListener("click",()=>go(b.dataset.page));
