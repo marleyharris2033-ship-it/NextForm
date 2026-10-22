@@ -664,7 +664,7 @@ function showOnboardingIfNeeded(){
   $("#setupHeight").value=data.profile.height||"";
   $("#setupSex").value=data.profile.sex||"male";
   $("#setupGoalWeight").value=data.profile.goalWeight||"";
-  $("#setupWeight").value=currentWeight?.()||"";
+  $("#setupWeight").value=weight()||"";
   pendingSetupPhoto=data.profile.photo||"";
   setAvatar($("#setupPhotoPreview"),pendingSetupPhoto,data.profile.name);
   $("#onboarding").classList.remove("hidden");
@@ -714,3 +714,4 @@ bindNavigation();
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{renderAll();
 showOnboardingIfNeeded();}catch(err){console.error("NextForm startup error:",err);}
+

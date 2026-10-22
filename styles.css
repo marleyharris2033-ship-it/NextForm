@@ -403,3 +403,11 @@ nav button span{
   .inlineExName{grid-column:1/-1}
   .inlineExerciseEditor .inlineSave,.inlineExerciseEditor .inlineCancel{width:100%}
 }
+
+
+/* Account controls: preserve the native hidden state. */
+#accountCard[hidden], #accountCard [hidden] { display: none !important; }
+.accountIdentity { overflow-wrap: anywhere; font-weight: 600; }
+.googleSignIn { background: #fff; color: #1f1f1f; border: 1px solid #747775; border-radius: 6px; padding: 12px 20px; min-height: 44px; font: 500 14px system-ui, sans-serif; cursor: pointer; }
+.googleSignIn:disabled { opacity: .55; cursor: wait; }
+.googleSignIn:focus-visible { outline: 3px solid #4285f4; outline-offset: 3px; }

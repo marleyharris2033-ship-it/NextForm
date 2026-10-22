@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1015"><title>NextForm</title>
-<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=editablelog1">
+<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=googleauth1">
 </head>
 <body>
 <div id="onboarding" class="onboarding hidden">
@@ -148,7 +148,16 @@
 <div class="chips" id="challengeChips"></div></div>
 <div id="challengeList"></div>
 </section>
-<section id="profile" class="page"><div class="card">
+<section id="profile" class="page">
+<div id="accountCard" class="card" hidden>
+  <h2>Account</h2>
+  <p id="accountIdentity" class="accountIdentity">Guest</p>
+  <p id="accountStatus" class="muted" role="status" aria-live="polite"></p>
+  <button id="googleSignIn" class="googleSignIn" type="button">Sign in with Google</button>
+  <button id="googleSignOut" class="secondary" type="button" hidden>Sign out</button>
+  <p class="tiny muted">Workouts stay in this browser and are not backed up to Google. Signing out or changing accounts does not hide or change this device’s workout records. Use Export backup to keep a copy.</p>
+</div>
+<div class="card">
 <div class="profileHead">
   <label class="photoPicker editPhoto">
     <input id="profilePhotoInput" type="file" accept="image/*">
@@ -172,4 +181,4 @@
     <button class="x logExRemove">×</button>
   </div>
 </template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=editablelog1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=googleauth1"></script><script type="module" src="auth.js?v=googleauth1"></script></body></html>
