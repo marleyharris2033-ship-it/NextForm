@@ -153,9 +153,9 @@ const CHALLENGES=[
 ["twentyfive","Quarter Century","Complete 25 workouts",25,600,d=>d.workouts.length],
 ["fifty","Fifty Club","Complete 50 workouts",50,1000,d=>d.workouts.length],
 ["hundred","Centurion","Complete 100 workouts",100,2000,d=>d.workouts.length],
-["streak3","Consistency I","Reach a 3-day training streak",3,150,d=>streak()],
-["streak5","Consistency II","Reach a 5-day training streak",5,250,d=>streak()],
-["streak7","Consistency III","Reach a 7-day training streak",7,400,d=>streak()],
+["streak3","Consistency I","Reach a 3-day training streak",3,150,d=>bestStreak()],
+["streak5","Consistency II","Reach a 5-day training streak",5,250,d=>bestStreak()],
+["streak7","Consistency III","Reach a 7-day training streak",7,400,d=>bestStreak()],
 ["pb1","Breakthrough","Set 1 strength PB",1,100,d=>d.workouts.reduce((s,w)=>s+(w.result?.pbs||0),0)],
 ["pb5","PB Hunter","Set 5 strength PBs",5,300,d=>d.workouts.reduce((s,w)=>s+(w.result?.pbs||0),0)],
 ["pb20","Progress Machine","Set 20 strength PBs",20,800,d=>d.workouts.reduce((s,w)=>s+(w.result?.pbs||0),0)],
@@ -170,7 +170,7 @@ const CHALLENGES=[
 ["gradeA","A-Class","Earn 3 A-or-better workout grades",3,300,d=>d.workouts.filter(w=>["A","S"].includes(w.result?.grade)).length],
 ["gradeS","S-Class","Earn your first S grade",1,500,d=>d.workouts.filter(w=>w.result?.grade==="S").length],
 ["gradeS5","S-Class Regular","Earn 5 S grades",5,1000,d=>d.workouts.filter(w=>w.result?.grade==="S").length],
-["fullbody6","Rotation Master","Complete all 6 built-in full-body workouts",6,750,d=>new Set(d.workouts.map(w=>w.planId).filter(x=>String(x).startsWith("builtin"))).size],
+["fullbody6","Rotation Master","Complete all 4 built-in full-body workouts",4,750,d=>new Set(d.workouts.map(w=>w.planId).filter(id=>BUILTIN_PLANS.some(p=>p.id===id&&p.category==="Full Body"))).size],
 ["weight3","Scale Habit","Log bodyweight 3 times",3,100,d=>d.weights.length],
 ["weight10","Data Driven","Log bodyweight 10 times",10,250,d=>d.weights.length],
 ["level5","Bronze Bound","Reach level 5",5,300,d=>levelInfo(d.xp).level],
@@ -185,7 +185,7 @@ const defaults={profile:{name:"",age:32,height:185,sex:"male",goalWeight:null,ph
 const OWNER_KEY="nextform-owner",DIRTY_KEY="nextform-dirty";
 function normalize(o){o=o&&typeof o==="object"?o:{};const arr=v=>Array.isArray(v)?v:[];return {...JSON.parse(JSON.stringify(defaults)),...o,profile:{...defaults.profile,...(o.profile&&typeof o.profile==="object"?o.profile:{})},workouts:arr(o.workouts).filter(w=>w&&typeof w==="object"),weights:arr(o.weights).filter(w=>w&&w.date&&+w.value),plans:arr(o.plans),schedule:o.schedule&&typeof o.schedule==="object"?o.schedule:{},claimedChallenges:arr(o.claimedChallenges),deletedWorkouts:arr(o.deletedWorkouts),xp:+o.xp||0,updatedAt:+o.updatedAt||0,version:3}}
 let data=(()=>{try{return normalize(JSON.parse(localStorage.getItem(KEY)||"{}"))}catch{return normalize({})}})();
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],today=()=>new Date().toISOString().slice(0,10);$("#date").value=today();$("#weightDate").value=today();
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],localDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`,today=()=>localDate(new Date());$("#date").value=today();$("#weightDate").value=today();
 const newId=()=>`${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
 function writeLocal(){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){console.error("NextForm could not save:",e);alert("NextForm couldn't save on this device (storage may be full or blocked). Export a backup now so nothing is lost.");return false}}
 function save(){data.updatedAt=Date.now();if(writeLocal())localStorage.setItem(DIRTY_KEY,"1");renderAll();window.dispatchEvent(new Event("nextform-saved"))}
@@ -219,6 +219,7 @@ function grade(w){
   for(const e of w.exercises||[]){
     const wt=+e.weight||0,sets=+e.sets||0,reps=+e.reps||0;
     if(e.name)exerciseCount++;
+    if(e.unit==="s")continue; // timed holds don't count towards volume or PBs
     volume+=wt*sets*reps;
     if(wt)bestRatio=Math.max(bestRatio,e1rm(wt,reps)/bw);
     const pb=priorBest(e.name,w.date);
@@ -367,10 +368,11 @@ function grade(w){
     breakdown
   };
 }
+function bestStreak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort(),best=0,run=0;for(let i=0;i<ds.length;i++){run=i&&(new Date(ds[i])-new Date(ds[i-1]))/86400000<=1?run+1:1;best=Math.max(best,run)}return best}
 function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
 function attrs(){let a={Strength:0,Endurance:0,Conditioning:0,Consistency:0,Progression:0,Mobility:0};data.workouts.forEach(w=>{let s=w.result?.score||50;if(["Strength","Mixed"].includes(w.type))a.Strength+=s*.06;if(["Running","Mixed"].includes(w.type))a.Endurance+=s*.065;if(["Boxing","Running","Mixed"].includes(w.type))a.Conditioning+=s*.055;if(w.type==="Mobility")a.Mobility+=s*.09;a.Consistency+=1.7;a.Progression+=(w.result?.pbs||0)*3.5});Object.keys(a).forEach(k=>a[k]=Math.min(100,Math.round(a[k])));return a}
 function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
-function renderHome(){let l=levelInfo(data.xp),w=week();$("#level").textContent=l.level;$("#rank").textContent=rankFor(l.level);$("#xpCurrent").textContent=l.into;$("#xpRemaining").textContent=`${l.need-l.into} to next level`;$("#xpBar").style.width=(l.into/l.need*100)+"%";$("#weightNow").textContent=weight()?.toFixed(1)||"—";$("#latestGrade").textContent=data.workouts.at(-1)?.result?.grade||"—";$("#streak").textContent=streak();$("#weekCount").textContent=w.ws.length;$("#weekMinutes").textContent=w.mins;$("#weekXP").textContent=w.xp;$("#weekVolume").textContent=w.vol.toLocaleString();$("#weekPBs").textContent=w.pbs;$("#weekGrade").textContent=w.g;$("#weekInsight").textContent=w.ws.length?`${w.ws.length} session${w.ws.length>1?"s":""} completed. ${w.pbs?`${w.pbs} PB${w.pbs>1?"s":""} this week. `:""}${w.mins>=150?"Excellent weekly training volume.":"Keep building your consistency."}`:"Log a workout to start your weekly report.";$("#attrs").innerHTML=Object.entries(attrs()).map(([k,v])=>`<div class="attr"><div class="row"><span>${k}</span><b>${v}</b></div><div class="tinybar"><i style="width:${v}%"></i></div></div>`).join("");let map={};data.workouts.forEach(x=>map[x.date]=(map[x.date]||0)+1);let h="";for(let i=34;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let k=d.toISOString().slice(0,10);h+=`<div class="heat ${map[k]?"on":""}" title="${k}"></div>`}$("#heatmap").innerHTML=h;renderBackupNudge();renderAchievements()}
+function renderHome(){let l=levelInfo(data.xp),w=week();$("#level").textContent=l.level;$("#rank").textContent=rankFor(l.level);$("#xpCurrent").textContent=l.into;$("#xpRemaining").textContent=`${l.need-l.into} to next level`;$("#xpBar").style.width=(l.into/l.need*100)+"%";$("#weightNow").textContent=weight()?.toFixed(1)||"—";$("#latestGrade").textContent=data.workouts.at(-1)?.result?.grade||"—";$("#streak").textContent=streak();$("#weekCount").textContent=w.ws.length;$("#weekMinutes").textContent=w.mins;$("#weekXP").textContent=w.xp;$("#weekVolume").textContent=w.vol.toLocaleString();$("#weekPBs").textContent=w.pbs;$("#weekGrade").textContent=w.g;$("#weekInsight").textContent=w.ws.length?`${w.ws.length} session${w.ws.length>1?"s":""} completed. ${w.pbs?`${w.pbs} PB${w.pbs>1?"s":""} this week. `:""}${w.mins>=150?"Excellent weekly training volume.":"Keep building your consistency."}`:"Log a workout to start your weekly report.";$("#attrs").innerHTML=Object.entries(attrs()).map(([k,v])=>`<div class="attr"><div class="row"><span>${k}</span><b>${v}</b></div><div class="tinybar"><i style="width:${v}%"></i></div></div>`).join("");let map={};data.workouts.forEach(x=>map[x.date]=(map[x.date]||0)+1);let h="";for(let i=34;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let k=localDate(d);h+=`<div class="heat ${map[k]?"on":""}" title="${k}"></div>`}$("#heatmap").innerHTML=h;renderBackupNudge();renderAchievements()}
 // Guests: remind them their workouts only live on this device.
 function renderBackupNudge(){
   const el=$("#backupNudge");if(!el)return;
@@ -386,12 +388,12 @@ $("#nudgeExport")?.addEventListener("click",()=>$("#exportBtn").click());
 window.addEventListener("nextform-auth",renderBackupNudge);
 // Ask the browser not to clear NextForm's storage automatically (helps on Safari/Chrome when granted).
 navigator.storage?.persist?.().catch(()=>{});
-const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Reach a 3-day streak",()=>streak()>=3],["🔥","On Fire","Reach a 7-day streak",()=>streak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
+const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Reach a 3-day streak",()=>bestStreak()>=3],["🔥","On Fire","Reach a 7-day streak",()=>bestStreak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
 function renderAchievements(){let cards=ACH.map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("");$("#achievements").innerHTML=cards;$("#achievementPreview").innerHTML=`<div class="achievementGrid">${ACH.slice(0,4).map(([ic,t,d,fn])=>`<div class="achievement ${fn()?"":"locked"}"><div class="icon">${ic}</div><strong>${t}</strong><span>${fn()?"Unlocked":d}</span></div>`).join("")}</div>`}
-function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
+function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");if(e.unit==="s"){r.querySelector(".repsWrap").dataset.unit="s";r.querySelector(".exreps").setAttribute("aria-label","Seconds")}r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
 addEx({name:"Bench Press"});addEx({name:"Back Squat"});$("#addEx").onclick=()=>addEx();$("#type").onchange=()=>{$("#runningFields").classList.toggle("hidden",$("#type").value!=="Running");$("#boxingFields").classList.toggle("hidden",$("#type").value!=="Boxing")};
 $("#loadPlanBtn").onclick=()=>go("planner");
-$("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0})).filter(e=>e.name),w={id:newId(),updatedAt:Date.now(),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><span class="muted">WORKOUT COMPLETE</span><div class="bigGrade">${w.result.grade}</div><div class="bigXP">+${w.result.xp} XP</div><p>${w.result.score}/100</p><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`}
+$("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0,...(r.querySelector(".repsWrap").dataset.unit==="s"?{unit:"s"}:{})})).filter(e=>e.name),w={id:newId(),updatedAt:Date.now(),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");if($("#finish").disabled)return;$("#finish").disabled=true;setTimeout(()=>{$("#finish").disabled=false},1500);w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();resetWorkoutForm();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><span class="muted">WORKOUT COMPLETE</span><div class="bigGrade">${w.result.grade}</div><div class="bigXP">+${w.result.xp} XP</div><p>${w.result.score}/100</p><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`}
 $("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
 
 // ===== EDITABLE TRAINING LOG =====
@@ -526,7 +528,7 @@ window.openAddExerciseToWorkout=id=>{
   };
 };
 
-function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`
+function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.unit!=="s").forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`
   <div class="logWorkoutCard">
     <div class="row between">
       <div>
@@ -542,7 +544,7 @@ function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).
     <div class="logExercises">
       ${(w.exercises||[]).length?(w.exercises||[]).map((e,ei)=>`
         <div class="logExerciseItem">
-          <div><b>${e.name}</b><span>${e.sets||0} sets · ${e.weight||0} kg × ${e.reps||0}</span></div>
+          <div><b>${e.name}</b><span>${e.sets||0} sets · ${e.unit==="s"?`${e.reps||0}s hold`:`${e.weight||0} kg × ${e.reps||0}`}</span></div>
           <button class="miniDelete" onclick="deleteExerciseEntry('${w.id}',${ei})">Delete</button>
         </div>`).join(""):`<div class="tiny muted">No exercises logged.</div>`}
     </div>
@@ -560,7 +562,7 @@ let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.
 function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`nextform-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);data.lastExport=Date.now();save()};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||!Array.isArray(o.workouts))throw 0;if(!confirm(`Replace this device's data with the backup (${o.workouts.length} workouts)?`))return;data=normalize(o);save();alert("Backup imported.")}catch{alert("That file isn't a NextForm backup.")}finally{e.target.value=""}};r.readAsText(f)};$("#resetBtn").onclick=async()=>{const cloud=window.NextFormCloud?.signedIn;if(!confirm(cloud?"Delete all NextForm data on this device AND in your Google account backup? This can't be undone.":"Delete all NextForm data on this device? Export a backup first if you might want it."))return;if(cloud){try{await window.NextFormCloud.deleteCloud()}catch{alert("Couldn't delete your cloud backup. Check your connection and try again.");return}}[KEY,DIRTY_KEY].forEach(k=>localStorage.removeItem(k));location.reload()}
 
 
-window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";p.exercises.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8}));$("#notes").value=`Plan: ${p.name}\nTargets: ${p.exercises.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;$("#finish").dataset.planId=p.id;go("train")};
+window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";p.exercises.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8,unit:/s$/.test(String(e.reps))?"s":undefined}));$("#notes").value=`Plan: ${p.name}\nTargets: ${p.exercises.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;$("#finish").dataset.planId=p.id;go("train")};
 
 window.togglePremadeDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
 let activePlanCategory="Full Body";
@@ -629,9 +631,12 @@ if(workoutBackBtn){
 
 // ===== PROFILE SETUP + WORKOUT TIMER =====
 let pendingSetupPhoto="";
-let workoutTimerSeconds=0;
-let workoutTimerRunning=false;
+// Timer state is a start time plus banked seconds, so it stays right when the phone locks or the app reloads.
+const TIMER_KEY="nextform-timer";
+let timer=(()=>{try{const t=JSON.parse(localStorage.getItem(TIMER_KEY)||"{}");return{startedAt:+t.startedAt||null,banked:+t.banked||0}}catch{return{startedAt:null,banked:0}}})();
 let workoutTimerInterval=null;
+const timerSeconds=()=>Math.floor(timer.banked+(timer.startedAt?(Date.now()-timer.startedAt)/1000:0));
+const saveTimer=()=>{try{localStorage.setItem(TIMER_KEY,JSON.stringify(timer))}catch{}};
 
 function avatarMarkupData(photo,name){
   return photo || "";
@@ -705,30 +710,42 @@ function formatTimer(sec){
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
 function renderTimer(){
+  const sec=timerSeconds(),running=!!timer.startedAt;
   const display=$("#workoutTimerDisplay"),state=$("#timerState"),btn=$("#timerStartPause");
-  if(display)display.textContent=formatTimer(workoutTimerSeconds);
-  if(state)state.textContent=workoutTimerRunning?"RUNNING":workoutTimerSeconds?"PAUSED":"READY";
-  if(btn)btn.textContent=workoutTimerRunning?"Pause":workoutTimerSeconds?"Resume":"Start";
+  if(display)display.textContent=formatTimer(sec);
+  if(state)state.textContent=running?"RUNNING":sec?"PAUSED":"READY";
+  if(btn)btn.textContent=running?"Pause":sec?"Resume":"Start";
 }
-function startPauseTimer(){
-  workoutTimerRunning=!workoutTimerRunning;
+function tickTimer(){
   clearInterval(workoutTimerInterval);
-  if(workoutTimerRunning){
-    workoutTimerInterval=setInterval(()=>{workoutTimerSeconds++;renderTimer()},1000);
-  }
+  if(timer.startedAt)workoutTimerInterval=setInterval(renderTimer,1000);
   renderTimer();
 }
+function startPauseTimer(){
+  if(timer.startedAt){timer.banked=timerSeconds();timer.startedAt=null}
+  else timer.startedAt=Date.now();
+  saveTimer();tickTimer();
+}
+function resetTimer(){timer={startedAt:null,banked:0};saveTimer();tickTimer()}
 $("#timerStartPause")?.addEventListener("click",startPauseTimer);
 $("#timerReset")?.addEventListener("click",()=>{
-  if(workoutTimerSeconds&&!confirm("Reset the workout timer?"))return;
-  clearInterval(workoutTimerInterval);workoutTimerRunning=false;workoutTimerSeconds=0;renderTimer();
+  if(timerSeconds()&&!confirm("Reset the workout timer?"))return;
+  resetTimer();
 });
 $("#timerUseDuration")?.addEventListener("click",()=>{
-  const mins=Math.max(1,Math.round(workoutTimerSeconds/60));
+  const mins=Math.max(1,Math.round(timerSeconds()/60));
   const input=$("#duration");
   if(input)input.value=mins;
 });
-renderTimer();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")renderTimer()});
+// After a workout is saved: clear the form so it can't be logged twice by accident.
+function resetWorkoutForm(){
+  $("#exerciseRows").innerHTML="";addEx({name:"Bench Press"});addEx({name:"Back Squat"});
+  ["#notes","#distance","#runMinutes","#rounds"].forEach(id=>{$(id).value=""});
+  $("#duration").value=45;$("#effort").value=7;$("#roundLength").value=3;$("#date").value=today();
+  resetTimer();
+}
+tickTimer();
 
 function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile()}const titles={home:"Home",train:"Train",planner:"Planner",progress:"Progress",learn:"Learn",challenges:"Challenges",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));$("#pageTitle").textContent=titles[p];if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
   $$("nav button").forEach(b=>{
