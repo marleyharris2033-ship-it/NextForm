@@ -88,3 +88,12 @@ body:has(#onboarding:not(.hidden)):not(.welcome-open) #app{visibility:hidden}
  .history,.pb,.challengeTop{flex-wrap:wrap}.logActions{flex-wrap:wrap}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+/* Backup reminder and sync status */
+.backupNudge{background:#f3f1e4;border-color:#d9cfa8}
+.backupNudge h2{margin-bottom:6px}.backupNudge p{margin:0 0 12px;font-size:14px}
+.syncStatus{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:4px 0 12px}
+.syncStatus::before{content:"";width:9px;height:9px;border-radius:50%;background:#9aa79c;flex-shrink:0}
+.syncStatus[data-state="ok"]::before{background:#3f8a55}
+.syncStatus[data-state="busy"]::before{background:#c79a2c}
+.syncStatus[data-state="error"]::before{background:var(--danger)}
+.syncStatus:empty{display:none}
