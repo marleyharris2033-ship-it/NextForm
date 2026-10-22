@@ -4,7 +4,7 @@ const byDateThenId = (a, b) =>
   String(a.date || '').localeCompare(String(b.date || '')) || String(a.id).localeCompare(String(b.id));
 
 export function hasContent(d) {
-  return !!(d && ((d.workouts || []).length || (d.weights || []).length || d.profile?.setupComplete));
+  return !!(d && ((d.workouts || []).length || (d.weights || []).length || (d.foodLog || []).length || d.profile?.setupComplete));
 }
 
 // Combine this device's data with the cloud copy without losing anything either side added.
@@ -12,16 +12,21 @@ export function hasContent(d) {
 export function mergeData(local, remote, challengeXp = {}) {
   if (!remote) return local;
   if (!local) return remote;
-  const tombstones = [...new Set([...(local.deletedWorkouts || []), ...(remote.deletedWorkouts || [])].map(String))];
-  const dead = new Set(tombstones);
-
-  const workouts = new Map();
-  for (const w of [...(remote.workouts || []), ...(local.workouts || [])]) {
-    const id = String(w.id);
-    if (dead.has(id)) continue;
-    const prev = workouts.get(id);
-    if (!prev || (w.updatedAt || 0) >= (prev.updatedAt || 0)) workouts.set(id, w);
-  }
+  // Entries keyed by id; newest edit wins; deletions on either device stick.
+  const mergeEntries = (key, tombKey) => {
+    const tombs = [...new Set([...(local[tombKey] || []), ...(remote[tombKey] || [])].map(String))];
+    const dead = new Set(tombs);
+    const byId = new Map();
+    for (const e of [...(remote[key] || []), ...(local[key] || [])]) {
+      const id = String(e.id);
+      if (dead.has(id)) continue;
+      const prev = byId.get(id);
+      if (!prev || (e.updatedAt || 0) >= (prev.updatedAt || 0)) byId.set(id, e);
+    }
+    return { list: [...byId.values()].sort(byDateThenId), tombs: tombs.slice(-500) };
+  };
+  const w = mergeEntries('workouts', 'deletedWorkouts');
+  const food = mergeEntries('foodLog', 'deletedFood');
 
   const weights = new Map();
   for (const w of [...(remote.weights || []), ...(local.weights || [])]) weights.set(`${w.date}|${w.value}`, w);
@@ -33,7 +38,7 @@ export function mergeData(local, remote, challengeXp = {}) {
   profile.setupComplete = !!(local.profile?.setupComplete || remote.profile?.setupComplete);
 
   const claimedChallenges = [...new Set([...(local.claimedChallenges || []), ...(remote.claimedChallenges || [])])];
-  const mergedWorkouts = [...workouts.values()].sort(byDateThenId);
+  const mergedWorkouts = w.list;
   const xp = mergedWorkouts.reduce((s, w) => s + (w.result?.xp || 0), 0) +
     claimedChallenges.reduce((s, id) => s + (challengeXp[id] || 0), 0);
 
@@ -44,7 +49,9 @@ export function mergeData(local, remote, challengeXp = {}) {
     workouts: mergedWorkouts,
     weights: [...weights.values()].sort((a, b) => String(a.date).localeCompare(String(b.date))),
     claimedChallenges,
-    deletedWorkouts: tombstones.slice(-500),
+    deletedWorkouts: w.tombs,
+    foodLog: food.list,
+    deletedFood: food.tombs,
     xp,
     lastExport: Math.max(local.lastExport || 0, remote.lastExport || 0) || null,
     updatedAt: Math.max(local.updatedAt || 0, remote.updatedAt || 0)

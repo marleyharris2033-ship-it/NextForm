@@ -6,7 +6,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=ui1">
+<link rel="stylesheet" href="ui.css?v=food1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -82,6 +82,11 @@
   <p id="weekInsight" class="insight">Log a workout to start your weekly report.</p>
 </div>
 
+<button type="button" class="card fuelCard" data-go="food" aria-label="Open food log">
+  <div class="sectionHead"><h2>Food today</h2><span class="muted" id="fuelLeft"></span></div>
+  <div class="fuelBars" id="fuelBars"></div>
+</button>
+
 <div class="tiles">
   <div class="tile"><p class="tileLabel">Streak</p><p class="tileValue"><b id="streak">0</b> <span id="streakUnit">days</span></p><p class="tileSub" id="streakSub">Train today to start one</p></div>
   <div class="tile"><p class="tileLabel">Body weight</p><p class="tileValue"><b id="weightNow">–</b> <span>kg</span></p><svg class="spark" id="weightSpark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"></svg><p class="tileSub" id="weightSub"></p></div>
@@ -109,7 +114,7 @@
 <div class="workoutBackRow">
   <button id="workoutBackBtn" class="secondary workoutBackBtn">← Back</button>
 </div>
-<div class="card"><div class="sectionHead"><h2>Log workout</h2><button class="secondary small" id="loadPlanBtn">Use a plan</button></div>
+<div class="card"><div class="sectionHead"><h2>Log workout</h2><div class="row"><button class="secondary small" type="button" data-go="learn">Exercises</button><button class="secondary small" id="loadPlanBtn">Use a plan</button></div></div>
 <div class="typeChips" id="typeChips" role="radiogroup" aria-label="Workout type"></div>
 <div class="form2"><label class="srOnly">Type<select id="type"><option>Strength</option><option>Boxing</option><option>Running</option><option>Mixed</option><option>Mobility</option><option>Other</option></select></label><label>Date<input id="date" type="date"></label><label>Duration (min)<input id="duration" type="number" value="45" min="1"></label><label>Effort / RPE<input id="effort" type="number" value="7" min="1" max="10"></label></div>
 <div id="runningFields" class="form2 hidden"><label>Distance (km)<input id="distance" type="number" step=".01" min="0"></label><label>Time (min)<input id="runMinutes" type="number" step=".1" min="0"></label></div>
@@ -123,6 +128,7 @@
 <section id="planner" class="page">
   <div class="card plannerHero">
     <p class="muted">Pick a split, then rotate through its sessions. Each one uses different exercises.</p>
+    <button class="link" type="button" data-go="learn">Browse the exercise library</button>
     <div id="planCategoryChips" class="chips plannerCats"></div>
   </div>
   <div id="premadeWorkoutList"></div>
@@ -184,6 +190,39 @@
 <section id="learn" class="page"><div class="card"><h2>Exercise library</h2><p class="muted">Technique cues and video demos. Start light while you learn a movement.</p><input id="learnSearch" placeholder="Search exercises..."><div class="chips" id="categoryChips"></div></div><div id="exerciseLibrary"></div></section>
 
 
+<section id="food" class="page">
+<div class="dayNav">
+  <button type="button" class="iconBtn" id="foodPrev" aria-label="Previous day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <p id="foodDayLabel">Today</p>
+  <button type="button" class="iconBtn" id="foodNext" aria-label="Next day"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+</div>
+<div class="card fuelSummary">
+  <div class="fuelTop">
+    <div class="kcalRing"><svg viewBox="0 0 120 120" id="kcalRing" aria-hidden="true"></svg><div><b id="kcalLeft">0</b><span id="kcalLeftLabel">kcal left</span></div></div>
+    <dl class="kcalFacts"><div><dt>Eaten</dt><dd id="kcalEaten">0</dd></div><div><dt>Target</dt><dd id="kcalTarget">0</dd></div></dl>
+  </div>
+  <div class="macros" id="macroBars"></div>
+</div>
+<div class="addRow">
+  <button type="button" class="primary" id="openScan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/></svg>Scan barcode</button>
+  <button type="button" class="secondary" id="openSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Search food</button>
+</div>
+<div id="mealList"></div>
+<div class="card">
+  <div class="sectionHead"><h2>Daily targets</h2><button class="link" type="button" id="editTargets">Edit</button></div>
+  <p class="muted small" id="targetNote"></p>
+  <div id="targetForm" class="hidden">
+    <div class="form2">
+      <label>Calories (kcal)<input id="tKcal" type="number" min="800" max="6000" step="10" inputmode="numeric"></label>
+      <label>Protein (g)<input id="tProtein" type="number" min="0" max="400" inputmode="numeric"></label>
+      <label>Carbs (g)<input id="tCarbs" type="number" min="0" max="800" inputmode="numeric"></label>
+      <label>Fat (g)<input id="tFat" type="number" min="0" max="300" inputmode="numeric"></label>
+    </div>
+    <div class="row topgap"><button class="primary" type="button" id="saveTargets">Save targets</button><button class="secondary" type="button" id="resetTargets">Use suggested</button></div>
+  </div>
+</div>
+</section>
+
 <section id="challenges" class="page">
 <div class="card"><p class="muted">Finish quests for bonus XP. Progress updates from your workout history.</p>
 <div class="chips" id="challengeChips"></div></div>
@@ -211,7 +250,57 @@
 </div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
-<nav class="tabbar" aria-label="Main"><button type="button" data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button><button type="button" data-page="planner" aria-label="Plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Plan</span></button><button type="button" data-page="progress" aria-label="Progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg><span>Progress</span></button><button type="button" data-page="train" class="trainTab" aria-label="Train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg><span>Train</span></button><button type="button" data-page="learn" aria-label="Learn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M10.5 9.5v5l4-2.5z"/></svg><span>Learn</span></button><button type="button" data-page="challenges" aria-label="Quests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg><span>Quests</span></button><button type="button" data-page="profile" aria-label="Profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-3.5 3.7-5 7-5s6 1.5 7 5"/></svg><span>Profile</span></button></nav>
+<nav class="tabbar" aria-label="Main"><button type="button" data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button><button type="button" data-page="planner" aria-label="Plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Plan</span></button><button type="button" data-page="progress" aria-label="Progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg><span>Progress</span></button><button type="button" data-page="train" class="trainTab" aria-label="Train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg><span>Train</span></button><button type="button" data-page="food" aria-label="Food"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/></svg><span>Food</span></button><button type="button" data-page="challenges" aria-label="Quests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg><span>Quests</span></button><button type="button" data-page="profile" aria-label="Profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-3.5 3.7-5 7-5s6 1.5 7 5"/></svg><span>Profile</span></button></nav>
+</div>
+<div id="foodSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheetHead">
+    <button type="button" class="iconBtn" id="sheetBack" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2 id="sheetTitle">Add food</h2>
+    <button type="button" class="iconBtn" id="sheetClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="sheetTabs chips" role="tablist">
+    <button type="button" class="chip" data-tab="search" role="tab">Search</button>
+    <button type="button" class="chip" data-tab="scan" role="tab">Scan</button>
+    <button type="button" class="chip" data-tab="recent" role="tab">Recent</button>
+    <button type="button" class="chip" data-tab="manual" role="tab">Enter manually</button>
+  </div>
+  <div class="sheetBody">
+    <div data-pane="search">
+      <form id="foodSearchForm" class="searchRow"><input id="foodQuery" type="search" placeholder="e.g. Greek yogurt, Weetabix" autocomplete="off" enterkeyhint="search"><button class="primary" type="submit">Search</button></form>
+      <p id="searchStatus" class="muted small" role="status" aria-live="polite"></p>
+      <div id="searchResults" class="foodResults"></div>
+    </div>
+    <div data-pane="scan">
+      <div class="scanner"><video id="scanVideo" playsinline muted></video><div class="scanFrame" aria-hidden="true"></div></div>
+      <p id="scanStatus" class="muted small" role="status" aria-live="polite">Point your camera at the barcode.</p>
+      <form id="barcodeForm" class="searchRow"><input id="barcodeInput" inputmode="numeric" pattern="[0-9]*" placeholder="Or type the barcode number" autocomplete="off"><button class="secondary" type="submit">Look up</button></form>
+    </div>
+    <div data-pane="recent"><div id="recentFoods" class="foodResults"></div></div>
+    <div data-pane="manual">
+      <form id="manualForm">
+        <label>Food name<input id="mName" required placeholder="e.g. Chicken wrap"></label>
+        <div class="form2 topgap">
+          <label>Calories (kcal)<input id="mKcal" type="number" min="0" step="1" inputmode="decimal" required></label>
+          <label>Protein (g)<input id="mProtein" type="number" min="0" step=".1" inputmode="decimal"></label>
+          <label>Carbs (g)<input id="mCarbs" type="number" min="0" step=".1" inputmode="decimal"></label>
+          <label>Fat (g)<input id="mFat" type="number" min="0" step=".1" inputmode="decimal"></label>
+        </div>
+        <p class="muted small topgap">Enter the totals for what you ate.</p>
+        <button class="primary full" type="submit">Add food</button>
+      </form>
+    </div>
+    <div data-pane="portion">
+      <div class="portionHead"><img id="pImage" alt="" hidden><div><h3 id="pName"></h3><p class="muted small" id="pBrand"></p></div></div>
+      <label class="topgap">Amount (g or ml)<input id="pGrams" type="number" min="1" step="1" inputmode="decimal"></label>
+      <div class="chips" id="pQuick"></div>
+      <div class="portionTotals" id="pTotals"></div>
+      <p class="tiny muted" id="pSource"></p>
+      <p class="fieldLabel topgap">Meal</p>
+      <div class="chips" id="pMeal"></div>
+      <button class="primary full" type="button" id="pSave">Add food</button>
+      <button class="danger full hidden" type="button" id="pDelete">Remove from log</button>
+    </div>
+  </div>
 </div>
 <template id="exTemplate"><div class="exrow"><input class="exname" list="exerciseNames" placeholder="Exercise"><span class="unitWrap" data-unit="sets"><input class="exsets" type="number" min="1" value="3" aria-label="Sets"></span><span class="unitWrap repsWrap" data-unit="reps"><input class="exreps" type="number" min="1" value="8" aria-label="Reps"></span><span class="unitWrap" data-unit="kg"><input class="exweight" type="number" min="0" step=".5" aria-label="Weight in kg"></span><button class="x" aria-label="Remove exercise">×</button></div></template>
 
@@ -224,4 +313,4 @@
     <button class="x logExRemove">×</button>
   </div>
 </template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=ui1"></script><script src="welcome.js?v=ui1"></script><script type="module" src="auth.js?v=ui1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=food1"></script><script src="food.js?v=food1"></script><script src="welcome.js?v=food1"></script><script type="module" src="auth.js?v=food1"></script></body></html>

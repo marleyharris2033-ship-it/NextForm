@@ -340,3 +340,77 @@ body:has(#onboarding:not(.hidden)):not(.welcome-open) #app{visibility:hidden}
   .tabbar span{font-size:9.5px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- Food ---------- */
+.iconBtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--mist);color:var(--pine);display:grid;place-items:center;flex-shrink:0}
+.iconBtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.iconBtn:disabled{opacity:.35}
+.dayNav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.dayNav p{font:700 18px var(--display);color:var(--pine-deep)}
+.fuelTop{display:flex;align-items:center;gap:20px}
+.kcalRing{position:relative;width:140px;height:140px;flex-shrink:0}
+.kcalRing svg{width:100%;height:100%}
+.kcalRing>div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.kcalRing b{font:750 30px/1 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kcalRing span{font-size:12.5px;color:var(--stone);margin-top:4px}
+.kcalFacts{margin:0;display:grid;gap:12px}
+.kcalFacts dt{font-size:13px;color:var(--stone)}
+.kcalFacts dd{margin:0;font:700 22px var(--display);font-variant-numeric:tabular-nums}
+.macros,.fuelBars{display:grid;gap:12px;margin-top:18px}
+.fuelBars{margin-top:4px}
+.macroHead{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:6px}
+.macroHead b{font:700 16px var(--display);font-variant-numeric:tabular-nums}
+.macroHead small{font:500 13px var(--text);color:var(--stone)}
+.macro .tinybar i{background:var(--c)}
+.fuelCard{display:block;width:100%;text-align:left;border:0;font:inherit;color:inherit}
+.fuelCard:active{transform:scale(.995)}
+.addRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.addRow button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px}
+.addRow svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mealCard{padding:16px 20px}
+.mealCard .sectionHead{margin-bottom:4px;align-items:center}
+.mealCard .iconBtn{width:36px;height:36px}
+.mealCard .iconBtn svg{width:20px;height:20px}
+.emptyMeal{padding:4px 0 2px}
+.foodItems{list-style:none;margin:0;padding:0}
+.foodItems li+li{border-top:1px solid var(--hairline)}
+.foodItem,.foodResult{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border:0;background:none;text-align:left;color:inherit;font:inherit;min-height:52px}
+.foodItem b,.foodResult b{display:block;font-weight:600;font-size:15px}
+.foodItem small,.foodResult small{display:block;color:var(--stone);font-size:13px;margin-top:1px}
+.foodKcal{font:700 16px var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.foodResults .foodResult+.foodResult{border-top:1px solid var(--hairline)}
+.foodResult svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke:var(--stone);stroke-width:2}
+
+/* Add-food sheet */
+body.sheetOpen{overflow:hidden}
+.sheet{position:fixed;inset:0;z-index:1200;background:var(--snow);display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.sheetHead{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;padding:12px 16px 6px}
+.sheetHead h2{text-align:center;font-size:19px}
+.sheetHead .iconBtn[hidden]{display:block!important;visibility:hidden}
+.sheetTabs{padding:6px 16px 10px}
+.sheetBody{flex:1;overflow:auto;padding:4px 16px 32px}
+.searchRow{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+.searchRow input{background:#fff}
+#searchStatus,#scanStatus{margin:8px 0}
+.foodResults{background:#fff;border-radius:var(--r-md);padding:0 16px}
+.foodResults:empty{display:none}
+.foodResults>p{padding:14px 0}
+.scanner{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#0f1d18;aspect-ratio:4/3;margin-top:4px}
+.scanner video{width:100%;height:100%;object-fit:cover;display:block}
+.scanFrame{position:absolute;left:12%;right:12%;top:30%;bottom:30%;border-radius:16px;box-shadow:0 0 0 2000px rgba(15,29,24,.35);border:3px solid rgba(255,255,255,.9)}
+.portionHead{display:flex;gap:14px;align-items:center;background:#fff;border-radius:var(--r-md);padding:14px}
+.portionHead img{width:56px;height:56px;object-fit:contain;border-radius:10px;background:var(--mist)}
+.portionHead h3{font-size:18px}
+#pGrams{background:#fff;font:700 22px var(--display)}
+#pQuick{margin-top:8px}
+#pQuick .chip,#pMeal .chip{background:#fff}
+#pMeal .chip.active{background:var(--pine)}
+.portionTotals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 8px}
+.portionTotals div{background:#fff;border-radius:var(--r-sm);padding:10px 8px;text-align:center}
+.portionTotals span{display:block;font-size:12px;color:var(--stone)}
+.portionTotals b{font:700 18px var(--display);font-variant-numeric:tabular-nums}
+.portionTotals small{font:500 11px var(--text);color:var(--stone)}
+.fieldLabel{font-size:13px;font-weight:600;color:var(--stone)}
+#pDelete{margin-top:10px}
+@media(max-width:380px){.kcalRing{width:120px;height:120px}.fuelTop{gap:14px}.portionTotals b{font-size:16px}}
