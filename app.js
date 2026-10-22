@@ -185,7 +185,7 @@ const defaults={profile:{name:"",age:32,height:185,sex:"male",goalWeight:null,ph
 const OWNER_KEY="nextform-owner",DIRTY_KEY="nextform-dirty";
 function normalize(o){o=o&&typeof o==="object"?o:{};const arr=v=>Array.isArray(v)?v:[];return {...JSON.parse(JSON.stringify(defaults)),...o,profile:{...defaults.profile,...(o.profile&&typeof o.profile==="object"?o.profile:{})},workouts:arr(o.workouts).filter(w=>w&&typeof w==="object"),weights:arr(o.weights).filter(w=>w&&w.date&&+w.value),plans:arr(o.plans),schedule:o.schedule&&typeof o.schedule==="object"?o.schedule:{},claimedChallenges:arr(o.claimedChallenges),deletedWorkouts:arr(o.deletedWorkouts),foodLog:arr(o.foodLog).filter(e=>e&&typeof e==="object"&&e.date),deletedFood:arr(o.deletedFood),nutrition:o.nutrition&&typeof o.nutrition==="object"?o.nutrition:{},xp:+o.xp||0,updatedAt:+o.updatedAt||0,version:3}}
 let data=(()=>{try{return normalize(JSON.parse(localStorage.getItem(KEY)||"{}"))}catch{return normalize({})}})();
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],localDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`,today=()=>localDate(new Date());$("#date").value=today();$("#weightDate").value=today();
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],localDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`,today=()=>localDate(new Date());$("#weightDate").value=today();
 const newId=()=>`${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
 function writeLocal(){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){console.error("NextForm could not save:",e);alert("NextForm couldn't save on this device (storage may be full or blocked). Export a backup now so nothing is lost.");return false}}
 function save(){data.updatedAt=Date.now();if(writeLocal())localStorage.setItem(DIRTY_KEY,"1");renderAll();window.dispatchEvent(new Event("nextform-saved"))}
@@ -220,7 +220,7 @@ function grade(w){
     const wt=+e.weight||0,sets=+e.sets||0,reps=+e.reps||0;
     if(e.name)exerciseCount++;
     if(e.unit==="s")continue; // timed holds don't count towards volume or PBs
-    volume+=wt*sets*reps;
+    volume+=Array.isArray(e.setsDetail)&&e.setsDetail.length?e.setsDetail.reduce((v,x)=>v+(+x.kg||0)*(+x.reps||0),0):wt*sets*reps;
     if(wt)bestRatio=Math.max(bestRatio,e1rm(wt,reps)/bw);
     const pb=priorBest(e.name,w.date);
     if(pb&&e1rm(wt,reps)>pb*1.005)pbs++;
@@ -370,7 +370,6 @@ function grade(w){
 }
 function bestStreak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort(),best=0,run=0;for(let i=0;i<ds.length;i++){run=i&&(new Date(ds[i])-new Date(ds[i-1]))/86400000<=1?run+1:1;best=Math.max(best,run)}return best}
 function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
-function attrs(){let a={Strength:0,Endurance:0,Conditioning:0,Consistency:0,Progression:0,Mobility:0};data.workouts.forEach(w=>{let s=w.result?.score||50;if(["Strength","Mixed"].includes(w.type))a.Strength+=s*.06;if(["Running","Mixed"].includes(w.type))a.Endurance+=s*.065;if(["Boxing","Running","Mixed"].includes(w.type))a.Conditioning+=s*.055;if(w.type==="Mobility")a.Mobility+=s*.09;a.Consistency+=1.7;a.Progression+=(w.result?.pbs||0)*3.5});Object.keys(a).forEach(k=>a[k]=Math.min(100,Math.round(a[k])));return a}
 function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
 const WEEK_GOALS={sessions:4,minutes:150,xp:1500};
 const TYPE_COLORS={Strength:"var(--pine)",Running:"var(--glacier)",Boxing:"var(--amber)",Mobility:"var(--lichen)",Mixed:"var(--moss)",Other:"var(--stone)"};
@@ -434,7 +433,11 @@ function renderHome(){
   const used=[...new Set(per.flatMap(p=>p.ws.map(x=>TYPE_COLORS[x.type]?x.type:"Other")))];
   $("#typeKey").innerHTML=used.map(t=>`<li style="--c:${TYPE_COLORS[t]}">${t}</li>`).join("");
   // Attributes
-  $("#attrs").innerHTML=Object.entries(attrs()).map(([k,v])=>`<div class="attr"><span>${k}</span><div class="tinybar"><i style="width:${v}%"></i></div><b>${v}</b></div>`).join("");
+  // Skills (RPG layer, rpg.js)
+  const ch=characterFrom(data.workouts);
+  $("#totalLevel").textContent=`Total level ${ch.totalLevel}`;
+  $("#skillList").innerHTML=ch.skills.map(k=>`<div class="skill${k.xp?"":" untrained"}"><span class="hex">${k.level}</span><div class="skillInfo"><div class="skillHead"><span>${k.name}</span><small>${k.max?"Max level":`${fmt(k.need-k.into)} XP to ${k.level+1}`}</small></div><div class="tinybar"><i style="width:${k.max?100:k.into/k.need*100}%"></i></div></div></div>`).join("");
+  $("#ascentClass").textContent=ch.title;
   renderBackupNudge();renderAchievements();
 }
 // Guests: remind them their workouts only live on this device.
@@ -460,10 +463,6 @@ function renderAchievements(){
   const sorted=[...items.filter(a=>a.on),...items.filter(a=>!a.on)];
   $("#achievementPreview").innerHTML=`<div class="badgeStrip">${sorted.map(a=>`<div class="badge ${a.on?"":"locked"}"><span class="badgeIcon">${a.ic}</span><span>${a.t}</span></div>`).join("")}</div>`;
 }
-function addEx(e={}){let f=$("#exTemplate").content.cloneNode(true),r=f.querySelector(".exrow");if(e.unit==="s"){r.querySelector(".repsWrap").dataset.unit="sec";r.querySelector(".exreps").setAttribute("aria-label","Seconds")}r.querySelector(".exname").value=e.name||"";r.querySelector(".exsets").value=e.sets||3;r.querySelector(".exreps").value=e.reps||8;r.querySelector(".exweight").value=e.weight??"";r.querySelector(".x").onclick=()=>r.remove();$("#exerciseRows").appendChild(f)}
-addEx({name:"Bench Press"});addEx({name:"Back Squat"});$("#addEx").onclick=()=>addEx();$("#type").onchange=()=>{$("#runningFields").classList.toggle("hidden",$("#type").value!=="Running");$("#boxingFields").classList.toggle("hidden",$("#type").value!=="Boxing")};
-$("#loadPlanBtn").onclick=()=>go("planner");
-$("#finish").onclick=()=>{let ex=$$("#exerciseRows .exrow").map(r=>({name:r.querySelector(".exname").value.trim(),sets:+r.querySelector(".exsets").value||0,reps:+r.querySelector(".exreps").value||0,weight:+r.querySelector(".exweight").value||0,...(r.querySelector(".repsWrap").dataset.unit==="sec"?{unit:"s"}:{})})).filter(e=>e.name),w={id:newId(),updatedAt:Date.now(),date:$("#date").value||today(),type:$("#type").value,duration:+$("#duration").value||0,effort:+$("#effort").value||0,notes:$("#notes").value.trim(),exercises:ex,distance:+$("#distance").value||0,runMinutes:+$("#runMinutes").value||0,rounds:+$("#rounds").value||0,roundLength:+$("#roundLength").value||0};if(!w.duration||w.effort<1||w.effort>10)return alert("Add a valid duration and effort score.");if($("#finish").disabled)return;$("#finish").disabled=true;setTimeout(()=>{$("#finish").disabled=false},1500);w.planId=$("#finish").dataset.planId||null;w.result=grade(w);data.workouts.push(w);data.xp+=w.result.xp;delete $("#finish").dataset.planId;save();resetWorkoutForm();$("#result").classList.remove("hidden");$("#result").innerHTML=`<div class="result"><p class="muted">Workout complete</p><div class="medal"><svg viewBox="0 0 120 120" aria-hidden="true">${ringsSvg([{value:w.result.score/100,color:"var(--pine)"}])}</svg><span class="bigGrade">${w.result.grade}</span></div><p class="resultScore">${w.result.score} out of 100</p><div class="bigXP">+${w.result.xp} XP</div><div class="scoreBreak">${Object.entries(w.result.breakdown).filter(x=>x[1]>0).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div></div>`;$("#result").scrollIntoView({behavior:"smooth",block:"start"})}
 $("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
 
 // ===== EDITABLE TRAINING LOG =====
@@ -473,74 +472,11 @@ function logExerciseOptions(selected=""){
     cats.map(cat=>`<optgroup label="${cat}">${EXERCISES.filter(e=>e.cat===cat).map(e=>`<option value="${e.name}" ${e.name===selected?"selected":""}>${e.name}</option>`).join("")}</optgroup>`).join("");
 }
 
-function addLogExerciseRow(defaults={}){
-  const f=$("#logExTemplate").content.cloneNode(true);
-  const row=f.querySelector(".logExRow");
-  row.querySelector(".logExName").innerHTML=logExerciseOptions(defaults.name||"");
-  row.querySelector(".logExSets").value=defaults.sets||3;
-  row.querySelector(".logExReps").value=defaults.reps||8;
-  row.querySelector(".logExWeight").value=defaults.weight??"";
-  row.querySelector(".logExRemove").onclick=()=>row.remove();
-  $("#logExerciseRows").appendChild(f);
-}
-
-function updateLogTypeFields(){
-  const t=$("#logType")?.value;
-  $("#logBoxingFields")?.classList.toggle("hidden",t!=="Boxing");
-  $("#logRunningFields")?.classList.toggle("hidden",t!=="Running");
-}
-$("#logType")?.addEventListener("change",updateLogTypeFields);
-
-$("#showAddWorkout")?.addEventListener("click",()=>{
-  $("#addWorkoutForm").classList.remove("hidden");
-  $("#logDate").value=today();
-  $("#logExerciseRows").innerHTML="";
-  if($("#logType").value==="Strength") addLogExerciseRow();
-  updateLogTypeFields();
-  $("#addWorkoutForm").scrollIntoView({behavior:"smooth",block:"start"});
-});
-$("#cancelLogWorkout")?.addEventListener("click",()=>$("#addWorkoutForm").classList.add("hidden"));
-$("#addLogExercise")?.addEventListener("click",()=>addLogExerciseRow());
-
 function recalcWorkoutAndXp(w,oldXp=0){
   w.result=grade(w);
   w.updatedAt=Date.now();
   data.xp=Math.max(0,data.xp-oldXp+(w.result?.xp||0));
 }
-
-$("#saveLogWorkout")?.addEventListener("click",()=>{
-  const type=$("#logType").value;
-  const duration=+$("#logDuration").value||0;
-  const effort=+$("#logEffort").value||0;
-  if(!duration||effort<1||effort>10){alert("Add a valid duration and effort score.");return}
-
-  const exercises=$$("#logExerciseRows .logExRow").map(r=>({
-    name:r.querySelector(".logExName").value,
-    sets:+r.querySelector(".logExSets").value||0,
-    reps:+r.querySelector(".logExReps").value||0,
-    weight:+r.querySelector(".logExWeight").value||0
-  })).filter(e=>e.name);
-
-  const w={
-    id:newId(),
-    updatedAt:Date.now(),
-    date:$("#logDate").value||today(),
-    type,
-    duration,
-    effort,
-    notes:$("#logNotes").value.trim(),
-    exercises,
-    rounds:+$("#logRounds").value||0,
-    roundLength:+$("#logRoundLength").value||0,
-    distance:+$("#logDistance").value||0,
-    runMinutes:+$("#logRunMinutes").value||0
-  };
-  w.result=grade(w);
-  data.workouts.push(w);
-  data.xp+=w.result?.xp||0;
-  save();
-  $("#addWorkoutForm").classList.add("hidden");
-});
 
 window.deleteWorkoutEntry=id=>{
   const w=data.workouts.find(x=>String(x.id)===String(id));
@@ -662,7 +598,6 @@ let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.
 function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`nextform-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);data.lastExport=Date.now();save()};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||!Array.isArray(o.workouts))throw 0;if(!confirm(`Replace this device's data with the backup (${o.workouts.length} workouts)?`))return;data=normalize(o);save();alert("Backup imported.")}catch{alert("That file isn't a NextForm backup.")}finally{e.target.value=""}};r.readAsText(f)};$("#resetBtn").onclick=async()=>{const cloud=window.NextFormCloud?.signedIn;if(!confirm(cloud?"Delete all NextForm data on this device AND in your Google account backup? This can't be undone.":"Delete all NextForm data on this device? Export a backup first if you might want it."))return;if(cloud){try{await window.NextFormCloud.deleteCloud()}catch{alert("Couldn't delete your cloud backup. Check your connection and try again.");return}}[KEY,DIRTY_KEY].forEach(k=>localStorage.removeItem(k));location.reload()}
 
 
-window.startPremadePlan=id=>{let p=BUILTIN_PLANS.find(x=>x.id===id);if(!p)return;$("#type").value=p.type;$("#type").onchange();$("#exerciseRows").innerHTML="";p.exercises.forEach(e=>addEx({name:e.name,sets:e.sets,reps:parseInt(String(e.reps))||8,unit:/s$/.test(String(e.reps))?"s":undefined}));$("#notes").value=`Plan: ${p.name}\nTargets: ${p.exercises.map(e=>`${e.name} ${e.sets}×${e.reps}`).join(" · ")}`;$("#finish").dataset.planId=p.id;go("train")};
 
 window.togglePremadeDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
 let activePlanCategory="Full Body";
@@ -702,41 +637,8 @@ function renderChallenges(){
 window.setChallengeCat=c=>{activeChallengeCat=c;renderChallenges()};
 
 
-function workoutHasInput(){
-  const note=$("#notes")?.value?.trim()||"";
-  const rows=$$("#exerciseRows .exrow");
-  const exerciseChanged=rows.some(r=>{
-    const name=r.querySelector(".exname")?.value?.trim()||"";
-    const weight=+(r.querySelector(".exweight")?.value||0);
-    return weight>0 || (name && !["Bench Press","Back Squat"].includes(name));
-  });
-  const customDuration=+($("#duration")?.value||45)!==45;
-  const customEffort=+($("#effort")?.value||7)!==7;
-  return !!(note || exerciseChanged || customDuration || customEffort);
-}
-
-function leaveWorkout(){
-  if(workoutHasInput()){
-    if(!confirm("Leave this workout? Unsaved changes will be lost.")) return;
-  }
-  go("home");
-}
-
-const workoutBackBtn=$("#workoutBackBtn");
-if(workoutBackBtn){
-  workoutBackBtn.addEventListener("click",leaveWorkout);
-}
-
-
 // ===== PROFILE SETUP + WORKOUT TIMER =====
 let pendingSetupPhoto="";
-// Timer state is a start time plus banked seconds, so it stays right when the phone locks or the app reloads.
-const TIMER_KEY="nextform-timer";
-let timer=(()=>{try{const t=JSON.parse(localStorage.getItem(TIMER_KEY)||"{}");return{startedAt:+t.startedAt||null,banked:+t.banked||0}}catch{return{startedAt:null,banked:0}}})();
-let workoutTimerInterval=null;
-const timerSeconds=()=>Math.floor(timer.banked+(timer.startedAt?(Date.now()-timer.startedAt)/1000:0));
-const saveTimer=()=>{try{localStorage.setItem(TIMER_KEY,JSON.stringify(timer))}catch{}};
-
 function avatarMarkupData(photo,name){
   return photo || "";
 }
@@ -808,44 +710,6 @@ function formatTimer(sec){
   const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
-function renderTimer(){
-  const sec=timerSeconds(),running=!!timer.startedAt;
-  const display=$("#workoutTimerDisplay"),state=$("#timerState"),btn=$("#timerStartPause");
-  if(display)display.textContent=formatTimer(sec);
-  if(state)state.textContent=running?"Running":sec?"Paused":"Ready";state.dataset.state=running?"running":sec?"paused":"ready";
-  if(btn)btn.textContent=running?"Pause":sec?"Resume":"Start";
-}
-function tickTimer(){
-  clearInterval(workoutTimerInterval);
-  if(timer.startedAt)workoutTimerInterval=setInterval(renderTimer,1000);
-  renderTimer();
-}
-function startPauseTimer(){
-  if(timer.startedAt){timer.banked=timerSeconds();timer.startedAt=null}
-  else timer.startedAt=Date.now();
-  saveTimer();tickTimer();
-}
-function resetTimer(){timer={startedAt:null,banked:0};saveTimer();tickTimer()}
-$("#timerStartPause")?.addEventListener("click",startPauseTimer);
-$("#timerReset")?.addEventListener("click",()=>{
-  if(timerSeconds()&&!confirm("Reset the workout timer?"))return;
-  resetTimer();
-});
-$("#timerUseDuration")?.addEventListener("click",()=>{
-  const mins=Math.max(1,Math.round(timerSeconds()/60));
-  const input=$("#duration");
-  if(input)input.value=mins;
-});
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")renderTimer()});
-// After a workout is saved: clear the form so it can't be logged twice by accident.
-function resetWorkoutForm(){
-  $("#exerciseRows").innerHTML="";addEx({name:"Bench Press"});addEx({name:"Back Squat"});
-  ["#notes","#distance","#runMinutes","#rounds"].forEach(id=>{$(id).value=""});
-  $("#duration").value=45;$("#effort").value=7;$("#roundLength").value=3;$("#date").value=today();
-  resetTimer();
-}
-tickTimer();
-
 function setHeader(p=document.querySelector(".page.active")?.id||"home"){
   const home=p==="home",name=(data.profile.name||"").trim().split(" ")[0];
   $("#pageTitle").textContent=home?(name?`Hi ${name}`:"Welcome"):titles[p];
@@ -854,13 +718,7 @@ function setHeader(p=document.querySelector(".page.active")?.id||"home"){
   setAvatar($("#avatarBtn"),data.profile.photo,data.profile.name);
 }
 $("#avatarBtn").addEventListener("click",()=>go("profile"));
-// Workout type as chips (the select stays as the source of truth)
-const WORKOUT_TYPES=["Strength","Running","Boxing","Mixed","Mobility","Other"];
-function syncTypeChips(){const v=$("#type").value;$("#typeChips").innerHTML=WORKOUT_TYPES.map(t=>`<button type="button" role="radio" aria-checked="${t===v}" class="chip${t===v?" active":""}" data-type="${t}" style="--c:${TYPE_COLORS[t]}">${t}</button>`).join("")}
-$("#typeChips").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;$("#type").value=b.dataset.type;$("#type").onchange()});
-{const orig=$("#type").onchange;$("#type").onchange=()=>{orig();syncTypeChips()}}
-syncTypeChips();
-function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile();window.renderFood?.();setHeader()}const titles={home:"Home",train:"Train",planner:"Plans",progress:"Progress",learn:"Exercise library",food:"Food",challenges:"Quests",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));setHeader(p);if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
+function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile();window.renderFood?.();window.renderTrain?.();setHeader()}const titles={home:"Home",train:"Train",planner:"Plans",progress:"Progress",learn:"Exercise library",food:"Food",challenges:"Quests",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));setHeader(p);if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
   $$("nav button").forEach(b=>{
     b.onclick=null;
     b.addEventListener("click",()=>go(b.dataset.page));
