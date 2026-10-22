@@ -97,3 +97,8 @@ body:has(#onboarding:not(.hidden)):not(.welcome-open) #app{visibility:hidden}
 .syncStatus[data-state="busy"]::before{background:#c79a2c}
 .syncStatus[data-state="error"]::before{background:var(--danger)}
 .syncStatus:empty{display:none}
+/* Timed holds (planks): reps column shows seconds */
+.repsWrap{position:relative;display:block;min-width:0}
+.repsWrap input{width:100%}
+.repsWrap[data-unit]::after{content:attr(data-unit);position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none}
+.repsWrap[data-unit] input{padding-right:16px}
