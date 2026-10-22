@@ -2,10 +2,10 @@
 // App files: try the network first (so updates show up straight away), but fall back to the
 // saved copy if there's no signal or the network is too slow, as in many gyms.
 // Firebase SDK files are versioned, so they're served from the saved copy once downloaded.
-const CACHE = 'nextform-v3';
+const CACHE = 'nextform-v4';
 const APP_FILES = [
   './', 'index.html', 'ui.css', 'welcome.css', 'fonts/bricolage-grotesque.woff', 'app.js', 'welcome.js',
-  'auth.js', 'sync-core.js', 'firebase-config.js', 'welcome-art.webp', 'icon.svg', 'manifest.json'
+  'food.js', 'auth.js', 'sync-core.js', 'firebase-config.js', 'welcome-art.webp', 'icon.svg', 'manifest.json'
 ];
 const SDK_HOST = 'www.gstatic.com';
 const NETWORK_TIMEOUT_MS = 3500;
@@ -63,5 +63,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin === self.location.origin) event.respondWith(networkFirst(request));
   else if (url.hostname === SDK_HOST && url.pathname.startsWith('/firebasejs/')) event.respondWith(cacheFirst(request));
-  // Everything else (Google sign-in, Firestore) goes straight to the network.
+  // The barcode reader library and its engine are pinned versions, so a saved copy never goes stale.
+  else if (/(^|\.)jsdelivr\.net$/.test(url.hostname) && /^\/npm\/(barcode-detector|zxing-wasm)@/.test(url.pathname)) event.respondWith(cacheFirst(request));
+  // Everything else (Google sign-in, Firestore, food lookups) goes straight to the network.
 });
