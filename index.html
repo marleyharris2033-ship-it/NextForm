@@ -3,10 +3,14 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f6f8f4"><title>NextForm</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json?v=2">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png?v=2">
+<meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=rpg1">
+<link rel="stylesheet" href="ui.css?v=look1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -51,7 +55,7 @@
   </div>
 </div>
 <div id="app">
-<header class="topbar"><div><p id="pageKicker" class="pageKicker"></p><h1 id="pageTitle">Home</h1></div><button id="avatarBtn" class="avatarBtn profileAvatar" type="button" aria-label="Open profile">N</button><button id="themeBtn" hidden aria-hidden="true"></button></header>
+<header class="topbar"><div class="titleWrap"><span class="logo" aria-hidden="true"></span><div><p id="pageKicker" class="pageKicker"></p><h1 id="pageTitle">Home</h1></div></div><button id="avatarBtn" class="avatarBtn profileAvatar" type="button" aria-label="Open profile">N</button><button id="themeBtn" hidden aria-hidden="true"></button></header>
 <main>
 <section id="home" class="page active">
 <div id="resumeBanner"></div>
@@ -78,39 +82,40 @@
 <div class="weekStrip" id="weekStrip" aria-label="This week"></div>
 
 <div class="card weekCard">
-  <div class="sectionHead"><h2>This week</h2><span class="weekGrade">Grade <b id="weekGrade">–</b></span></div>
+  <div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/></svg></span><h2>This week</h2></div><span class="weekGrade">Grade <b id="weekGrade">–</b></span></div>
   <div class="weekBody"><svg class="rings" id="weekRings" viewBox="0 0 120 120" aria-hidden="true"></svg><ul class="ringLegend" id="weekLegend"></ul></div>
   <p id="weekInsight" class="insight">Log a workout to start your weekly report.</p>
 </div>
 
 <button type="button" class="card fuelCard" data-go="food" aria-label="Open food log">
-  <div class="sectionHead"><h2>Food today</h2><span class="muted" id="fuelLeft"></span></div>
+  <div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/></svg></span><h2>Food today</h2></div><span class="muted" id="fuelLeft"></span></div>
   <div class="fuelBars" id="fuelBars"></div>
 </button>
 
 <div class="tiles">
-  <div class="tile"><p class="tileLabel">Streak</p><p class="tileValue"><b id="streak">0</b> <span id="streakUnit">days</span></p><p class="tileSub" id="streakSub">Train today to start one</p></div>
-  <div class="tile"><p class="tileLabel">Body weight</p><p class="tileValue"><b id="weightNow">–</b> <span>kg</span></p><svg class="spark" id="weightSpark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"></svg><p class="tileSub" id="weightSub"></p></div>
-  <div class="tile"><p class="tileLabel">Volume this week</p><p class="tileValue"><b id="weekVolume">0</b> <span>kg</span></p><p class="tileSub" id="volumeSub">Weights × reps × sets</p></div>
-  <div class="tile"><p class="tileLabel">Personal bests</p><p class="tileValue"><b id="weekPBs">0</b> <span>this week</span></p><p class="tileSub" id="pbSub"></p></div>
+  <div class="tile tint-amber"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-2.6 1.6-4.4 3-5.8.3 1.6 1.1 2.7 2.2 3.2C10.3 9 11.5 5.6 14.5 3c-.2 2.6.6 4.4 2 6 1.3 1.5 2 3.2 2 5.3C18.5 18.2 15.9 21 12 21z"/></svg></span><p class="tileLabel">Streak</p><p class="tileValue"><b id="streak">0</b> <span id="streakUnit">days</span></p><p class="tileSub" id="streakSub">Train today to start one</p></div>
+  <div class="tile tint-glacier"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8.5 10a3.5 3.5 0 0 1 7 0"/><path d="M12 10l1.5-2"/></svg></span><p class="tileLabel">Body weight</p><p class="tileValue"><b id="weightNow">–</b> <span>kg</span></p><svg class="spark" id="weightSpark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"></svg><p class="tileSub" id="weightSub"></p></div>
+  <div class="tile tint-pine"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg></span><p class="tileLabel">Volume this week</p><p class="tileValue"><b id="weekVolume">0</b> <span>kg</span></p><p class="tileSub" id="volumeSub">Weights × reps × sets</p></div>
+  <div class="tile tint-lichen"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg></span><p class="tileLabel">Personal bests</p><p class="tileValue"><b id="weekPBs">0</b> <span>this week</span></p><p class="tileSub" id="pbSub"></p></div>
 </div>
 
-<div class="card"><div class="sectionHead"><h2>Activity</h2><span class="muted">Minutes, last 14 days</span></div><div id="activityBars" class="bars"></div><ul class="typeKey" id="typeKey"></ul></div>
-<div class="card"><div class="sectionHead"><h2>Skills</h2><span class="muted" id="totalLevel"></span></div><p class="muted small skillIntro">Every set levels the muscles it trains. New records give bonus XP.</p><div class="skillList" id="skillList"></div></div>
-<div class="card"><div class="sectionHead"><h2>Achievements</h2><button class="link" data-go="progress">See all</button></div><div id="achievementPreview"></div></div>
-<div class="card"><div class="sectionHead"><h2>Quests</h2><button class="link" data-go="challenges">See all</button></div><div id="challengePreview"></div></div>
+<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M10 20V4M15 20v-7M20 20v-11"/></svg></span><h2>Activity</h2></div><span class="muted">Minutes, last 14 days</span></div><div id="activityBars" class="bars"></div><ul class="typeKey" id="typeKey"></ul></div>
+<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 8v8M9 11l3-3 3 3"/></svg></span><h2>Skills</h2></div><span class="muted" id="totalLevel"></span></div><p class="muted small skillIntro">Every set levels the muscles it trains. New records give bonus XP.</p><div class="skillList" id="skillList"></div></div>
+<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="5"/><path d="M9 4l3 5 3-5M12 12v4"/></svg></span><h2>Achievements</h2></div><button class="link" data-go="progress">See all</button></div><div id="achievementPreview"></div></div>
+<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg></span><h2>Quests</h2></div><button class="link" data-go="challenges">See all</button></div><div id="challengePreview"></div></div>
 </section>
 
 
 <section id="train" class="page">
 <div id="trainStart">
+  <div class="trainHero"><img src="train-hero.webp" alt="" width="900" height="474"><div class="heroShade"></div><span class="logo heroLogo" aria-hidden="true"></span><div class="heroText"><p id="heroKicker">Ready when you are</p><h2 id="heroTitle">Let’s train</h2></div></div>
   <div id="todayPlan"></div>
   <button type="button" class="primary full startBig" id="startEmpty">Start workout</button>
   <div class="quickTypes" aria-label="Start a different kind of session">
-    <button type="button" class="chip" data-start-type="Running">Run</button>
-    <button type="button" class="chip" data-start-type="Boxing">Boxing</button>
-    <button type="button" class="chip" data-start-type="Mobility">Mobility</button>
-    <button type="button" class="chip" data-start-type="Mixed">Mixed</button>
+    <button type="button" class="quickTile" data-start-type="Running" style="--c:var(--glacier)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="14.5" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2v4M6 12l3-3 4 1 2 3 3 1M11 15l-1-4"/></svg><span>Run</span></button>
+    <button type="button" class="quickTile" data-start-type="Boxing" style="--c:var(--amber)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 20v-3c-2-1-3-3-3-6V8a3 3 0 0 1 3-3h5a3 3 0 0 1 3 3v2h1a2 2 0 0 1 0 4h-2l-1 3v3z"/><path d="M8 17h7"/></svg><span>Boxing</span></button>
+    <button type="button" class="quickTile" data-start-type="Mobility" style="--c:var(--lichen)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19c-4 0-7.5-2-8.5-5 3 0 5.5 1 8.5 5zM12 19c4 0 7.5-2 8.5-5-3 0-5.5 1-8.5 5zM12 19c-2-2.5-2.5-6 0-11 2.5 5 2 8.5 0 11z"/></svg><span>Mobility</span></button>
+    <button type="button" class="quickTile" data-start-type="Mixed" style="--c:var(--moss)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3c4 0 6 10 10 10h3M4 17h3c1.6 0 2.8-1.5 3.8-3.3M14 8.5C15 7.5 16 7 17 7h3M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5"/></svg><span>Mixed</span></button>
   </div>
   <div class="card"><div class="sectionHead"><h2>Start from a plan</h2><button class="link" type="button" data-go="planner">All plans</button></div><div id="planPicks" class="planPicks"></div></div>
   <div class="trainLinks"><button class="link" type="button" id="logPast">Log a past workout</button><button class="link" type="button" data-go="learn">Exercise library</button></div>
@@ -118,7 +123,7 @@
 <div id="trainSession" class="hidden">
   <div class="sessionBar">
     <div class="sessionInfo"><p id="sessionName">Workout</p><p class="sessionClock" id="sessionClock">0:00</p></div>
-    <button type="button" class="primary" id="finishBtn">Finish</button>
+    <div class="sessionActions"><button type="button" class="primary startTimer" id="startTimer">Start</button><button type="button" class="primary" id="finishBtn">Finish</button></div>
   </div>
   <div id="pastFields" class="card form2 hidden">
     <label>Date<input id="pastDate" type="date"></label>
@@ -126,6 +131,7 @@
   </div>
   <div class="typeChips" id="sessionTypes" role="radiogroup" aria-label="Workout type"></div>
   <div id="cardioFields"></div>
+  <div class="setProgress" id="setProgress"><div class="setProgressBar"><i id="setProgressFill"></i></div><span id="setProgressText"></span></div>
   <div id="sessionExercises"></div>
   <button type="button" class="secondary full" id="addExerciseBtn">+ Add exercise</button>
   <button type="button" class="link discardLink" id="discardSession">Discard workout</button>
@@ -309,6 +315,7 @@
     <path d="M-20 220 C50 190 165 215 245 186 S325 150 380 166"/><path d="M-20 110 C60 90 170 110 250 80 S330 50 380 60"/>
   </svg>
   <div class="rewardBody">
+    <span class="logo rewardLogo" aria-hidden="true"></span>
     <p class="rewardKicker" id="rewardTitle">Workout complete</p>
     <div class="rewardMedal"><svg viewBox="0 0 120 120" id="rewardRing" aria-hidden="true"></svg><span id="rewardGrade">A</span></div>
     <p class="rewardXp">+<b id="rewardXp">0</b> XP</p>
@@ -323,4 +330,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="rpg.js?v=rpg1"></script><script src="app.js?v=rpg1"></script><script src="food.js?v=rpg1"></script><script src="train.js?v=rpg1"></script><script src="welcome.js?v=rpg1"></script><script type="module" src="auth.js?v=rpg1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="rpg.js?v=look1"></script><script src="app.js?v=look1"></script><script src="food.js?v=look1"></script><script src="train.js?v=look1"></script><script src="welcome.js?v=look1"></script><script type="module" src="auth.js?v=look1"></script></body></html>

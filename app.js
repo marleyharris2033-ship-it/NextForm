@@ -377,6 +377,30 @@ const titleCase=t=>t.charAt(0)+t.slice(1).toLowerCase();
 const GRADE_RANK={S:5,A:4,B:3,C:2,D:1};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
 const fmt=n=>Math.round(n).toLocaleString("en-GB");
+// Line icons (24px grid, stroke = currentColor)
+const ICON_PATHS={
+  flame:'<path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-2.6 1.6-4.4 3-5.8.3 1.6 1.1 2.7 2.2 3.2C10.3 9 11.5 5.6 14.5 3c-.2 2.6.6 4.4 2 6 1.3 1.5 2 3.2 2 5.3C18.5 18.2 15.9 21 12 21z"/>',
+  scale:'<rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8.5 10a3.5 3.5 0 0 1 7 0"/><path d="M12 10l1.5-2"/>',
+  dumbbell:'<path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/>',
+  trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
+  run:'<circle cx="14.5" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2v4M6 12l3-3 4 1 2 3 3 1M11 15l-1-4"/>',
+  glove:'<path d="M8 20v-3c-2-1-3-3-3-6V8a3 3 0 0 1 3-3h5a3 3 0 0 1 3 3v2h1a2 2 0 0 1 0 4h-2l-1 3v3z"/><path d="M8 17h7"/>',
+  lotus:'<path d="M12 19c-4 0-7.5-2-8.5-5 3 0 5.5 1 8.5 5zM12 19c4 0 7.5-2 8.5-5-3 0-5.5 1-8.5 5zM12 19c-2-2.5-2.5-6 0-11 2.5 5 2 8.5 0 11z"/>',
+  shuffle:'<path d="M4 7h3c4 0 6 10 10 10h3M4 17h3c1.6 0 2.8-1.5 3.8-3.3M14 8.5C15 7.5 16 7 17 7h3M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5"/>',
+  sunrise:'<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 4v4M5 9l2 2M19 9l-2 2M9 6.5 12 4l3 2.5"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+  moon:'<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
+  apple:'<path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/>',
+  chart:'<path d="M5 20V10M10 20V4M15 20v-7M20 20v-11"/>',
+  hex:'<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 8v8M9 11l3-3 3 3"/>',
+  medal:'<circle cx="12" cy="14" r="5"/><path d="M9 4l3 5 3-5M12 12v4"/>',
+  flag:'<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>',
+  rings:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/>',
+  cookie:'<path d="M20.5 12.5A8.5 8.5 0 1 1 11.5 3.5a3 3 0 0 0 4 4 3 3 0 0 0 5 5z"/><path d="M9 10h.01M8.5 15h.01M13 14h.01M15.5 17h.01"/>'
+};
+const icon=(name,cls="")=>`<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]||""}</svg>`;
+// Colour per skill group, used on skills, exercise cards and the reward screen
+const SKILL_COLORS={chest:"var(--pine)",back:"var(--pine)",shoulders:"var(--pine)",arms:"var(--pine)",legs:"var(--pine)",posterior:"var(--pine)",core:"var(--moss)",endurance:"var(--glacier)",boxing:"var(--amber)",mobility:"var(--lichen)"};
 function ringsSvg(rings){
   // Concentric progress rings; each {value 0..1+, color}
   const C=60;return rings.map((r,i)=>{const rad=50-i*15,len=2*Math.PI*rad,v=Math.min(1,Math.max(0,r.value));
@@ -396,8 +420,9 @@ function renderWeekStrip(){
     const ws=data.workouts.filter(w=>w.date===k);
     const best=ws.map(w=>w.result?.grade).filter(Boolean).sort((a,b)=>(GRADE_RANK[b]||0)-(GRADE_RANK[a]||0))[0];
     const state=ws.length?"done":k===t?"today":k>t?"future":"rest";
+    const col=ws.length?(TYPE_COLORS[ws[0].type]||TYPE_COLORS.Other):"";
     const label=d.toLocaleDateString("en-GB",{weekday:"long"});
-    h+=`<div class="day ${state}" title="${label}${ws.length?`: ${ws.length} workout${ws.length>1?"s":""}`:""}"><span class="dayRing">${ws.length?(best||"✓"):""}</span><span class="dayName">${DAYS[i].charAt(0)}</span></div>`}
+    h+=`<div class="day ${state}"${col?` style="--c:${col}"`:""} title="${label}${ws.length?`: ${ws.length} workout${ws.length>1?"s":""}`:""}"><span class="dayRing">${ws.length?(best||"✓"):""}</span><span class="dayName">${DAYS[i].charAt(0)}</span></div>`}
   $("#weekStrip").innerHTML=h;
 }
 function renderHome(){
@@ -436,7 +461,7 @@ function renderHome(){
   // Skills (RPG layer, rpg.js)
   const ch=characterFrom(data.workouts);
   $("#totalLevel").textContent=`Total level ${ch.totalLevel}`;
-  $("#skillList").innerHTML=ch.skills.map(k=>`<div class="skill${k.xp?"":" untrained"}"><span class="hex">${k.level}</span><div class="skillInfo"><div class="skillHead"><span>${k.name}</span><small>${k.max?"Max level":`${fmt(k.need-k.into)} XP to ${k.level+1}`}</small></div><div class="tinybar"><i style="width:${k.max?100:k.into/k.need*100}%"></i></div></div></div>`).join("");
+  $("#skillList").innerHTML=ch.skills.map(k=>`<div class="skill${k.xp?"":" untrained"}" style="--c:${SKILL_COLORS[k.id]}"><span class="hex">${k.level}</span><div class="skillInfo"><div class="skillHead"><span>${k.name}</span><small>${k.max?"Max level":`${fmt(k.need-k.into)} XP to ${k.level+1}`}</small></div><div class="tinybar"><i style="width:${k.max?100:k.into/k.need*100}%"></i></div></div></div>`).join("");
   $("#ascentClass").textContent=ch.title;
   renderBackupNudge();renderAchievements();
 }
