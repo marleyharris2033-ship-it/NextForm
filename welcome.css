@@ -1,0 +1,24 @@
+/* Welcome screen is deliberately scoped: existing workout views stay intact. */
+#welcome{display:none;color:#193f33;background:#fcf8ed;min-height:100svh;width:100%;padding:30px 0 max(24px,env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.welcome-open{background:#fcf8ed}
+body.welcome-open #welcome{display:block}
+body.welcome-open #app,body.welcome-open #onboarding,body.welcome-open .bg-orb{display:none!important}
+.welcome-brand{width:clamp(185px,42vw,280px);margin:0 auto 24px}
+.welcome-brand svg{display:block;width:100%;height:auto}
+.welcome-copy{text-align:center;padding:0 16px;position:relative;z-index:1}
+.welcome-copy h1{font-size:clamp(54px,11vw,94px);line-height:1.05;letter-spacing:-.045em;font-weight:850;margin:0 0 12px}
+.welcome-copy p{font-size:clamp(21px,4.8vw,36px);font-weight:750;line-height:1.4;letter-spacing:-.025em;margin:0}
+.welcome-scene{display:block;width:100%;height:auto;max-width:780px;margin:12px auto 0}
+.welcome-actions{max-width:660px;margin:0 auto;padding:0 24px;text-align:center}
+.welcome-actions button{width:100%;min-height:58px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:14px;padding:13px 18px;font-size:clamp(17px,3.5vw,22px);font-weight:650;cursor:pointer}
+#welcomeGoogle{background:#1b4436;color:#fff;border:2px solid #1b4436}
+#welcomeGoogle svg{width:28px;height:28px;flex-shrink:0}
+#welcomeGoogle:disabled{opacity:.65;cursor:wait}
+#welcomeGuest{margin-top:12px;background:transparent;border:2px solid #1b4436;color:#1b4436}
+.welcome-actions button:focus-visible{outline:3px solid #b37731;outline-offset:4px}
+.welcome-actions button:hover:not(:disabled){filter:brightness(.93)}
+#welcomeStatus{font-size:13px;line-height:1.45;margin:12px 0 0;color:#455a50}
+#welcomeStatus:empty{display:none}
+.welcome-note{font-size:13px;color:#53635b;margin:16px 0 0}
+@media(min-width:800px){#welcome{padding-top:36px}.welcome-brand{margin-bottom:18px}.welcome-scene{max-width:680px}.welcome-actions{max-width:600px}}
+@media(max-width:370px){.welcome-copy p{font-size:19px}.welcome-actions{padding:0 18px}}

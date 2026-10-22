@@ -15,6 +15,7 @@ function render(user) {
   login.disabled = busy;
   logout.disabled = busy;
   message(user ? 'Signed in with Google.' : 'Sign in with your Google account, or keep using NextForm as a guest.');
+  window.dispatchEvent(new CustomEvent('nextform-auth', { detail: { signedIn: !!user } }));
 }
 function errorMessage(error) {
   const messages = {

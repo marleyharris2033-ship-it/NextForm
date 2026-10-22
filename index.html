@@ -4,8 +4,20 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1015"><title>NextForm</title>
 <link rel="manifest" href="manifest.json"><link rel="stylesheet" href="styles.css?v=googleauth1">
+<link rel="stylesheet" href="welcome.css?v=1">
 </head>
-<body>
+<body class="welcome-open">
+<section id="welcome" aria-label="Welcome to NextForm">
+  <div class="welcome-brand"><svg viewBox="330 75 370 90" role="img" aria-label="NextForm"><image href="welcome-art.webp" width="1024" height="1536"/></svg></div>
+  <div class="welcome-copy"><h1>Level up.</h1><p>Ascend past your limits.<br>Find your NextForm.</p></div>
+  <svg class="welcome-scene" viewBox="0 480 1024 690" role="img" aria-label="Two people looking towards a mountain summit, ready to begin their ascent"><image href="welcome-art.webp" width="1024" height="1536"/></svg>
+  <div class="welcome-actions">
+    <button id="welcomeGoogle" disabled><svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.5H24v8.1h11.3c-1 5.2-5.4 8-11.3 8a12.6 12.6 0 1 1 0-25.2c3 0 5.7 1.1 7.8 3.1l6-6A21 21 0 1 0 24 45c12.1 0 20-8.5 20-20.5 0-1.4-.1-2.7-.4-4Z"/><path fill="#34A853" d="m6.3 36.3 6.8-5.3c2.2 3.5 6.2 5.6 10.9 5.6 3.6 0 6.6-1 8.6-3l6.5 5C35.5 42.8 30.3 45 24 45c-7.5 0-14-3.5-17.7-8.7Z"/><path fill="#FBBC05" d="M3 24c0-4.4 1.3-8.5 3.6-11.8l6.7 5.2a12.6 12.6 0 0 0-.2 13.6l-6.8 5.3A20.8 20.8 0 0 1 3 24Z"/><path fill="#EA4335" d="M6.6 12.2A21 21 0 0 1 24 3c5.8 0 10.7 2.1 14.8 5.5l-6 6A11.2 11.2 0 0 0 24 11.4c-4.5 0-8.4 2.3-10.7 6l-6.7-5.2Z"/></svg><span>Continue with Google</span></button>
+    <button id="welcomeGuest">Continue as guest</button>
+    <p id="welcomeStatus" role="status" aria-live="polite">Connecting to Google sign-in…</p>
+    <p class="welcome-note">Workouts are saved on this device.</p>
+  </div>
+</section>
 <div id="onboarding" class="onboarding hidden">
   <div class="onboardCard">
     <div class="onboardLogo">N</div>
@@ -150,6 +162,7 @@
 </section>
 <section id="profile" class="page">
 <div id="accountCard" class="card" hidden>
+<button id="backToWelcome" class="link" type="button">Back to welcome screen</button>
   <h2>Account</h2>
   <p id="accountIdentity" class="accountIdentity">Guest</p>
   <p id="accountStatus" class="muted" role="status" aria-live="polite"></p>
@@ -181,4 +194,4 @@
     <button class="x logExRemove">×</button>
   </div>
 </template>
-<datalist id="exerciseNames"></datalist><script src="app.js?v=googleauth1"></script><script type="module" src="auth.js?v=googleauth1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="app.js?v=googleauth1"></script><script src="welcome.js?v=1"></script><script type="module" src="auth.js?v=welcome1"></script></body></html>
