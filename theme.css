@@ -1,0 +1,90 @@
+/* NextForm — Forest & Ivory. One consistent palette, including legacy saved themes. */
+:root,body,body.light{
+ --bg:#f7f7f0;--card:#ffffff;--card2:#edf2eb;--text:#203c32;
+ --muted:#596b60;--accent:#245442;--accent-soft:#e5eee4;
+ --blue:#72917b;--violet:#657f69;--line:#d5dfd3;--danger:#a63838;
+ --glow:none;color-scheme:light;
+}
+body,body.light{background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+.bg-orb,.heroGlow{display:none}
+#app{max-width:860px;padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+header{background:rgba(247,247,240,.97);border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:14px;box-shadow:none}
+header small{font-size:10px;letter-spacing:.16em;font-weight:750;color:var(--accent)}
+header h1{font-size:26px;line-height:1.2;font-weight:750;color:var(--text)}
+h2{font-size:19px;letter-spacing:-.025em;font-weight:750}h3{font-weight:700}
+.brandMark,.onboardLogo{background:#fcf8ed;box-shadow:none;border:1px solid var(--line);color:var(--accent);overflow:hidden}
+.brandMark svg,.onboardLogo svg{width:80%;height:80%;display:block}
+#themeBtn{display:none} /* Retained for compatibility with existing app bindings. */
+main{padding:5px 16px 24px}
+.card,body.light .card,.mini,.learnCard,.challengeCard{
+ background:var(--card);border:1px solid var(--line);box-shadow:0 3px 12px rgba(32,60,50,.035);border-radius:18px;
+}
+.card{padding:20px;margin-bottom:16px}
+.hero{background:linear-gradient(120deg,#e5eee2,#f1f5eb);padding:24px;box-shadow:none;border-color:#ccd9c7}
+.rank{background:none;-webkit-background-clip:initial;background-clip:initial;color:#245442;text-shadow:none;font-size:32px;letter-spacing:-.03em;font-weight:800}
+.level{background:#fff;border:1px solid #cbd9c6;color:#245442;font-size:14px;box-shadow:none}
+.level b{font-size:27px}
+.bar,.tinybar,.challengeProgress{background:#dce5d8;border:0;box-shadow:none}
+.bar i,.tinybar i,.challengeProgress i{background:linear-gradient(90deg,#245442,#78947b);box-shadow:none}
+.xptext{color:#4c6255;font-weight:500}
+.mini{background:#fff;border-color:var(--line);padding:16px 10px}
+.mini b{color:var(--accent);font-weight:750;font-size:25px}
+.mini span,.summaryGrid span{font-size:11px;color:var(--muted)}
+.attr,.planCard,.achievement,.history,.pb,.logWorkoutCard,.logEditor{
+ background:var(--card2);border:1px solid var(--line);box-shadow:none;
+}
+.attr b{color:var(--accent)}
+.insight{background:#eff3e9;border:1px solid var(--line);color:#445c4b;font-size:13px;line-height:1.6}
+.primary,.durationBtns button.active,.durationBtns .secondary.active,.chip.active,body.light .chip.active{
+ background:#245442;color:#fff;border-color:#245442;box-shadow:none;
+}
+.primary,.secondary,.danger,.googleSignIn{min-height:44px;font-weight:650;border-radius:12px}
+.secondary,body.light .secondary,.round{background:#fff;border:1px solid #cad7c8;color:#245442;box-shadow:none}
+.link{color:#245442;font-weight:650;min-height:36px}
+button:focus-visible,a:focus-visible{outline:3px solid #8d9d70;outline-offset:3px}
+button:disabled{opacity:.55;cursor:not-allowed}
+label{font-size:13px;color:#4e6255;font-weight:650}
+input,select,textarea,body.light input,body.light select,body.light textarea{
+ background:#fafbf7;border:1px solid #ccd8c9;color:#203c32;font-size:16px;font-weight:400;box-shadow:none;min-height:46px;
+}
+input::placeholder,textarea::placeholder{color:#6b786f;opacity:1}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#245442;box-shadow:0 0 0 3px rgba(36,84,66,.12)}
+.exrow,.planex{background:#f4f6ef}
+.pickCard,.plannerHero,.workoutTimerCard{background:#f0f4eb;border-color:var(--line);box-shadow:none}
+.eyebrowBadge,.premadeBadge,.planNumber,.timerState{background:#e5eee1;color:#28543f;border:1px solid #ceddc8;box-shadow:none}
+.eyebrowBadge{font-size:10px;letter-spacing:.1em;font-weight:750}
+.planExercisePreview span,.planDetails,.logMeta,.inlineExerciseEditor{background:#f5f7f1;border-color:var(--line);color:var(--muted)}
+.planDetails div,.logExerciseItem{border-bottom-color:var(--line)}
+.diaryRow{border-color:var(--line)}
+.achievement:not(.locked){box-shadow:none;border-color:#b9cdb2}
+.achievement.locked{opacity:1;background:#f6f7f3;color:#69766a}
+.achievement.locked .icon{opacity:.5;filter:grayscale(1)}
+.achievement .icon{filter:none}
+.challengeCard.done{background:#edf4e8;border-color:#93b18b;box-shadow:none}
+.learnCard{background:#fff;box-shadow:none;border-color:var(--line)}
+.learnCard a{background:#e7efe2;border-color:#cadbc4;color:#245442}
+.chip,body.light .chip{background:#fff;border-color:var(--line);color:#4c6253;box-shadow:none;min-height:38px;font-weight:600}
+canvas,body.light canvas{background:#fafbf7;border-color:var(--line)}
+.heat{background:#edf2e8;border-color:#d8e1d2}.heat.on{background:#527851;border-color:#527851}
+nav,body.light nav{background:rgba(255,255,252,.98);border-top:1px solid #d5dfd3;box-shadow:0 -3px 16px rgba(32,60,50,.045);max-width:860px}
+nav button{color:#617064;min-height:50px;box-shadow:none}
+nav button.active{background:#e5eee1;color:#204d38}
+nav button span{font-size:10px;font-weight:500}
+nav button.active span{font-weight:750}
+.onboarding{z-index:1100;background:#f7f7f0;backdrop-filter:none;padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+body:has(#onboarding:not(.hidden)):not(.welcome-open) #app{visibility:hidden}
+.onboardCard{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 12px 36px rgba(32,60,50,.06);padding:26px}
+.onboardCard h2{color:#203c32;font-weight:750;letter-spacing:-.03em}
+.onboardCard .muted{line-height:1.6;font-size:14px}
+.onboardLogo{border-radius:16px}
+.profileAvatar{background-color:#e3eddf;background-image:none;color:#245442;border:2px solid #bdcfb6;box-shadow:none}
+.profileAvatar.hasPhoto{background-color:#e3eddf;color:transparent}
+.photoPicker>span{color:#245442;font-size:12px}
+.timerDisplay{color:#245442;font-weight:750}
+.googleSignIn{border-color:#cbd5c6;box-shadow:none}
+@media(max-width:520px){
+ .card{padding:17px}.hero{padding:20px}.onboardCard{padding:22px}
+ nav button span{font-size:9px}.exrow input{font-size:16px;padding:9px 4px}
+ .history,.pb,.challengeTop{flex-wrap:wrap}.logActions{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
