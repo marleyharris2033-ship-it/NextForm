@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=2">
-<link rel="stylesheet" href="ui.css?v=launch1">
+<link rel="stylesheet" href="ui.css?v=ring1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -69,15 +69,12 @@
   </svg>
   <div class="ascentHead">
     <div><p class="ascentRank" id="rank">Novice</p><p class="ascentLevel">Level <b id="level">1</b> <span id="ascentClass">Recruit</span></p></div>
-    <p class="ascentNext" id="xpRemaining">500 XP to level 2</p>
   </div>
-  <svg class="ridge" id="ridge" viewBox="0 0 320 92" aria-hidden="true">
-    <path class="ridgeBase" id="ridgePath" d="M6 84 L44 70 L62 76 L98 52 L118 60 L150 38 L170 46 L204 26 L222 34 L254 16 L270 22 L300 8"/>
-    <path class="ridgeDone" id="ridgeDone" d="M6 84 L44 70 L62 76 L98 52 L118 60 L150 38 L170 46 L204 26 L222 34 L254 16 L270 22 L300 8"/>
-    <g class="summit"><path d="M300 8 V-10"/><path class="flag" d="M300 -10 L314 -5 L300 0 Z"/></g>
-    <circle class="climber" id="climber" r="6" cx="6" cy="84"/>
-  </svg>
-  <p class="ascentXp"><b id="xpCurrent">0</b> of <span id="xpNeed">500</span> XP this level</p>
+  <div class="xpBody">
+    <div class="xpRing" id="xpRing" role="img"></div>
+    <div class="xpSide"><p class="xpNextLine" id="xpRemaining">500 XP to level 2</p><p class="xpLegendHead">XP this level</p><ul class="xpLegend" id="xpLegend"></ul></div>
+  </div>
+
 </div>
 
 <div class="weekStrip" id="weekStrip" aria-label="This week"></div>
@@ -366,4 +363,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=launch1"></script><script src="rpg.js?v=launch1"></script><script src="app.js?v=launch1"></script><script src="food.js?v=launch1"></script><script src="coach.js?v=launch1"></script><script src="train.js?v=launch1"></script><script src="plans.js?v=launch1"></script><script src="log-edit.js?v=launch1"></script><script src="insights.js?v=launch1"></script><script src="welcome.js?v=launch1"></script><script type="module" src="auth.js?v=launch1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=ring1"></script><script src="rpg.js?v=ring1"></script><script src="app.js?v=ring1"></script><script src="food.js?v=ring1"></script><script src="coach.js?v=ring1"></script><script src="train.js?v=ring1"></script><script src="plans.js?v=ring1"></script><script src="log-edit.js?v=ring1"></script><script src="insights.js?v=ring1"></script><script src="welcome.js?v=ring1"></script><script type="module" src="auth.js?v=ring1"></script></body></html>

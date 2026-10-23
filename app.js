@@ -487,11 +487,14 @@ function ringsSvg(rings){
   const C=60;return rings.map((r,i)=>{const rad=50-i*15,len=2*Math.PI*rad,v=Math.min(1,Math.max(0,r.value));
     return `<circle cx="${C}" cy="${C}" r="${rad}" class="ringTrack"/>`+(v<=0?"":`<circle cx="${C}" cy="${C}" r="${rad}" class="ringFill" style="stroke:${r.color};stroke-dasharray:${len*v} ${len}" transform="rotate(-90 ${C} ${C})"/>`)}).join("")}
 function renderAscent(l){
-  const path=$("#ridgePath"),done=$("#ridgeDone"),dot=$("#climber");if(!path)return;
-  const total=path.getTotalLength(),frac=Math.min(1,l.into/l.need),pt=path.getPointAtLength(total*frac);
-  done.style.strokeDasharray=`${total*frac} ${total}`;dot.setAttribute("cx",pt.x);dot.setAttribute("cy",pt.y);
+  const box=$("#xpRing");if(!box)return;
+  const b=levelBreakdown(data,CHALLENGES),pct=b.need?b.into/b.need:0,R=50,C=2*Math.PI*R,gap=b.into?1.6:0;
+  // one arc per discipline, in order, filling the ring up to this level's progress
+  let off=0;const arcs=b.parts.filter(p=>p.xp>0).map(p=>{const len=Math.max(0,p.xp/b.need*C-gap),a=`<circle class="xpArc" r="${R}" cx="60" cy="60" stroke="${p.color}" stroke-dasharray="${len.toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}"/>`;off+=p.xp/b.need*C;return a}).join("");
+  box.innerHTML=`<svg viewBox="0 0 120 120" aria-hidden="true"><circle class="xpTrack" r="${R}" cx="60" cy="60"/><g transform="rotate(-90 60 60)">${arcs}</g></svg><div class="xpCentre"><b>${Math.floor(pct*100)}%</b><small>${fmt(b.into)} / ${fmt(b.need)}</small><small>XP</small></div>`;
+  box.setAttribute("aria-label",`Level ${b.level}: ${fmt(b.into)} of ${fmt(b.need)} XP. `+b.parts.filter(p=>p.xp).map(p=>`${p.name} ${fmt(p.xp)}`).join(", "));
+  $("#xpLegend").innerHTML=b.into?b.parts.filter(p=>p.xp>0).map(p=>`<li style="--c:${p.color}"><span>${p.name}</span><b>${fmt(p.xp)}</b></li>`).join(""):`<li class="xpEmpty">Train to start filling your ring</li>`;
   $("#rank").textContent=titleCase(rankFor(l.level));$("#level").textContent=l.level;
-  $("#xpCurrent").textContent=fmt(l.into);$("#xpNeed").textContent=fmt(l.need);
   $("#xpRemaining").textContent=`${fmt(l.need-l.into)} XP to level ${l.level+1}`;
 }
 function renderWeekStrip(){
@@ -748,7 +751,7 @@ function renderSimplePlanner(){
 
 let activeChallengeCat="All";
 function challengeStatus(c){let cur=Math.max(0,c[5](data)),target=c[3];return{cur:Math.min(cur,target),target,done:cur>=target,pct:Math.min(100,cur/target*100)}}
-function claimChallenge(id){let c=CHALLENGES.find(x=>x[0]===id),s=c&&challengeStatus(c);if(!c||!s.done||data.claimedChallenges.includes(id))return;data.claimedChallenges.push(id);data.xp+=c[4];save()}
+function claimChallenge(id){let c=CHALLENGES.find(x=>x[0]===id),s=c&&challengeStatus(c);if(!c||!s.done||data.claimedChallenges.includes(id))return;data.claimedChallenges.push(id);data.claimTimes={...(data.claimTimes||{}),[id]:Date.now()};data.xp+=c[4];save()}
 function renderChallenges(){
  let cats=["All","Workout","Progress","Special"];$("#challengeChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeChallengeCat?"active":""}" onclick="setChallengeCat('${c}')">${c}</button>`).join("");
  let list=CHALLENGES.filter((c,i)=>activeChallengeCat==="All"||(activeChallengeCat==="Workout"&&i<10)||(activeChallengeCat==="Progress"&&i>=10&&i<24)||(activeChallengeCat==="Special"&&i>=24));
