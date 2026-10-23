@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=look1">
+<link rel="stylesheet" href="ui.css?v=char1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -28,13 +28,9 @@
   <div class="onboardCard">
     <div class="onboardLogo"><svg viewBox="340 80 100 85" role="img" aria-label="NextForm"><image href="welcome-art.webp" width="1024" height="1536"/></svg></div>
         <h2>Build your profile</h2>
-    <p class="muted">This is saved only on this device and helps personalise your training stats.</p>
+    <p class="muted">This helps personalise your grades and food targets. Next, you’ll design your character.</p>
 
-    <label class="photoPicker">
-      <input id="setupPhoto" type="file" accept="image/*">
-      <div id="setupPhotoPreview" class="profileAvatar largeAvatar">+</div>
-      <span>Choose profile photo</span>
-    </label>
+    
 
     <div class="form2 onboardForm">
       <label>Name<input id="setupName" type="text" placeholder="Your name"></label>
@@ -50,8 +46,8 @@
       </label>
       <label>Goal weight (kg)<input id="setupGoalWeight" type="number" min="30" max="300" step=".1" placeholder="Optional"></label>
     </div>
-    <button id="completeSetup" class="primary full">Start NextForm</button>
-    <p class="tiny muted setupPrivacy">Your profile and photo stay in this browser's local storage.</p>
+    <button id="completeSetup" class="primary full">Next: your character</button>
+    <p class="tiny muted setupPrivacy">Saved on this device, and backed up to your Google account if you sign in.</p>
   </div>
 </div>
 <div id="app">
@@ -59,8 +55,10 @@
 <main>
 <section id="home" class="page active">
 <div id="resumeBanner"></div>
+<div id="characterPrompt"></div>
 <div id="backupNudge" class="card backupNudge hidden"><h2>Back up your training</h2><p id="nudgeText" class="muted"></p><div class="row wrap"><button id="nudgeSignIn" class="primary" type="button">Sign in with Google</button><button id="nudgeExport" class="secondary" type="button">Export backup</button></div></div>
-<div class="ascent" aria-label="Level progress">
+<div class="ascent withHero" aria-label="Level progress">
+  <div class="ascentHero" id="ascentHero" aria-hidden="true"></div>
   <svg class="contours" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <path d="M-20 170 C60 150 90 120 150 128 S260 165 380 120"/><path d="M-20 145 C50 125 95 92 155 100 S255 140 380 92"/>
     <path d="M-20 118 C45 100 100 64 160 72 S250 110 380 62"/><path d="M-20 92 C40 76 104 38 166 46 S246 82 380 34"/>
@@ -210,6 +208,7 @@
 <div id="challengeList"></div>
 </section>
 <section id="profile" class="page">
+<div class="card characterCard" id="characterCard"></div>
 <div id="accountCard" class="card" hidden>
   <h2>Account</h2>
   <p id="accountIdentity" class="accountIdentity">Guest</p>
@@ -221,13 +220,7 @@
   <button id="backToWelcome" class="link" type="button">Show welcome screen</button>
 </div>
 <div class="card">
-<div class="profileHead">
-  <label class="photoPicker editPhoto">
-    <input id="profilePhotoInput" type="file" accept="image/*">
-    <div id="profilePhotoPreview" class="profileAvatar">N</div>
-    <span>Change photo</span>
-  </label>
-  <div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
+<div class="profileHead"><div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
 </div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
@@ -317,7 +310,7 @@
   <div class="rewardBody">
     <span class="logo rewardLogo" aria-hidden="true"></span>
     <p class="rewardKicker" id="rewardTitle">Workout complete</p>
-    <div class="rewardMedal"><svg viewBox="0 0 120 120" id="rewardRing" aria-hidden="true"></svg><span id="rewardGrade">A</span></div>
+    <div class="rewardHero"><div class="rewardChar" id="rewardChar" aria-hidden="true"></div><div class="rewardMedal"><svg viewBox="0 0 120 120" id="rewardRing" aria-hidden="true"></svg><span id="rewardGrade">A</span></div></div>
     <p class="rewardXp">+<b id="rewardXp">0</b> XP</p>
     <div class="rewardLevel">
       <div class="rewardLevelHead"><span id="rewardLevelName">Level 9</span><span id="rewardLevelNext"></span></div>
@@ -325,9 +318,17 @@
       <p class="levelUp hidden" id="levelUp"></p>
     </div>
     <div id="rewardSkills" class="rewardSkills"></div>
+    <div id="rewardGear" class="rewardRecords"></div>
     <div id="rewardRecords" class="rewardRecords"></div>
     <p id="rewardQuests" class="rewardQuests"></p>
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="rpg.js?v=look1"></script><script src="app.js?v=look1"></script><script src="food.js?v=look1"></script><script src="train.js?v=look1"></script><script src="welcome.js?v=look1"></script><script type="module" src="auth.js?v=look1"></script></body></html>
+<div id="charSheet" class="sheet charSheet hidden" role="dialog" aria-modal="true" aria-labelledby="charSheetTitle">
+  <div class="sheetHead"><button type="button" class="iconBtn" id="charShuffle" aria-label="Random character"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3c4 0 6 10 10 10h3M4 17h3c1.6 0 2.8-1.5 3.8-3.3M14 8.5C15 7.5 16 7 17 7h3M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5"/></svg></button><h2 id="charSheetTitle">Your character</h2><button type="button" class="iconBtn" id="charClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="charStage" id="charStage"></div>
+  <div class="chips charTabs" id="charTabs" role="tablist"></div>
+  <div class="charOptions" id="charOptions"></div>
+  <div class="charFoot"><button type="button" class="primary full" id="charSave">Save character</button></div>
+</div>
+<datalist id="exerciseNames"></datalist><script src="rpg.js?v=char1"></script><script src="avatar.js?v=char1"></script><script src="app.js?v=char1"></script><script src="character.js?v=char1"></script><script src="food.js?v=char1"></script><script src="train.js?v=char1"></script><script src="welcome.js?v=char1"></script><script type="module" src="auth.js?v=char1"></script></body></html>

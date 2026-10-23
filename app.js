@@ -716,6 +716,7 @@ $("#completeSetup")?.addEventListener("click",()=>{
   if(!data.weights.length)data.weights.push({date:today(),value:wt});
   save();
   $("#onboarding").classList.add("hidden");
+  window.NextFormCharacter?.openBuilder({first:true});
 });
 
 function showOnboardingIfNeeded(){
@@ -740,10 +741,10 @@ function setHeader(p=document.querySelector(".page.active")?.id||"home"){
   $("#pageTitle").textContent=home?(name?`Hi ${name}`:"Welcome"):titles[p];
   $("#pageKicker").textContent=home?new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}):"";
   $("#pageKicker").hidden=!home;
-  setAvatar($("#avatarBtn"),data.profile.photo,data.profile.name);
+  if(window.NextFormCharacter)window.NextFormCharacter.paintHeader();else setAvatar($("#avatarBtn"),data.profile.photo,data.profile.name);
 }
 $("#avatarBtn").addEventListener("click",()=>go("profile"));
-function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile();window.renderFood?.();window.renderTrain?.();setHeader()}const titles={home:"Home",train:"Train",planner:"Plans",progress:"Progress",learn:"Exercise library",food:"Food",challenges:"Quests",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));setHeader(p);if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
+function renderAll(){document.body.classList.toggle("light",data.theme==="light");$("#exerciseNames").innerHTML=EXERCISES.map(e=>`<option value="${e.name}">`).join("");renderHome();renderSimplePlanner();renderProgress();renderLearn();renderChallenges();renderProfile();window.renderFood?.();window.renderTrain?.();window.renderCharacter?.();setHeader()}const titles={home:"Home",train:"Train",planner:"Plans",progress:"Progress",learn:"Exercise library",food:"Food",challenges:"Quests",profile:"Profile"};function go(p){$$(".page").forEach(x=>x.classList.toggle("active",x.id===p));$$("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p));setHeader(p);if(p==="progress")setTimeout(drawWeight,30);scrollTo({top:0,behavior:"smooth"})}function bindNavigation(){
   $$("nav button").forEach(b=>{
     b.onclick=null;
     b.addEventListener("click",()=>go(b.dataset.page));
