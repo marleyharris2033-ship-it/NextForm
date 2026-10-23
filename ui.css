@@ -605,3 +605,53 @@ body{background:radial-gradient(130% 55% at 50% -12%,#dfeccf 0%,rgba(223,236,207
 .rewardLogo{display:block;margin:0 auto 10px;width:44px;height:35px;background:#fff;opacity:.95}
 @media(prefers-reduced-motion:reduce){.tick.pop{animation:none}}
 @media(max-width:380px){.quickTile{font-size:12px}.heroText h2{font-size:22px}}
+
+/* ===== Rest timer ===== */
+.restPill{flex-direction:column;align-items:stretch;gap:6px;padding:10px 10px 10px 18px;border-radius:24px;width:min(360px,calc(100% - 32px))}
+.restTop{display:flex;align-items:center;gap:8px}
+.restTop b{margin-right:auto}
+.restPill button{padding:6px 12px}
+.restTrack{height:4px;border-radius:99px;background:rgba(255,255,255,.16);overflow:hidden;margin-right:8px}
+.restTrack i{display:block;height:100%;width:0;background:var(--lichen);border-radius:inherit;transition:width .25s linear}
+.restNext{margin:0 8px 0 0;font-size:12.5px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.restPill.done{background:var(--moss);animation:restDone .5s ease 2}
+.restPill.done .restTrack i{background:#fff}
+@keyframes restDone{50%{transform:translateX(-50%) scale(1.04)}}
+/* ===== Suggestions ===== */
+.suggest{display:flex;align-items:center;gap:10px;background:#eef4e6;border-radius:14px;padding:9px 10px;margin:-2px 0 10px}
+.suggest.deload{background:#fbf0dc}
+.suggest.used{background:var(--mist)}
+.sugIcon{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;background:var(--pine);color:#fff;font-size:13px;font-weight:700}
+.suggest.deload .sugIcon{background:var(--amber);color:var(--pine-deep)}
+.suggest.used .sugIcon{background:var(--stone)}
+.sugText{flex:1;min-width:0}
+.sugText b{display:block;font-size:14.5px;color:var(--pine-deep)}
+.sugText small{display:block;font-size:12.5px;color:var(--stone);line-height:1.35}
+.sugUse{border:0;border-radius:999px;background:var(--pine);color:#fff;font-weight:650;font-size:14px;min-height:36px;padding:6px 16px;flex-shrink:0}
+/* ===== Exercise tools ===== */
+.exTools{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}
+.toolBtn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;background:var(--mist);color:var(--pine);font-weight:600;font-size:13.5px;min-height:34px;padding:4px 12px;position:relative}
+.toolBtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.restSel select{border:0;background:transparent;color:inherit;font:inherit;font-weight:700;padding:0 2px;min-height:0;width:auto;appearance:none;-webkit-appearance:none}
+/* ===== Plate maths ===== */
+.plateSheet{position:fixed;inset:0;z-index:1300;background:rgba(14,30,26,.45);display:flex;align-items:flex-end;justify-content:center}
+.plateCard{width:min(480px,100%);background:var(--snow);border-radius:26px 26px 0 0;padding:16px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px -12px rgba(0,0,0,.3)}
+.plateHead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.plateHead .muted{margin:0}
+.plateInput{display:block;margin-bottom:8px}
+.plateInput input{font:700 22px var(--display);text-align:center}
+#plateBars .chip.active{background:var(--pine);color:#fff}
+.plateViz{height:130px;display:flex;align-items:center;justify-content:center;margin:10px 0 4px;overflow:hidden}
+.pvBar{display:flex;align-items:center;gap:2px;position:relative}
+.pvBar::before{content:"";position:absolute;left:-60px;right:-8px;top:50%;height:10px;transform:translateY(-50%);background:linear-gradient(#c9cfcc,#8c9592);border-radius:3px;z-index:0}
+.pvSleeve{width:14px;height:26px;background:#7d8783;border-radius:3px;position:relative;z-index:1;margin-right:2px}
+.pvPlate{position:relative;z-index:1;width:22px;height:var(--h);background:var(--c);border-radius:5px;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;writing-mode:vertical-rl;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.pvPlate[style*="#f2f0ea"]{color:var(--pine-deep)}
+.pvCap{width:8px;height:18px;background:#5d6663;border-radius:2px;position:relative;z-index:1}
+.plateText{text-align:center;margin:6px 0 0;font-size:15px;line-height:1.45;color:var(--stone)}
+.plateText b{color:var(--pine-deep);font-size:17px}
+.exTools{align-items:center}
+label.toolBtn{flex-direction:row;gap:6px;font-size:13.5px;color:var(--pine);cursor:pointer}
+.restSel select{background:transparent!important;box-shadow:none!important;height:auto;line-height:1.2;color:var(--pine)}
+.plateViz{height:150px}
+.pvBar{transform:translateX(30px)}

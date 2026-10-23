@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=nochar1">
+<link rel="stylesheet" href="ui.css?v=coach1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -287,8 +287,19 @@
 
 
 <div id="restPill" class="restPill hidden" role="timer" aria-live="off">
-  <span>Rest</span><b id="restTime">1:30</b>
-  <button type="button" id="restPlus">+15s</button><button type="button" id="restSkip">Skip</button>
+  <div class="restTop"><span id="restLabel">Rest</span><b id="restTime">1:30</b>
+    <button type="button" id="restMinus" aria-label="15 seconds less">−15</button><button type="button" id="restPlus" aria-label="15 seconds more">+15</button><button type="button" id="restSkip">Skip</button></div>
+  <div class="restTrack"><i id="restBar"></i></div>
+  <p id="restNext" class="restNext"></p>
+</div>
+<div id="plateSheet" class="plateSheet hidden" role="dialog" aria-modal="true" aria-labelledby="plateTitle">
+  <div class="plateCard">
+    <div class="plateHead"><div><p class="muted small">Plate maths</p><h2 id="plateTitle">Bench Press</h2></div><button type="button" class="iconBtn" id="plateClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <label class="plateInput">Weight on the bar (kg)<input id="plateKg" type="number" inputmode="decimal" min="0" step="0.5"></label>
+    <div class="chips" id="plateBars"></div>
+    <div id="plateViz" class="plateViz" aria-hidden="true"></div>
+    <p id="plateText" class="plateText"></p>
+  </div>
 </div>
 <div id="exPicker" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="exPickerTitle">
   <div class="sheetHead"><span></span><h2 id="exPickerTitle">Add exercise</h2><button type="button" class="iconBtn" id="exPickerClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -330,4 +341,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="rpg.js?v=nochar1"></script><script src="app.js?v=nochar1"></script><script src="food.js?v=nochar1"></script><script src="train.js?v=nochar1"></script><script src="welcome.js?v=nochar1"></script><script type="module" src="auth.js?v=nochar1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="rpg.js?v=coach1"></script><script src="app.js?v=coach1"></script><script src="food.js?v=coach1"></script><script src="coach.js?v=coach1"></script><script src="train.js?v=coach1"></script><script src="welcome.js?v=coach1"></script><script type="module" src="auth.js?v=coach1"></script></body></html>
