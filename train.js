@@ -17,11 +17,25 @@
   const started = () => !!(session && !session.past && session.startedAt);
   const targetReps = r => parseInt(String(r), 10) || 8;
 
-  function lastSets(name) {
-    const key = name.toLowerCase();
+  // Past sessions of this exercise, newest first.
+  function history(name, max = 3) {
+    const key = name.toLowerCase(), out = [];
     const ws = [...data.workouts].sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id)));
-    for (const w of ws) { const e = (w.exercises || []).find(x => x.name.toLowerCase() === key); if (e) return { sets: setsOf(e), unit: e.unit }; }
-    return null;
+    for (const w of ws) { const e = (w.exercises || []).find(x => x.name.toLowerCase() === key); if (e) { out.push({ sets: setsOf(e), unit: e.unit }); if (out.length >= max) break; } }
+    return out;
+  }
+  const lastSets = name => history(name, 1)[0] || null;
+  const Coach = window.NextFormCoach;
+  const prefs = () => { const p = data.trainPrefs = data.trainPrefs && typeof data.trainPrefs === 'object' ? data.trainPrefs : {}; p.rest = p.rest || {}; p.bar = p.bar || {}; return p; };
+  const restFor = name => +prefs().rest[name.toLowerCase()] || Coach.defaultRest(name);
+  const rangeOf = e => e.range || String(e.target || '').split('×')[1] || '';
+  const suggestionFor = e => Coach.suggest(e.name, history(e.name), rangeOf(e));
+  // "62.5 kg × 6, 6, 6" when the weight is the same on every set, otherwise set by set.
+  function setsText(sets, timed) {
+    if (timed) return sets.map(s => `${s.reps}s`).join(', ');
+    const kgs = [...new Set(sets.map(s => +s.kg || 0))];
+    if (kgs.length === 1) return kgs[0] ? `${g(kgs[0])} kg × ${sets.map(s => s.reps).join(', ')}` : `${sets.map(s => s.reps).join(', ')} reps`;
+    return sets.map(s => +s.kg ? `${g(s.kg)} kg × ${s.reps}` : `${s.reps} reps`).join(', ');
   }
   function newExercise(name, plan) {
     const last = lastSets(name), timed = plan ? /s$/.test(String(plan.reps)) : last?.unit === 's';
@@ -29,7 +43,7 @@
     if (last && last.sets.length) sets = last.sets.map(s => ({ kg: s.kg || '', reps: s.reps || '', done: false }));
     else sets = Array.from({ length: plan?.sets || 3 }, () => ({ kg: '', reps: plan ? targetReps(plan.reps) : '', done: false }));
     if (plan && sets.length < plan.sets) while (sets.length < plan.sets) sets.push({ ...sets[sets.length - 1], done: false });
-    return { name, unit: timed ? 's' : undefined, target: plan ? `${plan.sets} × ${plan.reps}` : '', sets };
+    return { name, unit: timed ? 's' : undefined, target: plan ? `${plan.sets} × ${plan.reps}` : '', range: plan?.reps || '', sets };
   }
 
   function start({ type = 'Strength', plan = null, past = false } = {}) {
@@ -101,11 +115,21 @@
   }
   function exerciseCard(e, i) {
     const last = lastSets(e.name), timed = e.unit === 's';
-    const lastTxt = last ? `Last time: ${last.sets.slice(0, 4).map(s => timed ? `${s.reps}s` : `${g(s.kg)} kg × ${s.reps}`).join(', ')}` : e.target ? `Target: ${e.target}` : 'First time logging this';
+    const lastTxt = last ? `Last time: ${setsText(last.sets.filter(s => +s.reps > 0), timed)}` : e.target ? `Target: ${e.target}` : 'First time logging this';
+    const sug = !session.past && !e.sets.every(s => s.done) ? suggestionFor(e) : null;
+    const used = sug && e.sugUsed;
+    const sugHtml = sug ? `<div class="suggest ${sug.kind}${used ? ' used' : ''}"><span class="sugIcon" aria-hidden="true">${sug.kind === 'up' ? '▲' : sug.kind === 'deload' ? '↺' : '+'}</span>
+        <div class="sugText"><b>${used ? 'Using today’s target' : 'Try today'}: ${esc(setsText(sug.sets, timed))}</b><small>${esc(sug.reason)}</small></div>
+        ${used ? '' : `<button type="button" class="sugUse" data-usesug="${i}">Use</button>`}</div>` : '';
+    const rest = restFor(e.name), barbell = Coach.equipment(e.name) === 'barbell' && !timed;
+    const restOpts = [45, 60, 75, 90, 120, 150, 180, 240, 300]; if (!restOpts.includes(rest)) restOpts.push(rest);
     const skill = skillForExercise(e.name), skillName = SKILLS.find(k => k.id === skill)?.name;
     return `<section class="card exCard" data-ex="${i}" style="--c:${SKILL_COLORS[skill] || 'var(--stone)'}">
       <div class="exHead"><div>${skillName ? `<span class="muscleTag">${esc(skillName)}</span>` : ''}<h3>${esc(e.name)}</h3><p class="muted small">${esc(lastTxt)}</p></div>
         <button type="button" class="iconBtn exRemove" data-remove="${i}" aria-label="Remove ${esc(e.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      ${sugHtml}
+      ${session.past ? '' : `<div class="exTools">${barbell ? `<button type="button" class="toolBtn" data-plates="${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20M6 7v10M9 5v14M15 5v14M18 7v10"/></svg>Plates</button>` : ''}
+        <label class="toolBtn restSel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Rest <select data-restsel="${i}" aria-label="Rest between sets for ${esc(e.name)}">${restOpts.sort((a, b) => a - b).map(v => `<option value="${v}"${v === rest ? ' selected' : ''}>${mmss(v)}</option>`).join('')}</select></label></div>`}
       <div class="setGrid${session.past ? ' past' : ''}"><span>Set</span><span>kg</span><span>${timed ? 'sec' : 'reps'}</span>${session.past ? '' : '<span aria-hidden="true"></span>'}
         ${e.sets.map((s, j) => `<span class="setNo${s.done ? ' done' : ''}">${j + 1}</span>
           <input type="number" inputmode="decimal" min="0" step="0.5" value="${s.kg}" placeholder="–" class="${s.done ? 'done' : ''}" data-field="kg" data-set="${j}" aria-label="Set ${j + 1} kg">
@@ -128,28 +152,56 @@
   function startClock() {
     stopClock();
     if (!started()) return;
-    clockTimer = setInterval(() => { $('#sessionClock').textContent = mmss(elapsed()); renderResume(); renderRest(); }, 1000);
+    clockTimer = setInterval(() => { $('#sessionClock').textContent = mmss(elapsed()); renderResume(); }, 1000);
   }
   function stopClock() { clearInterval(clockTimer); clockTimer = null; }
-  function startRest(sec = DEFAULT_REST) { if (!session || session.past) return; session.restEnd = Date.now() + sec * 1000; persist(); renderRest(); }
+  // The rest timer ticks on its own (it used to only move while the workout clock was running).
+  let audio = null, doneUntil = 0;
+  function unlockAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch { audio = null; } }
+  function beep() {
+    if (!audio) return;
+    try { [0, 0.22, 0.44].forEach((t, k) => { const o = audio.createOscillator(), v = audio.createGain(), at = audio.currentTime + t;
+      o.frequency.value = k === 2 ? 1175 : 880; v.gain.setValueAtTime(0.0001, at); v.gain.exponentialRampToValueAtTime(0.25, at + 0.02); v.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+      o.connect(v).connect(audio.destination); o.start(at); o.stop(at + 0.2); }); } catch {}
+  }
+  function nextSetText() {
+    for (const e of session?.exercises || []) { const j = e.sets.findIndex(s => !s.done); if (j >= 0) { const s = e.sets[j], timed = e.unit === 's';
+      return `Next: ${e.name}, set ${j + 1}${s.reps ? `, ${timed ? `${s.reps}s` : +s.kg ? `${g(s.kg)} kg × ${s.reps}` : `${s.reps} reps`}` : ''}`; } }
+    return 'Last set done. Finish when you’re ready.';
+  }
+  function startRest(sec = DEFAULT_REST) {
+    if (!session || session.past) return;
+    session.restEnd = Date.now() + sec * 1000; session.restLen = sec; doneUntil = 0; persist(); renderRest();
+    clearInterval(restTimer); restTimer = setInterval(renderRest, 250);
+  }
   function hideRest() { $('#restPill').classList.add('hidden'); }
   function renderRest() {
     const pill = $('#restPill');
-    if (!session?.restEnd || !$('#train').classList.contains('active')) return pill.classList.add('hidden');
+    if (doneUntil && Date.now() < doneUntil && $('#train').classList.contains('active')) return;
+    if (doneUntil) { doneUntil = 0; pill.classList.remove('done'); }
+    if (!session?.restEnd) { clearInterval(restTimer); restTimer = null; return pill.classList.add('hidden'); }
+    if (!$('#train').classList.contains('active')) return pill.classList.add('hidden');
     const left = (session.restEnd - Date.now()) / 1000;
     if (left <= 0) {
-      if (left > -1.5) { navigator.vibrate?.([120, 80, 120]); }
-      session.restEnd = null; persist(); pill.classList.add('hidden'); return;
+      const fresh = left > -2; // only alert if it ran out just now, not when coming back to the app much later
+      session.restEnd = null; persist();
+      if (fresh) { navigator.vibrate?.([160, 90, 160]); beep(); doneUntil = Date.now() + 2500; pill.classList.add('done'); $('#restLabel').textContent = 'Rest done'; $('#restTime').textContent = 'Go!'; $('#restBar').style.width = '100%'; return; }
+      pill.classList.add('hidden'); return;
     }
-    pill.classList.remove('hidden');
+    pill.classList.remove('hidden', 'done');
+    $('#restLabel').textContent = 'Rest';
     $('#restTime').textContent = mmss(Math.ceil(left));
+    $('#restBar').style.width = `${Math.max(0, Math.min(100, 100 - left / (session.restLen || DEFAULT_REST) * 100))}%`;
+    $('#restNext').textContent = nextSetText();
   }
+  if (session?.restEnd) restTimer = setInterval(renderRest, 250);
   $('#startTimer').addEventListener('click', () => {
     if (!session || started()) return;
     session.startedAt = Date.now(); persist(); render();
   });
-  $('#restPlus').addEventListener('click', () => { if (session?.restEnd) { session.restEnd += 15000; persist(); renderRest(); } });
-  $('#restSkip').addEventListener('click', () => { if (session) { session.restEnd = null; persist(); renderRest(); } });
+  $('#restPlus').addEventListener('click', () => { if (session?.restEnd) { session.restEnd += 15000; session.restLen = (session.restLen || DEFAULT_REST) + 15; persist(); renderRest(); } });
+  $('#restMinus').addEventListener('click', () => { if (session?.restEnd) { session.restEnd -= 15000; persist(); renderRest(); } });
+  $('#restSkip').addEventListener('click', () => { if (session) { session.restEnd = null; doneUntil = 0; persist(); renderRest(); } });
 
   // ---------- session interactions ----------
   $('#trainStart').addEventListener('click', e => {
@@ -189,9 +241,15 @@
       card.querySelectorAll('.setNo')[+tick.dataset.tick]?.classList.toggle('done', s.done);
       if (s.done) { tick.classList.remove('pop'); void tick.offsetWidth; tick.classList.add('pop'); }
       renderProgress();
-      if (s.done) { navigator.vibrate?.(15); startRest(); }
+      if (s.done) { navigator.vibrate?.(15); unlockAudio(); startRest(restFor(ex.name)); }
       return;
     }
+    if (e.target.closest('[data-usesug]')) {
+      const sug = suggestionFor(ex); if (!sug) return;
+      sug.sets.forEach((t, j) => { if (!ex.sets[j]) ex.sets.push({ kg: '', reps: '', done: false }); if (!ex.sets[j].done) { ex.sets[j].kg = +t.kg ? t.kg : ''; ex.sets[j].reps = t.reps; } });
+      ex.sugUsed = true; persist(); return render();
+    }
+    if (e.target.closest('[data-plates]')) return openPlates(+card.dataset.ex);
     if (e.target.closest('[data-addset]')) { const lastSet = ex.sets[ex.sets.length - 1] || { kg: '', reps: '' }; ex.sets.push({ kg: lastSet.kg, reps: lastSet.reps, done: false }); persist(); return render(); }
     if (e.target.closest('[data-delset]')) { ex.sets.pop(); persist(); return render(); }
     if (e.target.closest('[data-remove]')) {
@@ -199,6 +257,46 @@
       session.exercises.splice(+card.dataset.ex, 1); persist(); render();
     }
   });
+  $('#sessionExercises').addEventListener('change', e => {
+    const sel = e.target.closest('[data-restsel]'); if (!sel || !session) return;
+    const ex = session.exercises[+sel.dataset.restsel]; prefs().rest[ex.name.toLowerCase()] = +sel.value; save();
+  });
+
+  // ---------- plate maths ----------
+  let plateEx = null;
+  const PLATE_COLORS = { 25: '#c8423b', 20: '#2f6fb0', 15: '#e2b23a', 10: '#3f8a4f', 5: '#f2f0ea', 2.5: '#1f2a28', 1.25: '#9aa3a0' };
+  function openPlates(i) {
+    const ex = session.exercises[i]; plateEx = ex.name;
+    const s = ex.sets.find(x => !x.done && +x.kg) || [...ex.sets].reverse().find(x => +x.kg);
+    $('#plateKg').value = s ? s.kg : '';
+    $('#plateTitle').textContent = ex.name;
+    $('#plateSheet').classList.remove('hidden'); document.body.classList.add('sheetOpen');
+    renderPlates();
+  }
+  function closePlates() { $('#plateSheet').classList.add('hidden'); document.body.classList.remove('sheetOpen'); }
+  function renderPlates() {
+    const have = Array.isArray(prefs().plates) ? prefs().plates : Coach.PLATES;
+    const bar = +prefs().bar[(plateEx || '').toLowerCase()] || 20, kg = +$('#plateKg').value || 0, r = Coach.plates(kg, bar, Coach.PLATES.filter(p => have.includes(p)));
+    $('#plateSet').innerHTML = Coach.PLATES.map(p => `<button type="button" class="pChip${have.includes(p) ? ' on' : ''}" data-plate="${p}" style="--c:${PLATE_COLORS[p]}" aria-pressed="${have.includes(p)}">${p}</button>`).join('');
+    $('#plateBars').innerHTML = [20, 15, 10].map(b => `<button type="button" class="chip${b === bar ? ' active' : ''}" data-bar="${b}">${b} kg bar</button>`).join('');
+    const h = p => 44 + p * 2.6;
+    $('#plateViz').innerHTML = `<div class="pvBar"><span class="pvSleeve"></span>${r.perSide.map(p => `<span class="pvPlate" style="--h:${h(p)}px;--c:${PLATE_COLORS[p]}">${p}</span>`).join('')}<span class="pvCap"></span></div>`;
+    $('#plateText').innerHTML = !kg ? 'Type the weight you want on the bar.'
+      : r.belowBar ? `That’s less than the ${bar} kg bar on its own.`
+      : !r.perSide.length ? 'Just the empty bar.'
+      : `<b>Each side: ${r.perSide.join(' + ')} kg</b>${r.exact ? '' : `<br>Can’t make ${g(kg)} kg exactly. This loads ${g(r.loaded)} kg.`}`;
+  }
+  $('#plateKg').addEventListener('input', renderPlates);
+  $('#plateBars').addEventListener('click', e => { const b = e.target.closest('[data-bar]'); if (!b || !plateEx) return; prefs().bar[plateEx.toLowerCase()] = +b.dataset.bar; save(); renderPlates(); });
+  $('#plateSet').addEventListener('click', e => {
+    const b = e.target.closest('[data-plate]'); if (!b) return;
+    const p = +b.dataset.plate, have = Array.isArray(prefs().plates) ? [...prefs().plates] : [...Coach.PLATES];
+    prefs().plates = have.includes(p) ? have.filter(x => x !== p) : [...have, p].sort((a, b) => b - a);
+    save(); renderPlates();
+  });
+  $('#plateClose').addEventListener('click', closePlates);
+  $('#plateSheet').addEventListener('click', e => { if (e.target.id === 'plateSheet') closePlates(); });
+
   $('#discardSession').addEventListener('click', () => {
     if (sessionHasWork() && !confirm('Discard this workout? Nothing from it will be saved.')) return;
     session = null; persist(); render();
