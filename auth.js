@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { planSignIn, mergeData, joinData, mergeIntoCloud } from './sync-core.js?v=split1';
+import { planSignIn, mergeData, joinData, mergeIntoCloud } from './sync-core.js?v=meals1';
 
 const SDK = 'https://www.gstatic.com/firebasejs/13.1.0/';
 const panel = document.getElementById('accountCard');

@@ -78,10 +78,15 @@
     $('#kcalTarget').textContent = fmt(t.kcal);
     $('#macroBars').innerHTML = MACROS.map(m => macroRow(m, sum[m.key], t[m.key])).join('');
 
-    $('#mealList').innerHTML = MEALS.map(meal => {
+    const yday = shiftDay(foodDay, -1), yList = entriesFor(yday);
+    const dayAction = foodDay === today()
+      ? (!list.length && yList.length ? `<button type="button" class="copyDay" data-copy-day="${yday}"><span class="cdIcon" aria-hidden="true">${COPY_ICON}</span><span><b>Copy all of yesterday</b><small>${yList.length} item${yList.length > 1 ? 's' : ''}, ${fmt(totals(yList).kcal)} kcal</small></span></button>` : '')
+      : (list.length ? `<button type="button" class="copyDay" data-copy-day="${foodDay}" data-to-today="1"><span class="cdIcon" aria-hidden="true">${COPY_ICON}</span><span><b>Copy this whole day to today</b><small>${list.length} item${list.length > 1 ? 's' : ''}, ${fmt(sum.kcal)} kcal</small></span></button>` : '');
+    $('#mealList').innerHTML = dayAction + MEALS.map(meal => {
       const items = list.filter(e => e.meal === meal || (meal === 'Snacks' && !MEALS.includes(e.meal))), mt = totals(items);
       const mi = MEAL_ICONS[meal];
       return `<section class="card mealCard"><div class="sectionHead"><div class="secTitle"><span class="secIcon" style="--c:${mi[1]}">${icon(mi[0])}</span><h2>${meal}</h2></div><div class="row"><span class="muted">${items.length ? `${fmt(mt.kcal)} kcal` : ''}</span><button type="button" class="iconBtn addMeal" data-meal="${meal}" aria-label="Add food to ${meal}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div></div>
+        ${mealActions(meal, items, yList)}
         ${items.length ? `<ul class="foodItems">${items.map(e => `<li><button type="button" class="foodItem" data-entry="${esc(e.id)}"><span><b>${esc(e.name)}</b><small>${esc(amountText(e))}${e.brand ? `, ${esc(e.brand)}` : ''}</small></span><span class="foodKcal">${fmt(e.kcal)}</span></button></li>`).join('')}</ul>` : `<p class="muted small emptyMeal">Nothing logged yet.</p>`}
       </section>`;
     }).join('');
@@ -93,6 +98,53 @@
 
     renderHomeFuel();
   }
+  const COPY_ICON = '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+  const inMeal = (list, meal) => list.filter(e => e.meal === meal || (meal === 'Snacks' && !MEALS.includes(e.meal)));
+  // Shortcuts under each meal: copy yesterday's (empty meal today), copy to today (past day), save as a meal.
+  function mealActions(meal, items, yList) {
+    const out = [];
+    if (foodDay === today() && !items.length) {
+      const y = inMeal(yList, meal);
+      if (y.length) out.push(`<button type="button" class="mealAct" data-copy-meal="${meal}" data-from="${shiftDay(foodDay, -1)}">${COPY_ICON}Copy yesterday’s ${meal.toLowerCase()} <small>${fmt(totals(y).kcal)} kcal</small></button>`);
+    }
+    if (foodDay < today() && items.length) out.push(`<button type="button" class="mealAct" data-copy-meal="${meal}" data-from="${foodDay}" data-to-today="1">${COPY_ICON}Copy to today</button>`);
+    if (items.length) out.push(`<button type="button" class="mealAct" data-save-meal="${meal}"><svg viewBox="0 0 24 24"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Save as meal</button>`);
+    return out.length ? `<div class="mealActs">${out.join('')}</div>` : '';
+  }
+  // Copy entries to a day as new entries (they're separate from the originals).
+  function copyEntries(entries, toDay, meal = null) {
+    data.foodLog = data.foodLog || [];
+    const now = Date.now();
+    entries.forEach((e, i) => { const { id, date, updatedAt, ...rest } = e; data.foodLog.push({ ...rest, id: newId() + i, date: toDay, meal: meal || (MEALS.includes(e.meal) ? e.meal : 'Snacks'), updatedAt: now }); });
+    save();
+  }
+  const savedMeals = () => (data.savedMeals = Array.isArray(data.savedMeals) ? data.savedMeals : []);
+  function saveMeal(meal) {
+    const items = inMeal(entriesFor(foodDay), meal); if (!items.length) return;
+    const name = (prompt('Name this meal', `My usual ${meal.toLowerCase()}`) || '').trim().slice(0, 50);
+    if (!name) return;
+    const keep = ['name', 'brand', 'code', 'unit', 'grams', 'per', 'servingG', 'servingLabel', 'kcal', 'protein', 'carbs', 'fat'];
+    savedMeals().unshift({ id: 'meal_' + newId(), name, meal, items: items.map(e => Object.fromEntries(keep.filter(k => e[k] != null).map(k => [k, e[k]]))), updatedAt: Date.now() });
+    save();
+    toastFood(`Saved “${name}”. Add it from Saved meals any time.`);
+  }
+  function toastFood(text) {
+    let t = $('#foodToast'); if (!t) { t = document.createElement('div'); t.id = 'foodToast'; t.className = 'foodToast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+    t.textContent = text; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  function renderSaved() {
+    const list = savedMeals(), box = $('#savedMeals');
+    box.innerHTML = list.length ? list.map(m => { const t = totals(m.items);
+      return `<div class="savedMeal"><button type="button" class="smAdd" data-add-saved="${esc(m.id)}"><span><b>${esc(m.name)}</b><small>${m.items.length} item${m.items.length > 1 ? 's' : ''}, ${fmt(t.kcal)} kcal, ${g1(t.protein)} g protein</small><small class="smItems">${esc(m.items.map(i => i.name).join(', '))}</small></span><span class="smPlus" aria-hidden="true">+</span></button>
+        <button type="button" class="iconBtn smDel" data-del-saved="${esc(m.id)}" aria-label="Delete ${esc(m.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`; }).join('')
+      : `<p class="muted small savedEmpty">No saved meals yet. Log a meal, then tap <b>Save as meal</b> under it to add it here in one tap next time.</p>`;
+  }
+  $('#savedMeals').addEventListener('click', e => {
+    const add = e.target.closest('[data-add-saved]'), del = e.target.closest('[data-del-saved]');
+    if (add) { const m = savedMeals().find(x => x.id === add.dataset.addSaved); if (m) { copyEntries(m.items, foodDay, sheet.meal); closeSheet(); toastFood(`Added ${m.name} to ${sheet.meal.toLowerCase()}.`); } }
+    if (del) { const m = savedMeals().find(x => x.id === del.dataset.delSaved); if (m && confirm(`Delete saved meal “${m.name}”?`)) {
+      data.savedMeals = savedMeals().filter(x => x.id !== m.id); data.deletedSavedMeals = [...new Set([...(data.deletedSavedMeals || []), m.id])].slice(-500); save(); renderSaved(); } }
+  });
   function macroRow(m, val, target) {
     const pct = target ? Math.min(100, val / target * 100) : 0;
     return `<div class="macro" style="--c:${m.color}"><div class="macroHead"><span>${m.label}</span><b>${g1(val)}<small> / ${target} g</small></b></div><div class="tinybar"><i style="width:${pct}%"></i></div></div>`;
@@ -157,6 +209,7 @@
     $('#sheetTitle').textContent = tab === 'portion' ? (sheet.editing ? 'Edit food' : 'Add food') : `Add to ${sheet.meal.toLowerCase()}`;
     if (tab === 'scan') startScan(); else stopScan();
     if (tab === 'recent') renderRecent();
+    if (tab === 'saved') renderSaved();
     if (tab === 'search') setTimeout(() => $('#foodQuery').focus(), 50);
   }
   $$('#foodSheet [data-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
@@ -166,6 +219,11 @@
   $('#openScan').addEventListener('click', () => openSheet('scan'));
   $('#openSearch').addEventListener('click', () => openSheet('search'));
   $('#mealList').addEventListener('click', e => {
+    const cm = e.target.closest('[data-copy-meal]'), cd = e.target.closest('[data-copy-day]'), sm = e.target.closest('[data-save-meal]');
+    if (cm) { const to = cm.dataset.toToday ? today() : foodDay, items = inMeal(entriesFor(cm.dataset.from), cm.dataset.copyMeal);
+      copyEntries(items, to); toastFood(cm.dataset.toToday ? `Copied ${cm.dataset.copyMeal.toLowerCase()} to today.` : `Copied yesterday’s ${cm.dataset.copyMeal.toLowerCase()}.`); return; }
+    if (cd) { const to = cd.dataset.toToday ? today() : foodDay; copyEntries(entriesFor(cd.dataset.copyDay), to); toastFood(cd.dataset.toToday ? 'Copied the whole day to today.' : 'Copied all of yesterday.'); return; }
+    if (sm) return saveMeal(sm.dataset.saveMeal);
     const add = e.target.closest('.addMeal');
     if (add) return openSheet('search', add.dataset.meal);
     const item = e.target.closest('[data-entry]');
@@ -259,9 +317,9 @@
   $('#manualForm').addEventListener('submit', e => {
     e.preventDefault();
     const name = $('#mName').value.trim(), kcal = num($('#mKcal').value);
-    if (!name || kcal == null) return;
+    if (kcal == null) { $('#mKcal').focus(); return; }
     const per = { kcal, protein: num($('#mProtein').value) || 0, carbs: num($('#mCarbs').value) || 0, fat: num($('#mFat').value) || 0 };
-    addEntry({ code: '', name, brand: '', unit: 'portion', per, servingG: null }, 1, sheet.meal);
+    addEntry({ code: '', name: name || `Quick add, ${fmt(kcal)} kcal`, brand: '', unit: 'portion', per, servingG: null }, 1, sheet.meal);
     e.target.reset();
     closeSheet();
   });
@@ -418,6 +476,7 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopScan(); else if (sheet.tab === 'scan' && !sheetEl.classList.contains('hidden')) startScan(); });
 
   window.renderFood = renderFood;
+  window.foodTargets = targets;
   window.NextFormFood = { validBarcode, suggestedTargets }; // handy for checks
   renderFood();
 })();
