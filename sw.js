@@ -2,14 +2,16 @@
 // App files: try the network first (so updates show up straight away), but fall back to the
 // saved copy if there's no signal or the network is too slow, as in many gyms.
 // Firebase SDK files are versioned, so they're served from the saved copy once downloaded.
-const CACHE = 'nextform-v10';
+const CACHE = 'nextform-v11';
 const APP_FILES = [
   './', 'index.html', 'ui.css', 'welcome.css', 'fonts/bricolage-grotesque.woff', 'app.js', 'welcome.js',
-  'rpg.js', 'avatar.js', 'character.js', 'food.js', 'train.js', 'auth.js', 'sync-core.js', 'firebase-config.js', 'welcome-art.webp', 'train-hero.webp', 'logo-mark.png', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/favicon-32.png', 'manifest.json'
+  'rpg.js', 'avatar-art.js', 'avatar.js', 'character.js', 'food.js', 'train.js', 'auth.js', 'sync-core.js', 'firebase-config.js', 'welcome-art.webp', 'train-hero.webp', 'logo-mark.png', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/favicon-32.png', 'manifest.json'
 ];
 // Hand-drawn hairstyles for the character creator.
 const HAIR = ['spikyFringe', 'textured', 'shoulderStraight', 'bowlSweep', 'longStraight', 'spikyCrop', 'locs', 'wavyBlonde', 'buzz', 'curlyCrop', 'waves', 'quiff', 'curlyCap', 'spikes', 'tightCurls', 'curtainBlonde', 'afro', 'looseCurls', 'pompadour', 'longWavy', 'sideSweep', 'emoSweep', 'slickBack', 'shortWavy', 'spikeTop', 'spikyBlonde', 'sidePart', 'curlyTop', 'bowl', 'flatTop', 'messySpiky', 'middlePart', 'texturedQuiff', 'slickedBlack', 'curlyFade', 'buzzFade', 'curtains', 'blondeQuiff', 'messy', 'twists', 'cornrows', 'bigAfro', 'shag', 'spikyBlack', 'textCrop', 'curlyTopFade', 'longDark', 'messyBun', 'bob', 'beachWaves', 'pixie', 'longSleek', 'longWaves', 'longFringe', 'halfUp', 'sidePonytail', 'topBun', 'curlyUpdo', 'spaceBuns', 'plaits', 'boxBraids', 'afroPuff', 'longCurls', 'wavyBun', 'shortCurls', 'longLocs'];
 APP_FILES.push(...HAIR.map(n => `hair/${n}.webp`));
+// Hand-drawn character artwork sheets.
+APP_FILES.push(...['heads', 'face', 'eyes', 'beards', 'bodies', 'tops', 'bottoms', 'shoes'].map(n => `art/${n}.webp`));
 const SDK_HOST = 'www.gstatic.com';
 const NETWORK_TIMEOUT_MS = 3500;
 

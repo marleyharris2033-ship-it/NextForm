@@ -695,7 +695,7 @@ body{background:radial-gradient(130% 55% at 50% -12%,#dfeccf 0%,rgba(223,236,207
 .thumb{display:flex;flex-direction:column;align-items:stretch;gap:4px;border:0;background:none;padding:0;font:inherit;color:inherit;text-align:center}
 .thumbArt{display:block;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:#efe4cc;box-shadow:0 0 0 1px rgba(21,48,42,.06);transition:box-shadow .12s,transform .12s}
 .thumbGrid.wide .thumbArt{aspect-ratio:2/1}
-.thumbGrid.tall .thumbArt{aspect-ratio:4/3}
+.thumbGrid.tall .thumbArt{aspect-ratio:3/5}
 .thumbArt .avatarSvg{width:100%;height:100%}
 .thumb.on .thumbArt{box-shadow:0 0 0 3px var(--pine);transform:scale(1.02)}
 .thumbLabel{font-size:12px;font-weight:600;color:var(--stone);line-height:1.2}
