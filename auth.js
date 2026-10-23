@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { planSignIn, mergeData, joinData, mergeIntoCloud } from './sync-core.js?v=meals1';
+import { planSignIn, mergeData, readCloud, mergeIntoCloud } from './sync-core.js?v=launch1';
 
 const SDK = 'https://www.gstatic.com/firebasejs/13.1.0/';
 const panel = document.getElementById('accountCard');
@@ -23,8 +23,24 @@ window.NextFormCloud = {
     for (const key of keys) { try { await fs.deleteDoc(chunkDoc(key)); } catch {} }
     await fs.deleteDoc(userDoc());
     localStorage.removeItem(NF.OWNER_KEY);
+  },
+  // Delete the account entirely: cloud backup, the sign-in record, and everything on this device.
+  async deleteAccount() {
+    const account = auth?.currentUser || user;
+    if (!account) throw new Error('not signed in');
+    stopSyncTimers();
+    await window.NextFormCloud.deleteCloud();
+    try { await sdk.deleteUser(account); }
+    catch (error) {
+      if (!String(error?.code || '').includes('requires-recent-login')) throw error;
+      // Google needs a fresh sign-in before an account can be deleted.
+      await sdk.reauthenticateWithPopup(account, provider);
+      await sdk.deleteUser(account);
+    }
+    for (const k of Object.keys(localStorage)) if (k.startsWith('nextform')) localStorage.removeItem(k);
   }
 };
+function stopSyncTimers() { clearTimeout(pushTimer); clearTimeout(retryTimer); if (unsubscribe) unsubscribe(); unsubscribe = null; ready = false; }
 
 function message(text) { status.textContent = text; }
 function syncState(state, text) { syncLine.dataset.state = state; syncLine.textContent = text; }
@@ -32,13 +48,14 @@ function render(u) {
   identity.textContent = u ? (u.email || u.displayName || 'Google account') : 'Guest';
   login.hidden = !!u;
   logout.hidden = !u;
+  document.getElementById('deleteAccount').hidden = !u;
   login.disabled = busy;
   logout.disabled = busy;
   message(u ? 'Signed in with Google.' : 'Sign in with your Google account to back up your workouts, or keep using NextForm as a guest.');
   if (!u) syncState('', '');
   document.getElementById('accountHelp').textContent = u
     ? 'Your workouts, weights and profile back up to this Google account automatically. Signing out removes them from this device; sign in again on any device to get them back.'
-    : 'Sign in to back up your workouts, weights and profile to your Google account and restore them on any device. As a guest, everything stays only in this browser.';
+    : 'Sign in to back up your workouts, weights and profile to your Google account and restore them on any device. As a guest, everything stays only in this browser. See the privacy policy in Help & legal below.';
   window.dispatchEvent(new CustomEvent('nextform-auth', { detail: { signedIn: !!u } }));
 }
 function errorMessage(error) {
@@ -70,15 +87,12 @@ const chunkDoc = key => fs.doc(db, 'users', user.uid, 'chunks', key);
 let chunked = true, legacyNote = '';
 const isDirty = () => localStorage.getItem(NF.DIRTY_KEY) === '1';
 // Whole cloud copy: main document plus any workout/food chunks it lists.
+// Pieces this device already has (same fingerprint) aren't downloaded again.
 async function fetchRemote() {
   const snap = await fs.getDoc(userDoc());
   if (!snap.exists()) return null;
-  let base; try { base = JSON.parse(snap.data().payload); } catch { return null; }
-  const keys = Array.isArray(base.chunkKeys) ? base.chunkKeys : [];
-  const parts = await Promise.all(keys.map(k => fs.getDoc(chunkDoc(k))));
-  const chunks = {};
-  parts.forEach((p, i) => { if (p.exists()) { try { chunks[keys[i]] = JSON.parse(p.data().payload); } catch {} } });
-  return NF.normalize(joinData(base, chunks));
+  const cloud = await readCloud(snap.data().payload, async key => { const c = await fs.getDoc(chunkDoc(key)); return { exists: c.exists(), payload: c.exists() ? c.data().payload : null }; }, NF.data);
+  return cloud ? NF.normalize(cloud.data) : null;
 }
 const txAdapter = tx => ({
   get: async ref => { const s = await tx.get(ref); return { exists: s.exists(), payload: s.exists() ? s.data().payload : null }; },
@@ -212,6 +226,14 @@ if (configured) {
     sdk = authSDK;
     fs = storeSDK;
     const app = appSDK.initializeApp(firebaseConfig);
+    // App Check (optional): proves requests come from NextForm itself, so other sites can't use this Firebase
+    // project. Only switched on once a reCAPTCHA v3 site key has been added to firebase-config.js.
+    if (typeof firebaseConfig.appCheckSiteKey === 'string' && firebaseConfig.appCheckSiteKey.trim()) {
+      try {
+        const ac = await import(SDK + 'firebase-app-check.js');
+        ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(firebaseConfig.appCheckSiteKey.trim()), isTokenAutoRefreshEnabled: true });
+      } catch (e) { console.warn('App Check unavailable', e); }
+    }
     auth = sdk.getAuth(app);
     db = fs.getFirestore(app);
     provider = new sdk.GoogleAuthProvider();

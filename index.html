@@ -9,8 +9,8 @@
 <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png?v=2">
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=meals1">
+<link rel="stylesheet" href="welcome.css?v=2">
+<link rel="stylesheet" href="ui.css?v=launch1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -22,6 +22,7 @@
     <button id="welcomeGuest">Continue as guest</button>
     <p id="welcomeStatus" role="status" aria-live="polite">Connecting to Google sign-in…</p>
     <p class="welcome-note">Sign in to back up your workouts to your Google account. Guest workouts stay on this device only.</p>
+    <p class="welcome-legal">By continuing you agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy policy</a>.</p>
   </div>
 </section>
 <div id="onboarding" class="onboarding hidden">
@@ -216,6 +217,7 @@
   <button id="googleSignOut" class="secondary" type="button" hidden>Sign out</button>
   <p id="accountHelp" class="tiny muted">Sign in to back up your workouts, weights and profile to your Google account and restore them on any device. As a guest, everything stays only in this browser.</p>
   <button id="backToWelcome" class="link" type="button">Show welcome screen</button>
+  <button id="deleteAccount" class="link danger deleteAccount" type="button" hidden>Delete my account</button>
 </div>
 <div class="card">
 <div class="profileHead">
@@ -225,7 +227,12 @@
     <span>Change photo</span>
   </label>
   <div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
-</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
+</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card helpCard"><h2>Help &amp; legal</h2>
+  <a class="helpRow" href="mailto:Nextformstudio@outlook.com?subject=NextForm%20feedback"><span><b>Contact us</b><small>Questions, bugs or ideas: Nextformstudio@outlook.com</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+  <a class="helpRow" href="privacy.html"><span><b>Privacy policy</b><small>What NextForm stores and your rights</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+  <a class="helpRow" href="terms.html"><span><b>Terms of use</b><small>Including: NextForm isn't medical advice</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+</div>
+<div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
 <nav class="tabbar" aria-label="Main"><button type="button" data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button><button type="button" data-page="planner" aria-label="Plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Plan</span></button><button type="button" data-page="progress" aria-label="Progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg><span>Progress</span></button><button type="button" data-page="train" class="trainTab" aria-label="Train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg><span>Train</span></button><button type="button" data-page="food" aria-label="Food"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/></svg><span>Food</span></button><button type="button" data-page="challenges" aria-label="Quests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg><span>Quests</span></button><button type="button" data-page="profile" aria-label="Profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-3.5 3.7-5 7-5s6 1.5 7 5"/></svg><span>Profile</span></button></nav>
@@ -359,4 +366,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=meals1"></script><script src="rpg.js?v=meals1"></script><script src="app.js?v=meals1"></script><script src="food.js?v=meals1"></script><script src="coach.js?v=meals1"></script><script src="train.js?v=meals1"></script><script src="plans.js?v=meals1"></script><script src="log-edit.js?v=meals1"></script><script src="insights.js?v=meals1"></script><script src="welcome.js?v=meals1"></script><script type="module" src="auth.js?v=meals1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=launch1"></script><script src="rpg.js?v=launch1"></script><script src="app.js?v=launch1"></script><script src="food.js?v=launch1"></script><script src="coach.js?v=launch1"></script><script src="train.js?v=launch1"></script><script src="plans.js?v=launch1"></script><script src="log-edit.js?v=launch1"></script><script src="insights.js?v=launch1"></script><script src="welcome.js?v=launch1"></script><script type="module" src="auth.js?v=launch1"></script></body></html>

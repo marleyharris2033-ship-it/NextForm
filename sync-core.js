@@ -101,7 +101,7 @@ export function splitData(data) {
 // { base, chunks } -> data (base without chunkKeys, workouts and food put back together).
 export function joinData(base, chunks = {}) {
   if (!base) return null;
-  const { chunkKeys, ...rest } = base;
+  const { chunkKeys, chunkFps, ...rest } = base;
   const workouts = [...(rest.workouts || [])], foodLog = [...(rest.foodLog || [])];
   for (const [key, list] of Object.entries(chunks)) {
     if (!Array.isArray(list)) continue;
@@ -110,36 +110,59 @@ export function joinData(base, chunks = {}) {
   return { ...rest, workouts: workouts.sort(byDateThenId), foodLog: foodLog.sort(byDateThenId) };
 }
 
-// One backup round inside a transaction: read the cloud copy (main + chunks), merge with this device,
-// write back only what changed. tx: { get(ref) -> {exists, payload}, set(ref, value), delete(ref) }.
-// refs: { main, chunk(key) }. chunked=false writes everything into the main document (old format).
+// Short fingerprint of a chunk's text (cyrb53). The main document stores one per chunk, so a device whose
+// own copy of a chunk has the same fingerprint already has exactly that chunk and needn't download it.
+export function fingerprint(str) {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+// This device's own chunks as { key: { list, payload, fp } }.
+export function localChunks(data) {
+  const out = {};
+  for (const [key, list] of Object.entries(splitData(data || {}).chunks)) { const payload = JSON.stringify(list); out[key] = { list, payload, fp: fingerprint(payload) }; }
+  return out;
+}
+// The whole cloud copy from its main document, reading only chunks this device doesn't already have.
+// getChunk(key) -> { exists, payload }. Returns { data, raw: { key: payload }, fps: { key: fingerprint } } or null.
+export async function readCloud(mainPayload, getChunk, local) {
+  let base; try { base = JSON.parse(mainPayload); } catch { return null; }
+  const keys = Array.isArray(base.chunkKeys) ? base.chunkKeys : [], fps = base.chunkFps || {}, mine = localChunks(local);
+  const chunks = {}, raw = {}, skipped = [];
+  await Promise.all(keys.map(async key => {
+    if (fps[key] && mine[key]?.fp === fps[key]) { chunks[key] = mine[key].list; raw[key] = mine[key].payload; skipped.push(key); return; }
+    const c = await getChunk(key);
+    if (!c.exists) return;
+    raw[key] = c.payload;
+    try { chunks[key] = JSON.parse(c.payload); } catch { chunks[key] = []; }
+  }));
+  return { data: joinData(base, chunks), raw, fps, keys, skipped };
+}
+
+// One backup round inside a transaction: read the cloud copy (main + any chunks this device doesn't
+// already have), merge with this device, write back only what changed. Every write also rewrites the main
+// document, which the transaction reads, so a change from another device always forces a retry.
+// tx: { get(ref) -> {exists, payload}, set(ref, value), delete(ref) }. refs: { main, chunk(key) }.
+// chunked=false writes everything into the main document (old format, before the split rules are published).
 export async function mergeIntoCloud(tx, refs, local, { challengeXp = {}, chunked = true, now = Date.now() } = {}) {
   const main = await tx.get(refs.main);
-  let base = null; const remoteChunks = {}, remoteRaw = {};
-  if (main.exists) {
-    try { base = JSON.parse(main.payload); } catch { base = null; }
-  }
-  const keys = Array.isArray(base?.chunkKeys) ? base.chunkKeys : [];
-  for (const key of keys) {
-    const c = await tx.get(refs.chunk(key));
-    if (!c.exists) continue;
-    remoteRaw[key] = c.payload;
-    try { remoteChunks[key] = JSON.parse(c.payload); } catch { remoteChunks[key] = []; }
-  }
-  const remote = base ? joinData(base, remoteChunks) : null;
-  const next = remote ? mergeData(local, remote, challengeXp) : { ...local };
+  const cloud = main.exists ? await readCloud(main.payload, key => tx.get(refs.chunk(key)), local) : null;
+  const next = cloud ? mergeData(local, cloud.data, challengeXp) : { ...local };
   next.updatedAt = Math.max(next.updatedAt || 0, now);
   if (!chunked) {
     tx.set(refs.main, { payload: JSON.stringify(next), updatedAt: next.updatedAt, schema: 1 });
-    return { data: next, wrote: ['main'] };
+    return { data: next, wrote: ['main'], skipped: cloud?.skipped || [] };
   }
-  const { base: nb, chunks } = splitData(next), wrote = [];
-  for (const [key, list] of Object.entries(chunks)) {
-    const payload = JSON.stringify(list);
-    if (remoteRaw[key] !== payload) { tx.set(refs.chunk(key), { payload, updatedAt: next.updatedAt }); wrote.push(key); }
+  const { base: nb } = splitData(next), mine = localChunks(next), wrote = [], keys = cloud?.keys || [];
+  nb.chunkFps = {};
+  for (const [key, c] of Object.entries(mine)) {
+    nb.chunkFps[key] = c.fp;
+    if (cloud?.raw[key] !== c.payload) { tx.set(refs.chunk(key), { payload: c.payload, updatedAt: next.updatedAt }); wrote.push(key); }
   }
-  for (const key of keys) if (!chunks[key]) { tx.delete(refs.chunk(key)); wrote.push('-' + key); }
+  for (const key of keys) if (!mine[key]) { tx.delete(refs.chunk(key)); wrote.push('-' + key); }
   tx.set(refs.main, { payload: JSON.stringify(nb), updatedAt: next.updatedAt, schema: 2 });
   wrote.push('main');
-  return { data: next, wrote };
+  return { data: next, wrote, skipped: cloud?.skipped || [] };
 }
