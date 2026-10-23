@@ -147,6 +147,8 @@ const EXERCISES=[
 ["Dead Hang", "Back", ["Hang from the bar with straight arms.", "Relax your shoulders, or pull them down for active hangs.", "Build up your time gradually."], "Dead Hang exercise form", "cali timed"],
 ["Wall Sit", "Legs", ["Back flat against the wall.", "Thighs parallel to the floor.", "Keep your weight in your heels."], "Wall Sit exercise form", "timed"]].map(([name,cat,cues,q,tags=""])=>({name,cat,cues,q,cali:/cali/.test(tags)||CALI_EXTRA.has(name),timed:/timed/.test(tags)||TIMED_EXTRA.has(name)}));
 
+// Your own plans first, then the built-in ones.
+function allPlans(){return [...(data.plans||[]).filter(p=>p&&p.id&&Array.isArray(p.exercises)),...BUILTIN_PLANS]}
 const BUILTIN_PLANS=[
 {category:"Full Body",id:"fb1",name:"Full Body A — Classic",type:"Strength",desc:"Balanced compounds with simple equipment.",exercises:[
 {name:"Back Squat",sets:3,reps:"6-8"},{name:"Bench Press",sets:3,reps:"6-8"},{name:"One-Arm Dumbbell Row",sets:3,reps:"8-12"},{name:"Romanian Deadlift",sets:3,reps:"8-10"},{name:"Lateral Raise",sets:2,reps:"12-15"},{name:"Plank",sets:3,reps:"30-60s"}]},
@@ -696,26 +698,32 @@ function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,
 
 
 window.togglePremadeDetails=id=>{let el=document.getElementById("details-"+id);if(el)el.classList.toggle("hidden")};
-let activePlanCategory="Full Body";
+let activePlanCategory="Full Body",plannerTabChosen=false;
 function renderSimplePlanner(){
  const cats=["Full Body","Push / Pull","Upper / Lower","Bro Split"];
- $("#planCategoryChips").innerHTML=cats.map(c=>`<button type="button" class="chip ${c===activePlanCategory?"active":""}" data-plan-category="${c}">${c}</button>`).join("");
+ const mine=(data.plans||[]).filter(p=>p&&p.id&&Array.isArray(p.exercises));
+ if(!plannerTabChosen&&mine.length)activePlanCategory="My plans";
+ $("#planCategoryChips").innerHTML=["My plans",...cats].map(c=>`<button type="button" class="chip ${c===activePlanCategory?"active":""}" data-plan-category="${c}">${c}${c==="My plans"&&mine.length?` <small>${mine.length}</small>`:""}</button>`).join("");
  $("#planCategoryChips").querySelectorAll("[data-plan-category]").forEach(btn=>{
    btn.addEventListener("click",()=>{
-     activePlanCategory=btn.dataset.planCategory;
+     activePlanCategory=btn.dataset.planCategory;plannerTabChosen=true;
      renderSimplePlanner();
    });
  });
- const visible=BUILTIN_PLANS.filter(p=>p.category===activePlanCategory);
- $("#premadeWorkoutList").innerHTML=visible.map(p=>`
+ const myView=activePlanCategory==="My plans";
+ const visible=myView?mine:BUILTIN_PLANS.filter(p=>p.category===activePlanCategory);
+ const createCard=myView?`<button type="button" class="createPlan" id="createPlan"><span class="cpPlus" aria-hidden="true">+</span><span><b>Create a plan</b><small>${mine.length?"Name it, pick exercises from the library, save it.":"Build your own workout from the exercise library and save it to use any time."}</small></span></button>`:"";
+ $("#premadeWorkoutList").innerHTML=createCard+visible.map(p=>`
   <div class="planCard builtinPlan">
-   <b class="planName">${p.name}</b>
-   <div class="tiny muted">${p.desc}</div>
-   <div class="planExercisePreview">${p.exercises.slice(0,4).map(e=>`<span>${e.name}</span>`).join("")}${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}</div>
+   <b class="planName">${esc(p.name)}</b>
+   <div class="tiny muted">${esc(p.desc||`${p.exercises.length} exercises${p.type&&p.type!=="Strength"?`, ${WORKOUT_TYPES.typeDef(p.type).label}`:""}`)}</div>
+   <div class="planExercisePreview">${p.exercises.slice(0,4).map(e=>`<span>${esc(e.name)}</span>`).join("")}${p.exercises.length>4?`<span>+${p.exercises.length-4} more</span>`:""}</div>
    <div class="buttons"><button class="primary" onclick="startPremadePlan('${p.id}')">Start workout</button><button class="secondary" onclick="togglePremadeDetails('${p.id}')">View exercises</button></div>
-   <div id="details-${p.id}" class="planDetails hidden">${p.exercises.map(e=>`<div><b>${e.name}</b><span>${e.sets} × ${e.reps}</span></div>`).join("")}</div>
-  </div>`).join("");
- $("#weekPlanner").innerHTML=DAYS.map(d=>`<div class="dayrow diaryRow"><b>${d}</b><select data-day="${d}"><option value="">Rest / no workout</option>${cats.map(cat=>`<optgroup label="${cat}">${BUILTIN_PLANS.filter(p=>p.category===cat).map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}</optgroup>`).join("")}</select>${data.schedule[d]?`<button class="secondary diaryStart" data-start="${data.schedule[d]}">Start</button>`:""}</div>`).join("");
+   <div id="details-${p.id}" class="planDetails hidden">${p.exercises.map(e=>`<div><b>${esc(e.name)}</b><span>${e.sets} × ${esc(e.reps)}</span></div>`).join("")}</div>
+   <div class="planMore">${p.custom?`<button type="button" class="link" data-edit-plan="${p.id}">Edit</button><button type="button" class="link" data-copy-plan="${p.id}">Duplicate</button><button type="button" class="link danger" data-delete-plan="${p.id}">Delete</button>`:`<button type="button" class="link" data-copy-plan="${p.id}">Copy to My plans and edit</button>`}</div>
+  </div>`).join("")+(myView&&!mine.length?"":"");
+ $("#createPlan")?.addEventListener("click",()=>window.openPlanBuilder?.());
+ $("#weekPlanner").innerHTML=DAYS.map(d=>`<div class="dayrow diaryRow"><b>${d}</b><select data-day="${d}"><option value="">Rest / no workout</option>${mine.length?`<optgroup label="My plans">${mine.map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</optgroup>`:""}${cats.map(cat=>`<optgroup label="${cat}">${BUILTIN_PLANS.filter(p=>p.category===cat).map(p=>`<option value="${p.id}" ${data.schedule[d]===p.id?"selected":""}>${p.name}</option>`).join("")}</optgroup>`).join("")}</select>${data.schedule[d]?`<button class="secondary diaryStart" data-start="${data.schedule[d]}">Start</button>`:""}</div>`).join("");
  $$("#weekPlanner select").forEach(sel=>sel.onchange=()=>{if(sel.value)data.schedule[sel.dataset.day]=sel.value;else delete data.schedule[sel.dataset.day];save()});
  $$(".diaryStart").forEach(b=>b.onclick=()=>startPremadePlan(b.dataset.start));
 }

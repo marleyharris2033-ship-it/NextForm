@@ -68,7 +68,7 @@
   function sessionHasWork() {
     return session && (session.exercises.some(e => e.sets.some(s => s.done)) || (WT.typeDef(session.type).fields || []).some(f => f.def == null && +session[f.k] > 0) || session.activity);
   }
-  window.startPremadePlan = id => { const p = BUILTIN_PLANS.find(x => x.id === id); if (p) start({ plan: p }); };
+  window.startPremadePlan = id => { const p = allPlans().find(x => x.id === id); if (p) start({ plan: p }); };
   window.startPastSession = () => start({ past: true });
 
   // ---------- rendering ----------
@@ -110,7 +110,7 @@
   }
   function renderStart() {
     renderTypeTiles();
-    const day = DAYS[(new Date().getDay() + 6) % 7], planId = data.schedule?.[day], plan = BUILTIN_PLANS.find(p => p.id === planId);
+    const day = DAYS[(new Date().getDay() + 6) % 7], planId = data.schedule?.[day], plan = allPlans().find(p => p.id === planId);
     const first = (data.profile.name || '').trim().split(' ')[0], st = streak();
     $('#heroTitle').textContent = first ? `Ready to climb, ${first}?` : 'Ready to climb?';
     $('#heroKicker').textContent = st > 1 ? `${st}-day streak. Keep it going.` : plan ? `Today: ${plan.name}` : 'Every set counts towards your skills';
@@ -120,9 +120,9 @@
     $('#startEmpty').textContent = plan ? 'Start a different workout' : 'Start workout';
     // Suggest plans: the ones you've used most recently first, then the rest of your split.
     const recent = [...new Set([...data.workouts].reverse().map(w => w.planId).filter(Boolean))];
-    const picks = [...recent.map(id => BUILTIN_PLANS.find(p => p.id === id)).filter(Boolean), ...BUILTIN_PLANS].filter((p, i, a) => a.indexOf(p) === i && p.id !== planId).slice(0, 4);
+    const picks = [...recent.map(id => allPlans().find(p => p.id === id)).filter(Boolean), ...data.plans, ...BUILTIN_PLANS].filter((p, i, a) => a.indexOf(p) === i && p.id !== planId).slice(0, 4);
     const CAT_COLOR = { 'Full Body': 'var(--pine)', 'Push / Pull': 'var(--glacier)', 'Upper / Lower': 'var(--amber)', 'Bro Split': 'var(--moss)' };
-    $('#planPicks').innerHTML = picks.map(p => `<button type="button" class="planPick" data-plan="${p.id}" style="--c:${CAT_COLOR[p.category] || 'var(--pine)'}"><span class="pickIcon">${icon('dumbbell')}</span><span class="pickText"><b>${esc(p.name)}</b><small>${p.exercises.length} exercises, ${esc(p.category)}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`).join('');
+    $('#planPicks').innerHTML = picks.map(p => `<button type="button" class="planPick" data-plan="${p.id}" style="--c:${CAT_COLOR[p.category] || 'var(--pine)'}"><span class="pickIcon">${icon('dumbbell')}</span><span class="pickText"><b>${esc(p.name)}</b><small>${p.exercises.length} exercises, ${esc(p.custom ? 'My plan' : p.category)}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`).join('');
   }
   function renderResume() {
     const box = $('#resumeBanner'); if (!box) return;
@@ -344,9 +344,13 @@
   });
 
   // ---------- exercise picker ----------
-  let pickerCat = 'All';
-  function openPicker() { if (session?.type === 'Calisthenics') pickerCat = 'Calisthenics'; else if (pickerCat === 'Calisthenics') pickerCat = 'All'; $('#exPicker').classList.remove('hidden'); document.body.classList.add('sheetOpen'); $('#exSearch').value = ''; renderPicker(); setTimeout(() => $('#exSearch').focus(), 50); }
-  function closePicker() { $('#exPicker').classList.add('hidden'); document.body.classList.remove('sheetOpen'); }
+  let pickerCat = 'All', pickTarget = null;
+  // The plan builder borrows this picker: pass a function and it gets the chosen name instead of the workout.
+  function openPicker(target = null, cat = null) {
+    pickTarget = typeof target === 'function' ? target : null;
+    if (cat) pickerCat = cat; else if (!pickTarget && session?.type === 'Calisthenics') pickerCat = 'Calisthenics'; else if (pickerCat === 'Calisthenics' && !cat) pickerCat = 'All'; $('#exPicker').classList.remove('hidden'); document.body.classList.add('sheetOpen'); $('#exSearch').value = ''; renderPicker(); setTimeout(() => $('#exSearch').focus(), 50); }
+  function closePicker() { $('#exPicker').classList.add('hidden'); pickTarget = null; if (!document.querySelector('.sheet:not(.hidden):not(#exPicker)')) document.body.classList.remove('sheetOpen'); }
+  window.openExercisePicker = openPicker;
   function renderPicker() {
     const q = $('#exSearch').value.trim(), ql = q.toLowerCase();
     const cats = ['All', 'Calisthenics', ...new Set(EXERCISES.map(e => e.cat))];
@@ -358,12 +362,14 @@
     $('#exList').innerHTML = list.map(e => `<button type="button" class="foodResult" data-name="${esc(e.name)}"><span><b>${esc(e.name)}</b><small>${esc(e.cat)}${e.timed ? ', timed hold' : ''}${used.has(e.name) ? ', done before' : ''}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>`).join('') +
       (q && !exact ? `<button type="button" class="foodResult" data-new="${esc(q)}"><span><b>Add “${esc(q)}”</b><small>As a new exercise</small></span></button>` : '');
   }
-  $('#addExerciseBtn').addEventListener('click', openPicker);
+  $('#addExerciseBtn').addEventListener('click', () => openPicker());
   $('#exPickerClose').addEventListener('click', closePicker);
   $('#exSearch').addEventListener('input', renderPicker);
   $('#exCats').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) { pickerCat = b.dataset.cat; renderPicker(); } });
   $('#exList').addEventListener('click', e => {
-    const b = e.target.closest('[data-name],[data-new]'); if (!b || !session) return;
+    const b = e.target.closest('[data-name],[data-new]'); if (!b) return;
+    if (pickTarget) { const cb = pickTarget; closePicker(); return cb(b.dataset.name || b.dataset.new.slice(0, 60)); }
+    if (!session) return;
     session.exercises.push(newExercise(b.dataset.name || b.dataset.new.slice(0, 60)));
     persist(); closePicker(); render();
     const cards = $$('#sessionExercises .exCard'); cards[cards.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });

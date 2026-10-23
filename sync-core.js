@@ -27,6 +27,7 @@ export function mergeData(local, remote, challengeXp = {}) {
   };
   const w = mergeEntries('workouts', 'deletedWorkouts');
   const food = mergeEntries('foodLog', 'deletedFood');
+  const plans = mergeEntries('plans', 'deletedPlans');
 
   const weights = new Map();
   for (const w of [...(remote.weights || []), ...(local.weights || [])]) weights.set(`${w.date}|${w.value}`, w);
@@ -52,6 +53,8 @@ export function mergeData(local, remote, challengeXp = {}) {
     deletedWorkouts: w.tombs,
     foodLog: food.list,
     deletedFood: food.tombs,
+    plans: plans.list,
+    deletedPlans: plans.tombs,
     xp,
     lastExport: Math.max(local.lastExport || 0, remote.lastExport || 0) || null,
     updatedAt: Math.max(local.updatedAt || 0, remote.updatedAt || 0)

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=types1">
+<link rel="stylesheet" href="ui.css?v=plans1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -299,6 +299,18 @@
     <p id="plateText" class="plateText"></p>
   </div>
 </div>
+<div id="planSheet" class="sheet planSheet hidden" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle">
+  <div class="sheetHead"><span></span><h2 id="planSheetTitle">New plan</h2><button type="button" class="iconBtn" id="planClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheetBody">
+    <label class="pLabel">Plan name<input id="planName" type="text" maxlength="60" placeholder="e.g. Monday push" autocomplete="off"></label>
+    <p class="pLabel">Type</p>
+    <div class="chips pTypes" id="planTypes"></div>
+    <div class="pHead"><p class="pLabel">Exercises</p><span id="planCount" class="muted small"></span></div>
+    <div id="planExList"></div>
+    <button type="button" class="secondary full" id="planAddEx">+ Add exercise from library</button>
+  </div>
+  <div class="charFoot pFoot"><button type="button" class="primary full" id="planSave">Save plan</button></div>
+</div>
 <div id="exPicker" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="exPickerTitle">
   <div class="sheetHead"><span></span><h2 id="exPickerTitle">Add exercise</h2><button type="button" class="iconBtn" id="exPickerClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody">
@@ -339,4 +351,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=types1"></script><script src="rpg.js?v=types1"></script><script src="app.js?v=types1"></script><script src="food.js?v=types1"></script><script src="coach.js?v=types1"></script><script src="train.js?v=types1"></script><script src="welcome.js?v=types1"></script><script type="module" src="auth.js?v=types1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=plans1"></script><script src="rpg.js?v=plans1"></script><script src="app.js?v=plans1"></script><script src="food.js?v=plans1"></script><script src="coach.js?v=plans1"></script><script src="train.js?v=plans1"></script><script src="plans.js?v=plans1"></script><script src="welcome.js?v=plans1"></script><script type="module" src="auth.js?v=plans1"></script></body></html>
