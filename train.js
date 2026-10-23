@@ -275,7 +275,9 @@
   }
   function closePlates() { $('#plateSheet').classList.add('hidden'); document.body.classList.remove('sheetOpen'); }
   function renderPlates() {
-    const bar = +prefs().bar[(plateEx || '').toLowerCase()] || 20, kg = +$('#plateKg').value || 0, r = Coach.plates(kg, bar);
+    const have = Array.isArray(prefs().plates) ? prefs().plates : Coach.PLATES;
+    const bar = +prefs().bar[(plateEx || '').toLowerCase()] || 20, kg = +$('#plateKg').value || 0, r = Coach.plates(kg, bar, Coach.PLATES.filter(p => have.includes(p)));
+    $('#plateSet').innerHTML = Coach.PLATES.map(p => `<button type="button" class="pChip${have.includes(p) ? ' on' : ''}" data-plate="${p}" style="--c:${PLATE_COLORS[p]}" aria-pressed="${have.includes(p)}">${p}</button>`).join('');
     $('#plateBars').innerHTML = [20, 15, 10].map(b => `<button type="button" class="chip${b === bar ? ' active' : ''}" data-bar="${b}">${b} kg bar</button>`).join('');
     const h = p => 44 + p * 2.6;
     $('#plateViz').innerHTML = `<div class="pvBar"><span class="pvSleeve"></span>${r.perSide.map(p => `<span class="pvPlate" style="--h:${h(p)}px;--c:${PLATE_COLORS[p]}">${p}</span>`).join('')}<span class="pvCap"></span></div>`;
@@ -286,6 +288,12 @@
   }
   $('#plateKg').addEventListener('input', renderPlates);
   $('#plateBars').addEventListener('click', e => { const b = e.target.closest('[data-bar]'); if (!b || !plateEx) return; prefs().bar[plateEx.toLowerCase()] = +b.dataset.bar; save(); renderPlates(); });
+  $('#plateSet').addEventListener('click', e => {
+    const b = e.target.closest('[data-plate]'); if (!b) return;
+    const p = +b.dataset.plate, have = Array.isArray(prefs().plates) ? [...prefs().plates] : [...Coach.PLATES];
+    prefs().plates = have.includes(p) ? have.filter(x => x !== p) : [...have, p].sort((a, b) => b - a);
+    save(); renderPlates();
+  });
   $('#plateClose').addEventListener('click', closePlates);
   $('#plateSheet').addEventListener('click', e => { if (e.target.id === 'plateSheet') closePlates(); });
 
