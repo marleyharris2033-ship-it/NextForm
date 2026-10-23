@@ -3,9 +3,9 @@
 (() => {
   const BARBELL = new Set(['bench press', 'back squat', 'front squat', 'box squat', 'zercher squat', 'deadlift', 'sumo deadlift',
     'romanian deadlift', 'rack pull', 'good morning', 'overhead press', 'push press', 'z press', 'barbell row', 'pendlay row',
-    'barbell curl', 'close-grip bench press', 'incline barbell press', 'floor press', 'hip thrust', 'jm press', 'ez-bar curl', 'skull crusher']);
+    'barbell curl', 'barbell shrug', 'trap bar deadlift', 'close-grip bench press', 'incline barbell press', 'floor press', 'hip thrust', 'jm press', 'ez-bar curl', 'skull crusher']);
   const LOWER = /squat|deadlift|rack pull|good morning|hip thrust|leg press|lunge|step-up/;
-  const ISOLATION = /curl|raise|fly|extension|pushdown|kickback|crunch|calf|face pull|pullover|squeeze|shrug|y raise|reverse fly|tate press/;
+  const ISOLATION = /curl|raise|fly|extension|pushdown|kickback|crunch|calf|face pull|pullover|squeeze|shrug|y raise|reverse fly|tate press|pec deck|abduction|adduction|woodchop|pallof|twist/;
 
   function equipment(name) {
     const n = String(name || '').trim().toLowerCase();

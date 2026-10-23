@@ -661,3 +661,21 @@ label.toolBtn{flex-direction:row;gap:6px;font-size:13.5px;color:var(--pine);curs
 .pChip{min-width:44px;min-height:36px;border-radius:12px;border:0;font-weight:700;font-size:14px;background:var(--mist);color:var(--stone);opacity:.55;text-decoration:line-through}
 .pChip.on{background:var(--c);color:#fff;opacity:1;text-decoration:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
 .pChip.on[style*="#f2f0ea"]{color:var(--pine-deep)}
+/* ===== Workout types ===== */
+.quickHead{margin:14px 0 0;font-size:13px;font-weight:650;color:var(--stone)}
+.quickTypes{margin-top:8px}
+.quickTile span{line-height:1.15;text-align:center}
+.quickTile .ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.typeChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px 16px;padding:2px 16px}
+.typeChips::-webkit-scrollbar{display:none}
+.typeChips .chip{flex-shrink:0}
+.typeCard .pickGroup{margin-bottom:14px}
+.typeCard .optLabel{font-size:13px;font-weight:650;color:var(--stone);margin:0 0 8px}
+.typeCard .optLabel small{font-weight:500}
+.pickChips{display:flex;flex-wrap:wrap;gap:8px}
+.pickChips .chip{min-height:36px;padding:6px 13px;font-size:13.5px}
+.pickChips .chip.active{background:var(--pine);color:#fff}
+.optTag{font-weight:500;color:var(--stone);opacity:.8}
+.typeCalc{margin:12px 0 0;font-weight:650;color:var(--pine);font-size:14px}
+.typeCard .form2 label>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.optTag{font-size:11.5px}

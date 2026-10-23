@@ -1,4 +1,6 @@
 const KEY="nextform-v1",DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const CALI_EXTRA=new Set(["Push-Up","Pull-Up","Chin-Up","Inverted Row","Hanging Leg Raise","Plank","Side Plank","Decline Push-Up","Incline Push-Up","Neutral-Grip Pull-Up","Wide-Grip Pull-Up"]);
+const TIMED_EXTRA=new Set(["Plank","Side Plank"]);
 const EXERCISES=[
 ["Bench Press","Chest",["Plant your feet and keep your upper back stable.","Lower with control to the lower chest.","Keep wrists stacked over forearms."],"Jeff Nippard bench press technique"],
 ["Incline Dumbbell Press","Chest",["Use a moderate incline.","Keep shoulder blades stable.","Lower under control."],"Jeff Nippard incline dumbbell press"],
@@ -99,7 +101,51 @@ const EXERCISES=[
 ["Wide-Grip Pull-Up","Back",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Wide-Grip Pull-Up exercise form"],
 ["Z Press","Shoulders",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Z Press exercise form"],
 ["Zercher Squat","Legs",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Zercher Squat exercise form"],
-["Zottman Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Zottman Curl exercise form"]].map(([name,cat,cues,q])=>({name,cat,cues,q}));
+["Zottman Curl","Arms",["Use a controlled range of motion.","Keep the movement stable and avoid unnecessary momentum.","Choose a load you can perform with consistent technique."],"Zottman Curl exercise form"],
+["Machine Chest Press", "Chest", ["Set the seat so handles line up with mid-chest.", "Keep shoulder blades back against the pad.", "Press smoothly and control the return."], "Machine Chest Press exercise form"],
+["Pec Deck", "Chest", ["Keep a soft bend in the elbows.", "Squeeze the chest to bring the pads together.", "Let the stretch come back slowly."], "Pec Deck exercise form"],
+["Weighted Dip", "Chest", ["Lean slightly forward for more chest.", "Lower until shoulders are just below elbows.", "Keep the added weight still, not swinging."], "Weighted Dip exercise form"],
+["Trap Bar Deadlift", "Back", ["Stand in the centre of the bar.", "Push the floor away with your legs.", "Keep your chest up and back flat."], "Trap Bar Deadlift exercise form"],
+["Machine Row", "Back", ["Set the chest pad so you can reach fully.", "Pull elbows back, not up.", "Pause with shoulder blades squeezed."], "Machine Row exercise form"],
+["Back Extension", "Hamstrings", ["Hinge at the hips, not the lower back.", "Squeeze glutes to come up.", "Stop when your body is in a straight line."], "Back Extension exercise form"],
+["Barbell Shrug", "Back", ["Hold the bar just outside your thighs.", "Lift shoulders straight up towards ears.", "Pause at the top, lower slowly."], "Barbell Shrug exercise form"],
+["Dumbbell Shrug", "Back", ["Let the dumbbells hang at your sides.", "Shrug straight up, don't roll the shoulders.", "Pause, then lower under control."], "Dumbbell Shrug exercise form"],
+["Hack Squat", "Legs", ["Feet shoulder-width on the platform.", "Lower until thighs are at least parallel.", "Drive through the whole foot."], "Hack Squat exercise form"],
+["Smith Machine Squat", "Legs", ["Feet slightly in front of the bar.", "Keep the bar over mid-foot as you sit down.", "Stand up by pushing the floor away."], "Smith Machine Squat exercise form"],
+["Sumo Squat", "Legs", ["Wide stance, toes turned out.", "Keep knees tracking over toes.", "Hold the weight close and chest up."], "Sumo Squat exercise form"],
+["Hip Abduction Machine", "Glutes", ["Sit tall with your back against the pad.", "Push knees out with control.", "Pause at the widest point."], "Hip Abduction Machine exercise form"],
+["Hip Adduction Machine", "Legs", ["Start at a stretch you can control.", "Squeeze knees together smoothly.", "Don't let the stack slam on the way back."], "Hip Adduction Machine exercise form"],
+["Glute Kickback", "Glutes", ["Keep hips square to the floor.", "Drive the heel back and up.", "Squeeze the glute at the top."], "Glute Kickback exercise form"],
+["Kettlebell Swing", "Glutes", ["Hinge, don't squat.", "Snap the hips forward to float the bell.", "Keep arms relaxed, the hips do the work."], "Kettlebell Swing exercise form"],
+["Preacher Curl", "Arms", ["Keep the back of your arms on the pad.", "Curl up without lifting your elbows.", "Lower all the way under control."], "Preacher Curl exercise form"],
+["Cable Curl", "Arms", ["Elbows stay by your sides.", "Curl up and squeeze.", "Resist the cable on the way down."], "Cable Curl exercise form"],
+["Overhead Cable Extension", "Arms", ["Face away from the cable, elbows by your head.", "Extend fully overhead.", "Keep elbows pointing forward."], "Overhead Cable Extension exercise form"],
+["Machine Shoulder Press", "Shoulders", ["Handles start around shoulder height.", "Press up without arching your back.", "Lower until hands are level with chin."], "Machine Shoulder Press exercise form"],
+["Cable Lateral Raise", "Shoulders", ["Stand side-on to the cable.", "Lead with the elbow out to the side.", "Stop around shoulder height."], "Cable Lateral Raise exercise form"],
+["Reverse Pec Deck", "Shoulders", ["Face the pad, arms straight ahead.", "Open the arms out to the sides.", "Squeeze the rear shoulders, don't shrug."], "Reverse Pec Deck exercise form"],
+["Ab Wheel Rollout", "Core", ["Start on your knees with hips tucked.", "Roll out only as far as your back stays flat.", "Pull back with your abs, not your hips."], "Ab Wheel Rollout exercise form"],
+["Russian Twist", "Core", ["Lean back slightly with a straight back.", "Rotate through the ribs, not just the arms.", "Feet down for easier, up for harder."], "Russian Twist exercise form"],
+["Pallof Press", "Core", ["Stand side-on to the cable.", "Press straight out and resist the twist.", "Keep hips and shoulders square."], "Pallof Press exercise form"],
+["Cable Woodchop", "Core", ["Rotate from high to low across your body.", "Pivot the back foot.", "Control the return."], "Cable Woodchop exercise form"],
+["Dip", "Chest", ["Shoulders down, away from ears.", "Lower until shoulders are just below elbows.", "Press up to straight arms."], "Dip exercise form", "cali"],
+["Muscle-Up", "Back", ["Pull explosively to the lower chest.", "Turn the wrists over quickly at the top.", "Press out to straight arms."], "Muscle-Up exercise form", "cali"],
+["Pistol Squat", "Legs", ["Reach the free leg out in front.", "Sit back and down on one leg.", "Use a support until you have the balance."], "Pistol Squat exercise form", "cali"],
+["Bodyweight Squat", "Legs", ["Feet shoulder-width, toes slightly out.", "Sit down between your heels.", "Keep your chest up."], "Bodyweight Squat exercise form", "cali"],
+["Handstand Push-Up", "Shoulders", ["Kick up against a wall.", "Lower your head to a triangle with your hands.", "Press back up to straight arms."], "Handstand Push-Up exercise form", "cali"],
+["Pike Push-Up", "Shoulders", ["Hips high, body in an upside-down V.", "Lower the top of your head towards the floor.", "Press back up through the shoulders."], "Pike Push-Up exercise form", "cali"],
+["Archer Push-Up", "Chest", ["Hands wide, shift your weight to one side.", "Keep the other arm nearly straight.", "Alternate sides each rep."], "Archer Push-Up exercise form", "cali"],
+["Diamond Push-Up", "Arms", ["Hands together under your chest.", "Keep elbows close to your body.", "Lower until your chest touches your hands."], "Diamond Push-Up exercise form", "cali"],
+["Toes-to-Bar", "Core", ["Hang with straight arms.", "Lift your toes to the bar with control.", "Avoid swinging between reps."], "Toes-to-Bar exercise form", "cali"],
+["Dragon Flag", "Core", ["Hold a bench behind your head.", "Keep your body straight from shoulders to toes.", "Lower as slowly as you can."], "Dragon Flag exercise form", "cali"],
+["Nordic Curl", "Hamstrings", ["Anchor your heels.", "Lower your body forward as slowly as possible.", "Push back up with your hands if needed."], "Nordic Curl exercise form", "cali"],
+["L-Sit", "Core", ["Press down through straight arms.", "Lift your legs straight out in front.", "Tuck the knees to make it easier."], "L-Sit exercise form", "cali timed"],
+["Handstand Hold", "Shoulders", ["Stack wrists, shoulders and hips.", "Push the floor away.", "Use a wall until you can balance freely."], "Handstand Hold exercise form", "cali timed"],
+["Front Lever Hold", "Back", ["Hang and pull your straight body up to horizontal.", "Keep arms straight and squeeze your lats.", "Start with knees tucked."], "Front Lever Hold exercise form", "cali timed"],
+["Back Lever Hold", "Back", ["Hang face-down with your body horizontal.", "Keep arms straight.", "Build up from a tucked position."], "Back Lever Hold exercise form", "cali timed"],
+["Planche Lean", "Shoulders", ["Start in a push-up position.", "Lean your shoulders forward past your hands.", "Keep arms straight and body tight."], "Planche Lean exercise form", "cali timed"],
+["Hollow Body Hold", "Core", ["Lower back pressed into the floor.", "Arms and legs reaching away.", "Bend the knees to make it easier."], "Hollow Body Hold exercise form", "cali timed"],
+["Dead Hang", "Back", ["Hang from the bar with straight arms.", "Relax your shoulders, or pull them down for active hangs.", "Build up your time gradually."], "Dead Hang exercise form", "cali timed"],
+["Wall Sit", "Legs", ["Back flat against the wall.", "Thighs parallel to the floor.", "Keep your weight in your heels."], "Wall Sit exercise form", "timed"]].map(([name,cat,cues,q,tags=""])=>({name,cat,cues,q,cali:/cali/.test(tags)||CALI_EXTRA.has(name),timed:/timed/.test(tags)||TIMED_EXTRA.has(name)}));
 
 const BUILTIN_PLANS=[
 {category:"Full Body",id:"fb1",name:"Full Body A — Classic",type:"Strength",desc:"Balanced compounds with simple equipment.",exercises:[
@@ -165,8 +211,8 @@ const CHALLENGES=[
 ["mins300","Five Hours","Train for 300 total minutes",300,250,d=>d.workouts.reduce((s,w)=>s+(+w.duration||0),0)],
 ["mins1000","Thousand Minutes","Train for 1,000 total minutes",1000,700,d=>d.workouts.reduce((s,w)=>s+(+w.duration||0),0)],
 ["strength10","Iron Habit","Complete 10 strength sessions",10,350,d=>d.workouts.filter(w=>w.type==="Strength").length],
-["run5","First 5K","Log a run of at least 5 km",1,250,d=>d.workouts.filter(w=>(w.distance||0)>=5).length],
-["boxing10","Ten Rounds","Complete a boxing session of 10+ rounds",1,250,d=>d.workouts.filter(w=>(w.rounds||0)>=10).length],
+["run5","First 5K","Log a run of at least 5 km",1,250,d=>d.workouts.filter(w=>(!w.type||w.type==="Running")&&(w.distance||0)>=5).length],
+["boxing10","Ten Rounds","Complete a boxing or combat session of 10+ rounds",1,250,d=>d.workouts.filter(w=>(!w.type||w.type==="Boxing")&&(w.rounds||0)>=10).length],
 ["gradeA","A-Class","Earn 3 A-or-better workout grades",3,300,d=>d.workouts.filter(w=>["A","S"].includes(w.result?.grade)).length],
 ["gradeS","S-Class","Earn your first S grade",1,500,d=>d.workouts.filter(w=>w.result?.grade==="S").length],
 ["gradeS5","S-Class Regular","Earn 5 S grades",5,1000,d=>d.workouts.filter(w=>w.result?.grade==="S").length],
@@ -220,7 +266,8 @@ function grade(w){
     const wt=+e.weight||0,sets=+e.sets||0,reps=+e.reps||0;
     if(e.name)exerciseCount++;
     if(e.unit==="s")continue; // timed holds don't count towards volume or PBs
-    volume+=Array.isArray(e.setsDetail)&&e.setsDetail.length?e.setsDetail.reduce((v,x)=>v+(+x.kg||0)*(+x.reps||0),0):wt*sets*reps;
+    const bwl=type==="calisthenics"?(WORKOUT_TYPES.BODYWEIGHT_LOAD[String(e.name).toLowerCase()]||0)*bw:0;
+    volume+=Array.isArray(e.setsDetail)&&e.setsDetail.length?e.setsDetail.reduce((v,x)=>v+((+x.kg||0)+bwl)*(+x.reps||0),0):(wt+bwl)*sets*reps;
     if(wt)bestRatio=Math.max(bestRatio,e1rm(wt,reps)/bw);
     const pb=priorBest(e.name,w.date);
     if(pb&&e1rm(wt,reps)>pb*1.005)pbs++;
@@ -297,7 +344,7 @@ function grade(w){
     if(distance>0&&pace>0) insight.push(`${distance.toFixed(1)} km at ${pace.toFixed(2)} min/km`);
   } else if(type==="mobility"){
     const durationScore=clamp(duration/30*30,0,30);
-    const exerciseVariety=Math.max(exerciseCount,(w.notes||"").trim()?1:0);
+    const exerciseVariety=Math.max(exerciseCount,(w.activities||[]).length,(w.notes||"").trim()?1:0);
     const varietyScore=clamp(exerciseVariety/6*20,0,20);
     const effortScore=clamp(15-Math.abs(effort-5)*3,0,15);
     const completenessScore=clamp((duration>=20?15:duration/20*15)+(exerciseVariety>=3?10:exerciseVariety/3*10),0,25);
@@ -311,6 +358,31 @@ function grade(w){
       "Consistency":Math.round(consistencyScore)
     };
     insight.push("Mobility rewards controlled, consistent work rather than maximum intensity");
+  } else if(["cycling","swimming","cardio","hiit","sports","walking"].includes(type)){
+    const WT=WORKOUT_TYPES, active=WT.activeMinutes(w), met=WT.metOf(w);
+    const durationScore=clamp(duration/60*20,0,20);
+    const activeScore=clamp(active/45*25,0,25);
+    const effortScore=clamp((effort-3)/7*20,0,20);
+    const workScore=clamp(active*met/400*15,0,15);
+    let progressionScore=0;
+    if(recentSame.length){
+      const prevActive=Math.max(...recentSame.map(x=>WT.activeMinutes(x)),0);
+      const dist=x=>(+x.distance||0)+(+x.metres||0)/1000;
+      const prevDist=Math.max(...recentSame.map(dist),0);
+      if(active>prevActive)progressionScore+=5;
+      if(dist(w)>0&&dist(w)>prevDist)progressionScore+=5;
+    }
+    progressionScore=clamp(progressionScore,0,10);
+    score=durationScore+activeScore+effortScore+workScore+progressionScore+consistencyScore;
+    breakdown={
+      "Duration":Math.round(durationScore),
+      "Active time":Math.round(activeScore),
+      "Intensity":Math.round(effortScore),
+      "Work done":Math.round(workScore),
+      "Progression":Math.round(progressionScore),
+      "Consistency":Math.round(consistencyScore)
+    };
+    const sum=WT.summary(w); if(sum)insight.push(sum);
   } else if(type==="mixed"){
     const durationScore=clamp(duration/60*20,0,20);
     const effortScore=clamp((effort-3)/7*15,0,15);
@@ -372,7 +444,7 @@ function bestStreak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort(),b
 function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
 function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
 const WEEK_GOALS={sessions:4,minutes:150,xp:1500};
-const TYPE_COLORS={Strength:"var(--pine)",Running:"var(--glacier)",Boxing:"var(--amber)",Mobility:"var(--lichen)",Mixed:"var(--moss)",Other:"var(--stone)"};
+const TYPE_COLORS=Object.fromEntries(WORKOUT_TYPES.TYPES.map(t=>[t.id,t.color]));
 const titleCase=t=>t.charAt(0)+t.slice(1).toLowerCase();
 const GRADE_RANK={S:5,A:4,B:3,C:2,D:1};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
@@ -456,7 +528,7 @@ function renderHome(){
   $("#activityBars").innerHTML=per.map(p=>{const segs=p.ws.map(x=>`<i style="height:${(+x.duration||0)/max*100}%;background:${TYPE_COLORS[x.type]||TYPE_COLORS.Other}" title="${esc(x.type)}, ${x.duration} min"></i>`).join("");
     return `<div class="barCol${p.k===today()?" isToday":""}"><div class="barStack">${segs}</div><span>${p.d.getDate()}</span></div>`}).join("");
   const used=[...new Set(per.flatMap(p=>p.ws.map(x=>TYPE_COLORS[x.type]?x.type:"Other")))];
-  $("#typeKey").innerHTML=used.map(t=>`<li style="--c:${TYPE_COLORS[t]}">${t}</li>`).join("");
+  $("#typeKey").innerHTML=used.map(t=>`<li style="--c:${TYPE_COLORS[t]}">${esc(WORKOUT_TYPES.typeDef(t).short||WORKOUT_TYPES.typeDef(t).label)}</li>`).join("");
   // Attributes
   // Skills (RPG layer, rpg.js)
   const ch=characterFrom(data.workouts);
@@ -563,14 +635,13 @@ function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).
   <div class="logWorkoutCard">
     <div class="row between">
       <div>
-        <b>${w.type}</b>
+        <b>${esc(WORKOUT_TYPES.typeDef(w.type).label)}</b>
         <small>${w.date} · ${w.duration} min · +${w.result?.xp||0} XP</small>
       </div>
       <span class="gradeTag">${w.result?.grade||"—"}</span>
     </div>
 
-    ${(w.type==="Boxing"&&(w.rounds||w.roundLength))?`<div class="logMeta">${w.rounds||0} rounds × ${w.roundLength||0} min</div>`:""}
-    ${(w.type==="Running"&&w.distance)?`<div class="logMeta">${(+w.distance).toFixed(1)} km · ${w.runMinutes||w.duration} min</div>`:""}
+    ${WORKOUT_TYPES.summary(w)?`<div class="logMeta">${esc(WORKOUT_TYPES.summary(w))}</div>`:""}
 
     <div class="logExercises">
       ${(w.exercises||[]).length?(w.exercises||[]).map((e,ei)=>`

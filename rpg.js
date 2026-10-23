@@ -4,7 +4,7 @@
 const SKILLS = [
   { id: 'chest', name: 'Chest' }, { id: 'back', name: 'Back' }, { id: 'shoulders', name: 'Shoulders' },
   { id: 'arms', name: 'Arms' }, { id: 'legs', name: 'Legs' }, { id: 'posterior', name: 'Posterior chain' },
-  { id: 'core', name: 'Core' }, { id: 'endurance', name: 'Endurance' }, { id: 'boxing', name: 'Boxing' },
+  { id: 'core', name: 'Core' }, { id: 'endurance', name: 'Endurance' }, { id: 'boxing', name: 'Combat' },
   { id: 'mobility', name: 'Mobility' }
 ];
 const CATEGORY_SKILL = { Chest: 'chest', Back: 'back', Shoulders: 'shoulders', Arms: 'arms', Legs: 'legs', Calves: 'legs',
@@ -49,6 +49,10 @@ function setXp(s, timed) {
   return Math.round(8 + s.reps + (s.kg * s.reps) / 40);
 }
 const PB_BONUS = 50;
+// Latest logged bodyweight, for moves where you lift yourself (pull-ups, dips, push-ups...).
+function currentBodyweight() {
+  try { const w = typeof weight === 'function' ? +weight() : 0; return w > 25 && w < 350 ? w : 80; } catch { return 80; }
+}
 
 // Skill XP a single workout earns. `bests` (exercise -> best e1RM so far) is updated as it goes.
 function workoutSkillXp(w, bests = new Map()) {
@@ -56,7 +60,8 @@ function workoutSkillXp(w, bests = new Map()) {
   const add = (id, xp) => { if (id && xp > 0) gain[id] = (gain[id] || 0) + Math.round(xp); };
   for (const e of w.exercises || []) {
     const skill = skillForExercise(e.name), timed = e.unit === 's', sets = setsOf(e);
-    sets.forEach(s => add(skill, setXp(s, timed)));
+    const bwLoad = WORKOUT_TYPES.BODYWEIGHT_LOAD[e.name.toLowerCase()] || 0, bw = bwLoad ? currentBodyweight() : 0;
+    sets.forEach(s => add(skill, setXp(bwLoad ? { kg: s.kg + bw * bwLoad, reps: s.reps } : s, timed)));
     if (timed) continue;
     const key = e.name.toLowerCase(), top = Math.max(0, ...sets.map(s => e1rm(s.kg, s.reps)));
     const prev = bests.get(key) || 0;
@@ -67,11 +72,10 @@ function workoutSkillXp(w, bests = new Map()) {
     }
     if (top > prev) bests.set(key, top);
   }
-  const mins = +w.duration || 0;
-  if (w.type === 'Running') add('endurance', (+w.distance || 0) * 60 + (+w.runMinutes || mins) * 2);
-  if (w.type === 'Boxing') add('boxing', (+w.rounds || 0) * 25 + mins * 1.5);
-  if (w.type === 'Mobility') add('mobility', mins * 4);
-  if (['Mixed', 'Other'].includes(w.type) && !(w.exercises || []).length) add('endurance', mins * 2);
+  // Running, cycling, swimming, sports and the rest: see workout-types.js for how each is worked out.
+  const share = {};
+  WORKOUT_TYPES.typeSkillXp(w, (id, xp) => { if (id && xp > 0) share[id] = (share[id] || 0) + xp; });
+  for (const [id, xp] of Object.entries(share)) add(id, xp);
   return { gain, records };
 }
 
