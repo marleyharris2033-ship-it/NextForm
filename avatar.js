@@ -1,6 +1,78 @@
 // NextForm character: a layered, full-body SVG drawn from the creator's choices.
 // Painted-illustration look to sit beside the welcome artwork: realistic proportions, rounded form
 // shading lit from the upper left, textured hair and beards with soft edges, clothing seams and folds.
+// Hand-drawn hairstyles (hair/<name>.webp): [width, height, face-centre x, hairline y] in image pixels, the
+// hair's main colour (used for eyebrows and "Match hair") and the top of the hair at the centre. HAIR_HEAD_PX image pixels = the head's width.
+const HAIR_HEAD_PX = 130, HAIRLINE = 8.5;
+const HAIR_ART = {
+  spikyFringe: [184, 174, 89.0, 121, '#43393f', 9],
+  textured: [152, 111, 75.5, 70, '#3c3035', 3],
+  shoulderStraight: [181, 200, 89.0, 54, '#453d44', 5],
+  bowlSweep: [163, 129, 81.0, 91, '#a06f53', 0],
+  longStraight: [194, 224, 97.0, 39, '#5f4a44', 2],
+  spikyCrop: [174, 144, 86.0, 85, '#392d33', 1],
+  locs: [184, 215, 87.0, 53, '#494046', 3],
+  wavyBlonde: [196, 148, 98.0, 51, '#cfa775', 3],
+  buzz: [150, 108, 74.5, 51, '#221a1e', 1],
+  curlyCrop: [173, 126, 86.0, 73, '#3c3034', 1],
+  waves: [165, 137, 82.0, 56, '#2f252b', 0],
+  quiff: [177, 136, 89.0, 75, '#9e6d52', 3],
+  curlyCap: [186, 141, 92.5, 67, '#46363a', 1],
+  spikes: [189, 165, 92.0, 112, '#392d32', 8],
+  tightCurls: [155, 119, 77.0, 64, '#3a2d33', 0],
+  curtainBlonde: [185, 153, 92.5, 58, '#deb680', 3],
+  afro: [195, 151, 97.0, 89, '#3a2f36', 0],
+  looseCurls: [181, 141, 90.0, 63, '#865f47', 3],
+  pompadour: [173, 140, 87.5, 70, '#9d6d52', 2],
+  longWavy: [195, 201, 97.5, 50, '#5f4741', 3],
+  sideSweep: [165, 130, 82.5, 66, '#684639', 2],
+  emoSweep: [164, 135, 82.5, 96, '#453b44', 0],
+  slickBack: [168, 130, 84.0, 59, '#736a6e', 1],
+  shortWavy: [168, 126, 84.0, 54, '#44363c', 3],
+  spikeTop: [190, 173, 94.5, 111, '#2f2529', 3],
+  spikyBlonde: [173, 142, 86.5, 85, '#a4825c', 10],
+  sidePart: [168, 139, 85.5, 69, '#483e47', 1],
+  curlyTop: [179, 134, 89.0, 86, '#3f3236', 1],
+  bowl: [175, 157, 87.5, 105, '#946850', 1],
+  flatTop: [158, 134, 79.0, 84, '#3b3036', 0],
+  messySpiky: [180, 148, 89.5, 120, '#3c3031', 7],
+  middlePart: [176, 138, 100.5, 72, '#57392c', 1],
+  texturedQuiff: [185, 160, 101.0, 85, '#8a5d41', 1],
+  slickedBlack: [179, 157, 88.5, 84, '#3a2f30', 6],
+  curlyFade: [182, 142, 90.0, 79, '#312422', 3],
+  buzzFade: [158, 129, 79.0, 68, '#5e4336', 0],
+  curtains: [197, 144, 98.0, 58, '#4b3630', 3],
+  blondeQuiff: [184, 144, 93.5, 70, '#ba9265', 2],
+  messy: [193, 159, 94.5, 111, '#3c3132', 0],
+  twists: [196, 159, 94.0, 80, '#32221e', 8],
+  cornrows: [163, 133, 81.5, 58, '#42322c', 3],
+  bigAfro: [202, 166, 100.5, 99, '#2f2221', 3],
+  shag: [204, 158, 107.0, 75, '#583b30', 1],
+  spikyBlack: [191, 169, 94.5, 120, '#382e30', 9],
+  textCrop: [178, 148, 89.5, 82, '#6b4735', 0],
+  curlyTopFade: [188, 150, 92.5, 91, '#36241f', 3],
+  longDark: [196, 199, 97.5, 57, '#4a362f', 4],
+  messyBun: [166, 211, 82.5, 105, '#533628', 1],
+  bob: [169, 156, 83.5, 52, '#423537', 3],
+  beachWaves: [211, 173, 107.0, 52, '#c79d6d', 2],
+  pixie: [159, 146, 81.0, 95, '#82482e', 1],
+  longSleek: [200, 222, 100.5, 49, '#4f3933', 2],
+  longWaves: [214, 235, 116.5, 56, '#5d3729', 1],
+  longFringe: [172, 232, 85.5, 79, '#c3966a', 2],
+  halfUp: [178, 224, 109.0, 98, '#4c352f', 3],
+  sidePonytail: [181, 218, 114.0, 85, '#4f352c', 2],
+  topBun: [149, 232, 75.5, 95, '#b79163', 1],
+  curlyUpdo: [168, 226, 87.0, 108, '#3b2925', 1],
+  spaceBuns: [198, 180, 99.0, 67, '#392e31', 20],
+  plaits: [152, 204, 75.0, 54, '#764227', 3],
+  boxBraids: [197, 207, 99.5, 46, '#302526', 3],
+  afroPuff: [200, 171, 102.0, 96, '#2c2020', 1],
+  longCurls: [196, 177, 99.5, 48, '#503023', 1],
+  wavyBun: [206, 207, 104.0, 68, '#af875a', 3],
+  shortCurls: [161, 145, 80.5, 85, '#312729', 3],
+  longLocs: [202, 204, 102.5, 58, '#3d271f', 2]
+};
+const OLD_HAIR = { crop: 'textCrop', fade: 'buzzFade', undercut: 'sideSweep', sidepart: 'sidePart', slickback: 'slickBack', hightop: 'flatTop', receding: 'buzz', curly: 'curlyCap', mohawk: 'spikeTop', lob: 'shoulderStraight', long: 'longStraight', longBangs: 'longFringe', sideSwept: 'emoSweep', wavy: 'longWavy', wavyBangs: 'longWaves', curlyLong: 'longCurls', ponytail: 'sidePonytail', highPonytail: 'topBun', pigtails: 'spaceBuns', sideBraid: 'plaits', braids: 'boxBraids', bun: 'topBun' };
 const AVATAR_OPTIONS = {
   skin: ['#f6dcc7', '#f0c9a8', '#e6b48c', '#d29a72', '#c08458', '#a86e45', '#8a5638', '#714529', '#5e3a26', '#46291a'],
   face: ['oval', 'round', 'square', 'long', 'heart', 'diamond'],
@@ -10,7 +82,7 @@ const AVATAR_OPTIONS = {
   nose: ['straight', 'button', 'wide', 'roman', 'small', 'long'],
   mouth: ['neutral', 'smile', 'grin', 'full', 'thin', 'smirk'],
   ears: ['average', 'small', 'large', 'protruding'],
-  hair: ['buzz', 'crop', 'fade', 'undercut', 'sidepart', 'slickback', 'quiff', 'messy', 'hightop', 'receding', 'curly', 'afro', 'afroPuff', 'twists', 'locs', 'cornrows', 'mohawk', 'pixie', 'bob', 'lob', 'shag', 'long', 'longBangs', 'sideSwept', 'wavy', 'wavyBangs', 'curlyLong', 'ponytail', 'highPonytail', 'pigtails', 'plaits', 'sideBraid', 'braids', 'bun', 'spaceBuns', 'bald'],
+  hair: [...Object.keys(HAIR_ART), 'bald'],
   hairColor: ['#1d1815', '#2f2019', '#3f281c', '#6e4428', '#8c5a32', '#a8743f', '#d4ad6a', '#e6d3a3', '#9c4329', '#b8b4ad', '#ece9e2'],
   beard: ['none', 'stubble', 'heavyStubble', 'moustache', 'handlebar', 'soulPatch', 'goatee', 'vandyke', 'circle', 'chinstrap', 'mutton', 'short', 'full', 'bushy', 'long'],
   top: ['tee', 'vneck', 'polo', 'shirt', 'jersey', 'longsleeve', 'sweater', 'tank', 'stringer', 'hoodie', 'zip', 'crop', 'sportsbra'],
@@ -34,7 +106,7 @@ const AVATAR_DEFAULT = {
   skin: '#d29a72', height: 0.5, muscle: 0.45, shoulders: 0.5, waist: 0.4, legs: 0.5,
   face: 'oval', eyes: 'almond', eyeColor: '#5a3b26', brows: 'natural', nose: 'straight', mouth: 'neutral', ears: 'average',
   freckles: false, mole: false, smileLines: false, foreheadLines: false,
-  hair: 'crop', hairColor: '#3f281c', beard: 'none', beardColor: '#3f281c',
+  hair: 'textCrop', hairColor: '#3f281c', beard: 'none', beardColor: '#3f281c',
   top: 'tee', topColor: '#8fa58f', bottom: 'shorts', bottomColor: '#24292c', shoes: '#2f5a46', socks: 'crew',
   topPattern: 'none', hat: 'none', hatColor: '#2f5a46', glasses: 'none', earrings: 'none', necklace: 'none', hairAcc: 'none', tattoo: 'none',
   headphones: false, wristbands: false, watch: false, gear: []
@@ -50,6 +122,7 @@ function normalizeAvatar(cfg = {}) {
   if (typeof c.glasses === 'boolean') c.glasses = c.glasses ? 'square' : 'none';
   if (typeof c.cap === 'boolean' && !c.hat) c.hat = c.cap ? 'cap' : 'none';
   if (typeof c.earring === 'boolean' && !c.earrings) c.earrings = c.earring ? 'stud' : 'none';
+  if (OLD_HAIR[c.hair]) c.hair = OLD_HAIR[c.hair];
   delete c.build; delete c.facialHair; delete c.cap; delete c.earring;
   const out = { ...AVATAR_DEFAULT, ...c };
   ['height', 'muscle', 'shoulders', 'waist', 'legs'].forEach(k => { out[k] = Math.max(0, Math.min(1, +out[k])); if (Number.isNaN(out[k])) out[k] = AVATAR_DEFAULT[k]; });
@@ -100,7 +173,7 @@ function renderAvatar(cfg = {}, opts = {}) {
 
   // ---------- palette ----------
   const skin = c.skin, skinD = shadeHex(skin, -0.17), skinDD = shadeHex(skin, -0.32), skinL = shadeHex(skin, 0.14);
-  const hairC = c.hairColor, hairD = shadeHex(hairC, -0.32), hairL = shadeHex(hairC, hairC > '#c0' ? -0.12 : 0.3);
+  const hairC = HAIR_ART[c.hair] ? HAIR_ART[c.hair][4] : c.hairColor, hairD = shadeHex(hairC, -0.32), hairL = shadeHex(hairC, hairC > '#c0' ? -0.12 : 0.3);
   const beardC = c.beardColor, beardD = shadeHex(beardC, -0.32), beardL = shadeHex(beardC, 0.28);
   const topC = c.topColor, topD = shadeHex(topC, -0.18), topDD = shadeHex(topC, -0.32), topL = shadeHex(topC, 0.14);
   const botC = c.bottomColor, botD = shadeHex(botC, -0.22), botL = shadeHex(botC, 0.14);
@@ -172,79 +245,9 @@ function renderAvatar(cfg = {}, opts = {}) {
     </g>`);
   }
 
-  // ---------- hair geometry (authored on a 42 x 51 head grid, then fitted) ----------
+  // hair accessories are placed on a 42 x 51 head grid
   const hs = hw / 21, Hx = v => r1(cx + v * hs), Hy = v => r1(hy + v * (headH / 51));
   const P = (pts) => pts.replace(/(-?[\d.]+),(-?[\d.]+)/g, (_, a, b) => `${Hx(+a)} ${Hy(+b)}`);
-  const hairBack = {
-    long: P('M-23,-6 C-29,14 -27,48 -22,62 L22,62 C27,48 29,14 23,-6 Z'),
-    wavy: P('M-23,-6 C-30,10 -24,24 -29,36 C-24,46 -30,58 -24,70 L24,70 C30,58 24,46 29,36 C24,24 30,10 23,-6 Z'),
-    bob: P('M-24,22 C-29,-4 -26,-32 0,-34 C26,-32 29,-4 24,22 C12,25 -12,25 -24,22 Z'),
-    afro: P('M0,-50 C26,-50 38,-30 36,-10 C35,8 30,16 24,18 L-24,18 C-30,16 -35,8 -36,-10 C-38,-30 -26,-50 0,-50 Z'),
-    twists: P('M0,-38 C18,-38 28,-26 27,-8 L-27,-8 C-28,-26 -18,-38 0,-38 Z'),
-    ponytail: P('M10,-20 C30,-18 34,4 30,24 C33,40 28,52 24,60 C20,46 22,30 18,18 C16,4 12,-6 6,-10 Z'),
-    lob: P('M-25,-4 C-30,14 -28,30 -24,38 L24,38 C28,30 30,14 25,-4 Z'),
-    shag: P('M-25,-4 C-30,10 -27,22 -25,30 L-20,27 L-16,32 L16,32 L20,27 L25,30 C27,22 30,10 25,-4 Z'),
-    highPonytail: P('M-2,-31 C10,-48 28,-42 31,-20 C34,2 30,26 26,42 C21,28 24,8 18,-10 C14,-22 6,-28 -2,-31 Z'),
-    afroPuff: P('M0,-56 C15,-56 23,-48 23,-38 C23,-28 15,-22 0,-22 C-15,-22 -23,-28 -23,-38 C-23,-48 -15,-56 0,-56 Z')
-  };
-  hairBack.longBangs = hairBack.sideSwept = hairBack.long; hairBack.wavyBangs = hairBack.wavy;
-  const hairFront = {
-    crop: P('M-22,-2 C-24,-24 -12,-31 2,-30 C17,-30 25,-20 22,-2 C19,-12 12,-17 4,-17 C-4,-19 -15,-14 -22,-2 Z'),
-    sidepart: P('M-22,0 C-25,-24 -10,-33 4,-31 C19,-30 26,-18 22,0 C20,-13 15,-19 7,-20 C-5,-14 -15,-14 -22,0 Z'),
-    fade: P('M-20,-7 C-21,-25 -10,-31 1,-31 C13,-31 22,-24 20,-7 C15,-16 8,-19 0,-19 C-8,-19 -15,-16 -20,-7 Z'),
-    buzz: P('M-21,-4 C-22,-23 -11,-28 0,-28 C11,-28 22,-23 21,-4 C17,-17 9,-20 0,-20 C-9,-20 -17,-17 -21,-4 Z'),
-    slickback: P('M-21,-4 C-23,-26 -10,-33 1,-33 C13,-33 23,-26 21,-4 C19,-14 14,-20 6,-21 C-2,-22 -14,-20 -21,-4 Z'),
-    quiff: P('M-21,-2 C-23,-22 -15,-29 -7,-30 C-11,-40 5,-45 14,-38 C21,-33 24,-23 21,-2 C19,-12 14,-18 8,-19 C2,-20 -6,-18 -21,-2 Z'),
-    messy: P('M-21,0 C-24,-14 -20,-24 -16,-28 L-18,-35 L-11,-31 L-8,-38 L-3,-32 L2,-39 L6,-32 L12,-37 L13,-30 L20,-32 L18,-24 C23,-18 23,-8 21,0 C19,-10 15,-16 10,-17 L6,-14 L2,-18 L-3,-15 L-8,-18 C-14,-16 -18,-10 -21,0 Z'),
-    mohawk: P('M-6,-18 C-8,-32 -6,-42 0,-47 C6,-42 8,-32 6,-18 C4,-20 -4,-20 -6,-18 Z'),
-    long: P('M-23,24 C-29,-20 -12,-33 1,-32 C15,-32 29,-20 23,24 L18,22 C21,-4 15,-16 2,-18 C-10,-16 -20,-4 -18,22 Z'),
-    wavy: P('M-23,30 C-28,18 -22,10 -26,0 C-28,-22 -12,-33 1,-32 C15,-32 28,-22 26,0 C22,10 28,18 23,30 L18,28 C21,16 16,8 19,-2 C15,-16 8,-19 1,-19 C-9,-17 -16,-12 -19,-2 C-16,8 -21,16 -18,28 Z'),
-    bob: P('M-21,-6 C-23,-26 -10,-34 1,-33 C14,-33 23,-26 21,-6 L18,-10 L16,-12 L-16,-12 L-19,-9 Z M-21,-6 L-18,-9 C-18,4 -17,14 -16,22 L-23,22 C-22,12 -22,2 -21,-6 Z M21,-6 L18,-9 C18,4 17,14 16,22 L23,22 C22,12 22,2 21,-6 Z'),
-    ponytail: P('M-22,-1 C-24,-24 -11,-32 1,-31 C15,-31 25,-22 22,-1 C18,-14 10,-19 0,-19 C-10,-19 -18,-14 -22,-1 Z'),
-    afro: P('M-22,-1 C-25,-28 -12,-36 0,-36 C12,-36 25,-28 22,-1 C19,-12 12,-19 0,-19 C-12,-19 -19,-12 -22,-1 Z'),
-    twists: P('M-21,-4 C-22,-18 -16,-22 -8,-22 L8,-22 C16,-22 22,-18 21,-4 L24,-8 L24,-30 L-24,-30 L-24,-8 Z'),
-    braids: P('M-21,-2 C-23,-24 -11,-31 1,-31 C14,-31 23,-24 21,-2 C18,-13 10,-18 0,-18 C-10,-18 -18,-13 -21,-2 Z'),
-    longBangs: P('M-23,26 C-29,-20 -12,-33 1,-32 C15,-32 29,-20 23,26 L18,24 C20,4 19,-6 17,-11 L-17,-11 C-19,-6 -20,4 -18,24 Z'),
-    wavyBangs: P('M-23,30 C-28,18 -22,10 -26,0 C-28,-22 -12,-33 1,-32 C15,-32 28,-22 26,0 C22,10 28,18 23,30 L18,28 C21,16 16,8 19,-2 L17,-11 L12,-9 L7,-11.5 L2,-9 L-3,-11.5 L-8,-9 L-13,-11.5 L-17,-11 L-19,-2 C-16,8 -21,16 -18,28 Z'),
-    sideSwept: P('M-23,26 C-29,-20 -12,-33 1,-32 C15,-32 29,-20 23,26 L18,24 C21,0 18,-12 12,-17 C4,-12 -8,-7 -17,-3 C-19,6 -20,14 -18,24 Z'),
-    pixie: P('M-22,2 C-24,-24 -12,-32 2,-31 C17,-31 25,-22 22,2 C21,-8 18,-14 14,-15 C8,-10 -2,-8 -12,-10 C-17,-8 -20,-4 -22,2 Z'),
-    lob: P('M-24,36 C-29,-18 -12,-33 0,-31 C12,-33 29,-18 24,36 L19,34 C21,2 16,-14 1,-18 L0,-29 L-1,-18 C-16,-14 -21,2 -19,34 Z'),
-    shag: P('M-24,22 L-21,16 L-24,10 C-28,-20 -12,-33 1,-32 C15,-32 28,-20 24,10 L21,16 L24,22 L19,20 C20,4 17,-6 14,-9 L10,-6 L6,-10 L1,-7 L-4,-10 L-9,-6 L-13,-10 C-18,-4 -19,8 -19,20 Z'),
-    centerPart: P('M-22,-1 C-24,-24 -11,-32 0,-29 C11,-32 24,-24 22,-1 C18,-14 10,-19 1,-19 L0,-28 L-1,-19 C-10,-19 -18,-14 -22,-1 Z'),
-    undercut: P('M-15,-17 C-17,-34 6,-41 18,-33 C26,-28 27,-18 23,-11 C20,-20 12,-24 4,-22 C-4,-20 -10,-16 -15,-17 Z'),
-    hightop: P('M-20,-8 L-21,-32 Q-21,-39 -13,-40 L13,-40 Q21,-39 21,-32 L20,-8 C16,-17 8,-19 0,-19 C-8,-19 -16,-17 -20,-8 Z'),
-    recedingSides: P('M-22,4 C-23,-8 -21,-17 -15,-21 C-14,-14 -16,-6 -19,4 Z M22,4 C23,-8 21,-17 15,-21 C14,-14 16,-6 19,4 Z')
-  };
-  hairFront.bun = hairFront.highPonytail = hairFront.afroPuff = hairFront.ponytail;
-  hairFront.curly = hairFront.curlyLong = hairFront.locs = hairFront.crop;
-  hairFront.pigtails = hairFront.plaits = hairFront.spaceBuns = hairFront.centerPart;
-  hairFront.sideBraid = hairFront.sidepart;
-
-  // ---------- back layer: cape, back hair ----------
-  if (gear.has('cape')) L.push(`<path d="M${X(-1, W - 6)} ${sh + 2} Q${X(-1, W + 16)} ${hipY + 40} ${X(-1, W + 8)} ${ankle - 26} Q${cx} ${ankle - 14} ${X(1, W + 8)} ${ankle - 26} Q${X(1, W + 16)} ${hipY + 40} ${X(1, W - 6)} ${sh + 2}Z" fill="#9b3527"/>
-    <path d="M${cx + 6} ${sh + 4} Q${X(1, W + 4)} ${hipY + 50} ${X(1, W + 8)} ${ankle - 26} Q${X(1, W + 16)} ${hipY + 40} ${X(1, W - 6)} ${sh + 2}Z" fill="#7f2a1f"/>`);
-  const backHair = hairBack[c.hair] ? c.hair : null;
-  if (backHair && !hijab && !(hatOn && ['afro', 'twists', 'afroPuff', 'highPonytail'].includes(c.hair))) {
-    const d = hairBack[backHair];
-    const fillB = ['afro', 'twists', 'afroPuff'].includes(c.hair) ? hairC : hairD;
-    L.push(`<g filter="url(#${uid}-rough)"><path d="${d}" fill="${fillB}"/><path d="${d}" fill="url(#${uid}-hairTex)" opacity=".5"/></g>`);
-    if (c.hair === 'afro') L.push(`<g fill="none" stroke="${hairL}" stroke-width=".7" opacity=".45">${[[-28, -30], [-20, -42], [-8, -46], [8, -46], [20, -42], [28, -30], [32, -14], [-32, -14], [-30, 4], [30, 4]].map(([x, y]) => `<path d="M${Hx(x) - 1.5} ${Hy(y)} q1.5 -2 3 0 q.8 1.6 -.6 2.4"/>`).join('')}</g>`);
-  }
-
-  if (!hijab) {
-    const tex = d => `<g filter="url(#${uid}-rough)"><path d="${d}" fill="${hairD}"/><path d="${d}" fill="url(#${uid}-hairTex)" opacity=".5"/></g>`;
-    if (c.hair === 'pigtails') [-1, 1].forEach(s => L.push(tex(P(`M${s * 17},-2 C${s * 31},0 ${s * 36},16 ${s * 32},34 C${s * 30},44 ${s * 26},50 ${s * 22},46 C${s * 27},32 ${s * 24},14 ${s * 15},4 Z`))));
-    if (c.hair === 'curlyLong') {
-      const pts = []; for (let i = 0; i < 26; i++) { const t = i / 25, a = Math.PI * (0.9 + 1.2 * t); pts.push([Math.cos(a) * 26, -4 + Math.sin(a) * 30]); }
-      for (let y = 4; y <= 52; y += 8) pts.push([-27 - (y % 16 ? 2 : 0), y], [27 + (y % 16 ? 2 : 0), y], [-21, y + 4], [21, y + 4]);
-      L.push(`<g filter="url(#${uid}-rough)"><g fill="${hairD}">${pts.map(([x, y]) => `<circle cx="${Hx(x)}" cy="${Hy(y)}" r="${r1(7.4 * hs)}"/>`).join('')}</g>
-        <g fill="none" stroke="${hairL}" stroke-width=".7" opacity=".45">${pts.filter((_, i) => i % 2).map(([x, y]) => `<path d="M${r1(Hx(x) - 2)} ${Hy(y)} q1.8 -2.4 3.6 0 q.8 1.6 -.8 2.6"/>`).join('')}</g></g>`);
-    }
-    if (c.hair === 'locs' && !hatOn) {
-      const locs = []; for (let i = 0; i < 13; i++) { const x = -27 + i * 4.5, len = 58 + (i % 3) * 6; locs.push(`<path d="M${Hx(x * 0.75)} ${Hy(-24)} Q${Hx(x * 1.05)} ${Hy(len * 0.4)} ${Hx(x)} ${Hy(len)}" stroke="${i % 2 ? hairD : shadeHex(hairC, -0.15)}" stroke-width="${r1(3.6 * hs)}" fill="none" stroke-linecap="round"/>`); }
-      L.push(`<g filter="url(#${uid}-rough)">${locs.join('')}</g>`);
-    }
-  }
   // ---------- legs ----------
   const k = (LIMB - 1) * 6;
   const legD = (s, g = 0) => {
@@ -567,70 +570,21 @@ function renderAvatar(cfg = {}, opts = {}) {
   if (['moustache', 'vandyke', 'short', 'full', 'long', 'bushy', 'circle', 'mutton'].includes(BD)) L.push(textured(tache(BD === 'bushy' ? 0.8 : 0)));
   if (BD === 'handlebar') L.push(`<g filter="url(#${uid}-rough)"><path d="${tache(1.6)}" fill="${beardC}"/><path d="M${cx - 7.4} ${mouthY - 0.2} q-2.6 .4 -2.4 -3.2 M${cx + 7.4} ${mouthY - 0.2} q2.6 .4 2.4 -3.2" stroke="${beardC}" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="${tache(1.6)}" fill="url(#${uid}-beardTex)" opacity=".6"/></g>`);
 
-  // ---------- hair (front) ----------
-  const hairGroup = inner => hatOn ? `<g clip-path="url(#${uid}-hatcut)">${inner}</g>` : inner;
-  if (hatOn) defs.push(`<clipPath id="${uid}-hatcut"><rect x="0" y="${hy - 7}" width="200" height="400"/></clipPath>`);
-  const textureFill = d => `<g filter="url(#${uid}-rough)"><path d="${d}" fill="${hairC}"/><path d="${d}" fill="url(#${uid}-hairTex)" opacity=".6"/></g>
-    <path d="M${Hx(-14)} ${Hy(-22)} Q${Hx(-4)} ${Hy(-30)} ${Hx(8)} ${Hy(-27)} M${Hx(-16)} ${Hy(-16)} Q${Hx(-8)} ${Hy(-24)} ${Hx(2)} ${Hy(-24)}" stroke="${hairL}" stroke-width=".8" fill="none" opacity=".5" stroke-linecap="round"/>`;
-  const H = hijab ? 'hidden' : c.hair;
-  if (H === 'bun' && !hatOn) L.push(`<g filter="url(#${uid}-rough)"><circle cx="${cx}" cy="${headTop - 5}" r="7.5" fill="${hairC}"/><circle cx="${cx}" cy="${headTop - 5}" r="7.5" fill="url(#${uid}-hairTex)" opacity=".7"/></g>`);
-  if (H === 'curly' && !hatOn) {
-    const pts = [[-20, -6], [-21, -15], [-16, -24], [-7, -30], [3, -31], [13, -27], [20, -18], [21, -8], [-11, -22], [8, -23], [-1, -24]];
-    L.push(`<g filter="url(#${uid}-rough)"><g fill="${hairC}">${pts.map(([x, y]) => `<circle cx="${Hx(x)}" cy="${Hy(y)}" r="${r1(8.6 * hs * 1.1)}"/>`).join('')}</g></g>
-      <g fill="none" stroke="${hairL}" stroke-width=".8" opacity=".7">${pts.map(([x, y]) => `<path d="M${r1(Hx(x) - 2.5)} ${Hy(y)} q2 -3 4 0 q1 2 -1 3"/>`).join('')}</g>
-      <g fill="none" stroke="${hairD}" stroke-width=".9" opacity=".6">${pts.slice(0, 8).map(([x, y]) => `<path d="M${r1(Hx(x) + 1)} ${r1(Hy(y) + 3)} q2 1 3 -1"/>`).join('')}</g>`);
-  } else if (H === 'twists' && !hatOn) {
-    L.push(textureFill(hairFront.crop));
-    const coils = [];
-    [[17, 24, 11, 0], [13, 19, 7, 0.5]].forEach(([n, rx, len, off]) => {
-      for (let i = 0; i < n; i++) {
-        const t = (i + off) / (n - 1), a = Math.PI * (1.05 + 0.9 * t), bx = Math.cos(a) * (rx - 4), by = -8 + Math.sin(a) * 22;
-        const dx = Math.cos(a), dy = Math.sin(a), ang = Math.atan2(dy, dx) * 180 / Math.PI + 90;
-        for (let j = 0; j < 4; j++) {
-          const px = Hx(bx + dx * j * (len / 4) * 1.1), py = Hy(by + dy * j * (len / 4) * 1.25);
-          coils.push(`<ellipse cx="${px}" cy="${py}" rx="${r1(2.1 * hs)}" ry="${r1(2.6 * hs)}" fill="${j % 2 ? hairD : hairC}" transform="rotate(${r1(ang + (j % 2 ? 22 : -22))} ${px} ${py})"/>`);
-        }
-      }
-    });
-    L.push(`<g filter="url(#${uid}-rough)">${coils.join('')}</g>`);
-  } else if (H === 'cornrows') {
-    L.push(hairGroup(`<path d="${hairFront.buzz}" fill="${hairC}" opacity=".55"/>`));
-    if (!hatOn) L.push(`<g>${Array.from({ length: 7 }, (_, r) => { const x0 = -15 + r * 5; return Array.from({ length: 7 }, (_, i) => { const t = i / 6, x = Hx(x0 * (1 - t * 0.35)), y = Hy(-18 - t * 10.5); return `<ellipse cx="${x}" cy="${y}" rx="${r1(1.9 * hs)}" ry="${r1(1.4 * hs)}" fill="${i % 2 ? hairD : hairC}" transform="rotate(${r1(-x0 * 2)} ${x} ${y})"/>`; }).join(''); }).join('')}</g>`);
-  } else if (H === 'receding') {
-    L.push(hairGroup(`<path d="${hairFront.buzz}" fill="${hairC}" opacity=".16"/>${textureFill(hairFront.recedingSides)}`));
-  } else if (H === 'undercut') {
-    L.push(hairGroup(`<path d="${hairFront.buzz}" fill="${hairC}" opacity=".3"/><path d="${hairFront.buzz}" fill="url(#${uid}-scalpTex)" opacity=".7"/>${hatOn ? '' : textureFill(hairFront.undercut)}`));
-  } else if (H === 'mohawk') {
-    L.push(hairGroup(`<path d="${hairFront.buzz}" fill="${hairC}" opacity=".28"/>${hatOn ? '' : textureFill(hairFront.mohawk)}`));
-  } else if (H === 'buzz') {
-    L.push(hairGroup(`<path d="${hairFront.buzz}" fill="${hairC}" opacity=".42"/><path d="${hairFront.buzz}" fill="url(#${uid}-scalpTex)" opacity=".9"/>`));
-  } else if (hairFront[H]) {
-    L.push(hairGroup(textureFill(hairFront[H])));
-    if (H === 'slickback' && !hatOn) L.push(`<path d="M${Hx(-12)} ${Hy(-21)} Q${Hx(-9)} ${Hy(-28)} ${Hx(-6)} ${Hy(-32)} M${Hx(-4)} ${Hy(-22)} Q${Hx(-1)} ${Hy(-28)} ${Hx(2)} ${Hy(-33)} M${Hx(4)} ${Hy(-22)} Q${Hx(7)} ${Hy(-27)} ${Hx(10)} ${Hy(-31)} M${Hx(12)} ${Hy(-20)} Q${Hx(14)} ${Hy(-24)} ${Hx(16)} ${Hy(-27)}" stroke="${hairL}" stroke-width=".7" fill="none" opacity=".4"/>`);
-    if (H === 'fade' && !hatOn) [-1, 1].forEach(s => { const d = `M${X(s, F.cw * 0.86)} ${hy - 11} Q${X(s, F.cw + 0.4)} ${hy - 9} ${X(s, F.cw + 0.2)} ${hy - 2} L${X(s, F.cw - 2.6)} ${hy - 2} Q${X(s, F.cw - 2.4)} ${hy - 7} ${X(s, F.cw * 0.7)} ${hy - 11}Z`; L.push(`<path d="${d}" fill="${hairC}" opacity=".22"/><path d="${d}" fill="url(#${uid}-scalpTex)" opacity=".8"/>`); });
+  // ---------- hair: hand-drawn artwork, fitted to the head ----------
+  const H = hijab ? 'hidden' : c.hair, art = HAIR_ART[H];
+  if (art) {
+    const [w, h, ax, ay] = art, k = (2 * hw) / HAIR_HEAD_PX;
+    // keep the top of the hair at or above the crown so the scalp never peeks out over a thin parting
+    const x = r1(cx - ax * k), y = r1(Math.min(headTop + HAIRLINE - ay * k, headTop - 2 - art[5] * k));
+    if (hatOn) defs.push(`<clipPath id="${uid}-hatcut"><rect x="0" y="${hy - 7}" width="200" height="400"/></clipPath>`);
+    L.push(`<image href="hair/${H}.webp" x="${x}" y="${y}" width="${r1(w * k)}" height="${r1(h * k)}"${hatOn ? ` clip-path="url(#${uid}-hatcut)"` : ''}/>`);
   }
-  const braid = (x0, y0, x1, y1, n, rx, ry, sway = 0) => `<g>${Array.from({ length: n }, (_, i) => { const t = i / (n - 1), x = x0 + (x1 - x0) * Math.min(1, t * 1.4) + Math.sin(t * 3) * sway, y = y0 + (y1 - y0) * t;
-      return `<ellipse cx="${r1(x)}" cy="${r1(y)}" rx="${rx}" ry="${ry}" fill="${i % 2 ? hairD : hairC}" transform="rotate(${i % 2 ? 30 : -30} ${r1(x)} ${r1(y)})"/>`; }).join('')}</g>`;
-  if (H === 'plaits') [-1, 1].forEach(s => L.push(braid(Hx(s * 19), Hy(0), X(s, F.cw + 1), sh + 44, 18, 2.3, 3.1, s * 0.5) + `<rect x="${X(s, F.cw + 1) - 2}" y="${sh + 44}" width="4" height="2.4" rx="1" fill="${hatC}"/>`));
-  if (H === 'sideBraid') L.push(braid(Hx(-16), Hy(-10), X(-1, F.cw - 3), sh + 52, 22, 2.4, 3.2, -1));
-  if (H === 'pigtails') [-1, 1].forEach(s => L.push(`<rect x="${Hx(s * 20) - 2}" y="${Hy(-2) - 1.5}" width="4" height="3.4" rx="1.4" fill="${hatC}"/>`));
-  if (H === 'spaceBuns' && !hatOn) [-1, 1].forEach(s => L.push(`<g filter="url(#${uid}-rough)"><circle cx="${Hx(s * 13)}" cy="${Hy(-30)}" r="${r1(8 * hs)}" fill="${hairC}"/><circle cx="${Hx(s * 13)}" cy="${Hy(-30)}" r="${r1(8 * hs)}" fill="url(#${uid}-hairTex)" opacity=".6"/></g>`));
-  if ((H === 'afroPuff' || H === 'highPonytail') && !hatOn) L.push(`<path d="M${Hx(-5)} ${Hy(H === 'afroPuff' ? -24 : -30)} q${5 * hs} ${2 * hs} ${10 * hs} 0" stroke="${hatC}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`);
-  if (H === 'locs' && !hatOn) [-1, 1].forEach(s => { for (let i = 0; i < 3; i++) L.push(`<g filter="url(#${uid}-rough)"><path d="M${Hx(s * (14 + i * 3))} ${Hy(-16 + i * 3)} Q${Hx(s * (21 + i * 2))} ${Hy(14)} ${Hx(s * (22 + i * 3))} ${Hy(48 - i * 5)}" stroke="${i % 2 ? hairD : hairC}" stroke-width="${r1(3.4 * hs)}" fill="none" stroke-linecap="round"/></g>`); });
   if (c.hairAcc !== 'none' && !hatOn && !['bald', 'buzz', 'hidden'].includes(H)) {
     const ax = Hx(-17), ay = Hy(-17);
     if (c.hairAcc === 'flower') L.push(`<g>${[0, 72, 144, 216, 288].map(a => `<ellipse cx="${ax}" cy="${r1(ay - 2.2)}" rx="1.5" ry="2.4" fill="#f2a7b6" transform="rotate(${a} ${ax} ${ay})"/>`).join('')}<circle cx="${ax}" cy="${ay}" r="1.2" fill="#e3b341"/></g>`);
     if (c.hairAcc === 'clip') L.push(`<rect x="${ax - 3}" y="${ay - 1}" width="7" height="2" rx="1" fill="#d6b062" transform="rotate(-25 ${ax} ${ay})"/>`);
     if (c.hairAcc === 'bow') L.push(`<g transform="translate(${Hx(12)} ${Hy(-27)}) rotate(15)"><path d="M0 0 L-5 -3 L-5 3Z M0 0 L5 -3 L5 3Z" fill="${hatC}"/><circle r="1.3" fill="${hatD}"/></g>`);
   }
-  if (H === 'braids') [-1, 1].forEach(s => {
-    for (let b = 0; b < 3; b++) {
-      const x0 = Hx(s * (16 + b * 2.6)), y0 = Hy(-14 + b * 4), x1 = X(s, F.cw + 3 + b * 2.6), y1 = sh + 46 - b * 4, n = 22;
-      const parts = Array.from({ length: n }, (_, i) => { const t = i / (n - 1), x = x0 + (x1 - x0) * Math.min(1, t * 1.6) + s * Math.sin(t * 3) * 0.6, y = y0 + (y1 - y0) * t;
-        return `<ellipse cx="${r1(x)}" cy="${r1(y)}" rx="1.55" ry="2.3" fill="${i % 2 ? hairD : hairC}" transform="rotate(${i % 2 ? 28 : -28} ${r1(x)} ${r1(y)})"/>`; }).join('');
-      L.push(`<g>${parts}<circle cx="${r1(x1)}" cy="${r1(y1 + 2.4)}" r="1.2" fill="#e0b443"/></g>`);
-    }
-  });
   // ---------- hats and head gear ----------
   if (c.hat === 'cap' || c.hat === 'backwardsCap') {
     const dome = `M${cx - F.fw - 1.2} ${hy - 4} C${cx - F.fw - 1.6} ${headTop - 3} ${cx - 7} ${headTop - 6} ${cx} ${headTop - 6} C${cx + 8} ${headTop - 6} ${cx + F.fw + 1.6} ${headTop - 3} ${cx + F.fw + 1.2} ${hy - 4} Q${cx} ${hy - 8} ${cx - F.fw - 1.2} ${hy - 4}Z`;
@@ -703,4 +657,4 @@ function renderAvatar(cfg = {}, opts = {}) {
   const vb = views[opts.view] || views.full;
   return `<svg class="avatarSvg" viewBox="${vb}" role="img" aria-label="Your character" xmlns="http://www.w3.org/2000/svg"><defs>${defs.join('')}</defs><g${opts.lite ? '' : ` filter="url(#${uid}-grain)"`}>${L.join('')}</g></svg>`;
 }
-if (typeof module !== 'undefined') module.exports = { renderAvatar, normalizeAvatar, AVATAR_OPTIONS, AVATAR_DEFAULT };
+if (typeof module !== 'undefined') module.exports = { renderAvatar, normalizeAvatar, AVATAR_OPTIONS, AVATAR_DEFAULT, HAIR_ART };

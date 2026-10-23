@@ -26,7 +26,7 @@
     nose: { straight: 'Straight', button: 'Button', wide: 'Wide', roman: 'Roman', small: 'Small', long: 'Long' },
     mouth: { neutral: 'Neutral', smile: 'Smile', grin: 'Grin', full: 'Full lips', thin: 'Thin lips', smirk: 'Smirk' },
     ears: { average: 'Average', small: 'Small', large: 'Large', protruding: 'Protruding' },
-    hair: { buzz: 'Buzz', crop: 'Crop', fade: 'Fade', undercut: 'Undercut', sidepart: 'Side part', slickback: 'Slick back', quiff: 'Quiff', messy: 'Messy', hightop: 'High top', receding: 'Receding', curly: 'Curly', afro: 'Afro', afroPuff: 'Afro puff', twists: 'Twists', locs: 'Locs', cornrows: 'Cornrows', mohawk: 'Mohawk', pixie: 'Pixie', bob: 'Bob', lob: 'Lob', shag: 'Shag', long: 'Long', longBangs: 'Long + fringe', sideSwept: 'Side swept', wavy: 'Wavy', wavyBangs: 'Wavy + fringe', curlyLong: 'Long curls', ponytail: 'Ponytail', highPonytail: 'High ponytail', pigtails: 'Pigtails', plaits: 'Plaits', sideBraid: 'Side braid', braids: 'Box braids', bun: 'Top bun', spaceBuns: 'Space buns', bald: 'Bald' },
+    hair: { spikyFringe: 'Spiky fringe', textured: 'Textured', shoulderStraight: 'Shoulder straight', bowlSweep: 'Swept bowl', longStraight: 'Long straight', spikyCrop: 'Spiky crop', locs: 'Locs', wavyBlonde: 'Wavy bob', buzz: 'Buzz', curlyCrop: 'Curly crop', waves: 'Waves', quiff: 'Quiff', curlyCap: 'Curly', spikes: 'Spikes', tightCurls: 'Tight curls', curtainBlonde: 'Curtains long', afro: 'Afro', looseCurls: 'Loose curls', pompadour: 'Pompadour', longWavy: 'Wavy', sideSweep: 'Side sweep', emoSweep: 'Swept fringe', slickBack: 'Slick back', shortWavy: 'Short wavy', spikeTop: 'Spike top', spikyBlonde: 'Spiky', sidePart: 'Side part', curlyTop: 'Curly top', bowl: 'Bowl', flatTop: 'Flat top', messySpiky: 'Messy spiky', middlePart: 'Middle part', texturedQuiff: 'Textured quiff', slickedBlack: 'Slicked', curlyFade: 'Curly fade', buzzFade: 'Buzz fade', curtains: 'Curtains', blondeQuiff: 'Swept quiff', messy: 'Messy', twists: 'Twists', cornrows: 'Cornrows', bigAfro: 'Big afro', shag: 'Shag', spikyBlack: 'Spiky messy', textCrop: 'Crop', curlyTopFade: 'Curly top fade', longDark: 'Lob', messyBun: 'Messy bun', bob: 'Bob', beachWaves: 'Beach waves', pixie: 'Pixie', longSleek: 'Long sleek', longWaves: 'Long waves', longFringe: 'Long + fringe', halfUp: 'Half up', sidePonytail: 'Side ponytail', topBun: 'Top bun', curlyUpdo: 'Curly updo', spaceBuns: 'Space buns', plaits: 'Plaits', boxBraids: 'Box braids', afroPuff: 'Afro puff', longCurls: 'Long curls', wavyBun: 'Wavy + bun', shortCurls: 'Short curls', longLocs: 'Long locs', bald: 'Bald' },
     beard: { none: 'None', stubble: 'Stubble', heavyStubble: 'Heavy stubble', moustache: 'Moustache', handlebar: 'Handlebar', soulPatch: 'Soul patch', goatee: 'Goatee', vandyke: 'Van Dyke', circle: 'Circle', chinstrap: 'Chinstrap', mutton: 'Mutton chops', short: 'Short', full: 'Full', bushy: 'Bushy', long: 'Long' },
     top: { tee: 'T-shirt', vneck: 'V-neck', polo: 'Polo', shirt: 'Shirt', jersey: 'Jersey', longsleeve: 'Long sleeve', sweater: 'Sweater', tank: 'Tank', stringer: 'Stringer', hoodie: 'Hoodie', zip: 'Zip hoodie', crop: 'Crop top', sportsbra: 'Sports bra' },
     topPattern: { none: 'Plain', stripes: 'Stripes', dots: 'Dots', check: 'Check' },
@@ -126,6 +126,8 @@
     renderBuilder();
   }
   function closeBuilder() { $('#charSheet').classList.add('hidden'); document.body.classList.remove('sheetOpen'); draft = null; }
+  // Each drawn hairstyle has its own colour; beards can match it.
+  const hairTone = d => (HAIR_ART[d.hair] ? HAIR_ART[d.hair][4] : d.hairColor);
   const group = (label, inner, extra = '') => `<div class="optGroup"><div class="optHead"><p class="optLabel">${label}</p>${extra}</div>${inner}</div>`;
   const swatches = (key, label, extraBtn = '') => {
     const preset = AVATAR_OPTIONS[{ beardColor: 'hairColor', hatColor: 'topColor' }[key] || key], cur = draft[key], custom = !preset.includes(cur);
@@ -155,7 +157,7 @@
     if (tab === 'Body') h = swatches('skin', 'Skin tone') + Object.keys(SLIDERS).map(slider).join('');
     if (tab === 'Face') h = thumbs('face', 'Face shape') + thumbs('eyes', 'Eyes', 'eyes', 'wide') + swatches('eyeColor', 'Eye colour') + thumbs('brows', 'Eyebrows', 'brows', 'wide')
       + thumbs('nose', 'Nose', 'nose', 'tall') + thumbs('mouth', 'Mouth', 'mouth', 'wide') + thumbs('ears', 'Ears') + toggles(['freckles', 'mole', 'smileLines', 'foreheadLines'], 'Details');
-    if (tab === 'Hair') h = swatches('hairColor', 'Hair colour') + thumbs('hair', 'Style') + thumbs('hairAcc', 'Hair accessory');
+    if (tab === 'Hair') h = thumbs('hair', 'Style') + thumbs('hairAcc', 'Hair accessory');
     if (tab === 'Beard') h = swatches('beardColor', 'Beard colour', `<button type="button" class="chip matchHair" data-match="1">Match hair</button>`) + thumbs('beard', 'Style');
     if (tab === 'Outfit') h = chips('top', 'Top') + swatches('topColor', 'Top colour') + chips('topPattern', 'Pattern') + chips('bottom', 'Bottoms') + swatches('bottomColor', 'Bottoms colour') + swatches('shoes', 'Trainers') + chips('socks', 'Socks');
     if (tab === 'Extras') h = thumbs('hat', 'Headwear') + swatches('hatColor', 'Headwear and accessory colour') + thumbs('glasses', 'Glasses') + thumbs('earrings', 'Earrings') + thumbs('necklace', 'Necklace', 'neck', 'wide') + toggles(['headphones', 'wristbands', 'watch'], 'Accessories') + chips('tattoo', 'Tattoo');
@@ -175,7 +177,7 @@
     ['skin', 'face', 'eyes', 'eyeColor', 'brows', 'nose', 'mouth', 'ears', 'hair', 'hairColor', 'top', 'topColor', 'bottom', 'bottomColor', 'shoes', 'socks'].forEach(k => { draft[k] = pick(k); });
     draft.topPattern = Math.random() < 0.2 ? pick('topPattern') : 'none'; draft.hatColor = pick('topColor');
     draft.earrings = Math.random() < 0.3 ? pick('earrings') : 'none'; draft.necklace = Math.random() < 0.2 ? pick('necklace') : 'none'; draft.hairAcc = Math.random() < 0.15 ? pick('hairAcc') : 'none';
-    draft.beard = Math.random() < 0.5 ? 'none' : pick('beard'); draft.beardColor = draft.hairColor;
+    draft.beard = Math.random() < 0.5 ? 'none' : pick('beard'); draft.beardColor = hairTone(draft);
     Object.keys(SLIDERS).forEach(k => { draft[k] = 0.15 + rnd() * 0.7; });
     draft.hat = Math.random() < 0.2 ? pick('hat') : 'none'; draft.glasses = Math.random() < 0.25 ? pick('glasses') : 'none';
     draft.tattoo = Math.random() < 0.2 ? pick('tattoo') : 'none';
@@ -187,7 +189,7 @@
     const b = e.target.closest('[data-key],[data-toggle],[data-gear],[data-match]'); if (!b || !draft) return;
     if (b.dataset.key) draft[b.dataset.key] = b.dataset.val;
     if (b.dataset.toggle) draft[b.dataset.toggle] = !draft[b.dataset.toggle];
-    if (b.dataset.match) draft.beardColor = draft.hairColor;
+    if (b.dataset.match) draft.beardColor = hairTone(draft);
     if (b.dataset.gear) { const id = b.dataset.gear; draft.gear = draft.gear.includes(id) ? draft.gear.filter(x => x !== id) : [...draft.gear, id]; }
     refresh();
   });
