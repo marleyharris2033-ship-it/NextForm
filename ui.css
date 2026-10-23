@@ -792,3 +792,12 @@ details.learnCard a{margin:0 16px 16px}
 .reviewGrid i{font-style:normal;font-size:11px;margin-left:4px}
 .reviewGrid i.up{color:#2f7d4f}.reviewGrid i.down{color:var(--danger)}
 .reviewFoot{margin:10px 0 0}
+
+.deleteAccount{display:block;margin-top:2px;color:var(--danger)!important}
+
+.helpCard h2{margin-bottom:4px}
+.helpRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;min-height:56px;color:inherit;text-decoration:none;border-bottom:1px solid var(--hairline)}
+.helpRow:last-child{border-bottom:0}
+.helpRow b{display:block;font-size:15.5px;color:var(--pine-deep)}
+.helpRow small{display:block;font-size:13px;color:var(--stone)}
+.helpRow svg{width:18px;height:18px;fill:none;stroke:var(--stone);stroke-width:2;stroke-linecap:round;flex-shrink:0}

@@ -6,5 +6,7 @@ export const firebaseConfig = {
   storageBucket: "nextform1993.firebasestorage.app",
   messagingSenderId: "896110786904",
   appId: "1:896110786904:web:1b82c63f8a8c0686478d2d",
-  measurementId: "G-JPK29Z1CRP"
+  measurementId: "G-JPK29Z1CRP",
+  // Optional: reCAPTCHA v3 site key for Firebase App Check (public, safe to commit). Leave empty until set up.
+  appCheckSiteKey: ""
 };
