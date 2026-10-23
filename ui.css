@@ -822,3 +822,5 @@ details.learnCard a{margin:0 16px 16px}
 .xpLegend .xpEmpty{color:rgba(255,255,255,.7)}
 @media(max-width:360px){.xpRing{width:120px;height:120px}.xpCentre b{font-size:26px}}
 .xpCentre small+small{margin-top:0}
+.resultHead{margin:0;padding:12px 0 2px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--stone)}
+.resultHead+.foodResult{border-top:0!important}

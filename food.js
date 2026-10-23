@@ -3,7 +3,8 @@
 (() => {
   const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
   const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
-  const OFF_SEARCH = 'https://uk.openfoodfacts.org/cgi/search.pl';
+  const OFF_SEARCH = 'https://uk.openfoodfacts.org/cgi/search.pl'; // older search, used as a fallback
+  const OFF_SEARCH_NEW = 'https://search.openfoodfacts.org/search'; // newer, faster search service
   const OFF_FIELDS = 'code,product_name,product_name_en,brands,serving_size,serving_quantity,nutriments,image_front_small_url';
   const PRODUCT_CACHE = 'nextform-products'; // barcode lookups, kept on this device for offline re-use
   const DETECTOR_URL = 'https://cdn.jsdelivr.net/npm/barcode-detector@3.2.2/dist/es/ponyfill.min.js';
@@ -231,14 +232,16 @@
   });
 
   // ---------- Open Food Facts ----------
+  // The newer search can return a name as text or as { en: ..., main: ... }.
+  const textOf = v => (typeof v === 'string' ? v.trim() : v && typeof v === 'object' ? String(v.en || v.main || Object.values(v)[0] || '').trim() : '');
   function fromOFF(p) {
     const n = p.nutriments || {};
     let kcal = num(n['energy-kcal_100g']);
     if (kcal == null && num(n.energy_100g) != null) kcal = num(n.energy_100g) / 4.184; // kJ to kcal
     return {
       code: String(p.code || ''),
-      name: (p.product_name_en || p.product_name || '').trim() || 'Unnamed product',
-      brand: String(p.brands || '').split(',')[0].trim(),
+      name: textOf(p.product_name_en) || textOf(p.product_name) || 'Unnamed product',
+      brand: (Array.isArray(p.brands) ? String(p.brands[0] || '') : String(p.brands || '').split(',')[0]).trim(),
       unit: 'g',
       per: kcal == null ? null : { kcal, protein: num(n.proteins_100g) || 0, carbs: num(n.carbohydrates_100g) || 0, fat: num(n.fat_100g) || 0 },
       servingG: num(p.serving_quantity) > 0 ? num(p.serving_quantity) : null,
@@ -274,25 +277,65 @@
   }
 
   // Search
+  // Search: everyday foods and your recent foods first (instant, work offline), then Open Food Facts.
+  const words = q => q.toLowerCase().split(/[^a-z0-9%]+/).filter(w => w.length > 1);
+  const matches = (text, ws) => ws.every(w => text.includes(w));
+  function localMatches(q) {
+    const ws = words(q); if (!ws.length) return { common: [], recent: [] };
+    const common = (window.COMMON_FOODS || []).filter(f => matches(f.keywords, ws)).slice(0, 6);
+    const recent = recentProducts().filter(p => matches(`${p.name} ${p.brand}`.toLowerCase(), ws)).slice(0, 5);
+    return { common, recent };
+  }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function searchOFF(q) {
+    // 1. The newer search service. Fill in nutrition from the barcode lookup if a result is missing it.
+    try {
+      const json = await fetchJSON(`${OFF_SEARCH_NEW}?q=${encodeURIComponent(q)}&langs=en&page_size=24&fields=${OFF_FIELDS}`, 9000);
+      if (Array.isArray(json?.hits) && json.hits.length) {
+        const list = json.hits.map(fromOFF), missing = list.filter(p => !p.per && p.code).slice(0, 8);
+        await Promise.all(missing.map(async p => { try { const full = await findBarcode(p.code); if (full?.per) Object.assign(p, full); } catch {} }));
+        const good = list.filter(p => p.per);
+        if (good.length) return good;
+      }
+    } catch {}
+    // 2. The older search, tried twice: it has been failing intermittently.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const json = await fetchJSON(`${OFF_SEARCH}?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=25&fields=${OFF_FIELDS}`, 12000);
+        return (json.products || []).map(fromOFF).filter(p => p.per);
+      } catch (e) { if (attempt) throw e; await sleep(700); }
+    }
+    return [];
+  }
+  let searchSeq = 0;
   $('#foodSearchForm').addEventListener('submit', async e => {
     e.preventDefault();
     const q = $('#foodQuery').value.trim();
     if (q.length < 2) return;
-    const out = $('#searchResults'), status = $('#searchStatus');
-    out.innerHTML = ''; status.textContent = 'Searching…';
-    if (!navigator.onLine) { status.textContent = 'You’re offline. Use Recent or enter the food manually.'; return; }
+    const out = $('#searchResults'), status = $('#searchStatus'), seq = ++searchSeq;
+    const { common, recent } = localMatches(q);
+    let online = [];
+    const draw = (note) => {
+      const groups = [['Your recent foods', recent], ['Everyday foods', common], ['From Open Food Facts', online]].filter(g => g[1].length);
+      const all = groups.flatMap(g => g[1]);
+      let i = 0;
+      out.innerHTML = groups.map(([title, list]) => `<p class="resultHead">${title}</p>` + list.map(p => resultRow(p, i++)).join('')).join('');
+      out.onclick = ev => { const b = ev.target.closest('[data-i]'); if (b) { const p = all[+b.dataset.i]; showPortion(p, p.lastAmount ? { grams: p.lastAmount } : {}); } };
+      status.textContent = note;
+    };
+    draw(common.length || recent.length ? 'Searching Open Food Facts for more…' : 'Searching…');
+    if (!navigator.onLine) return draw(common.length || recent.length ? 'You’re offline, so only everyday and recent foods are shown.' : 'You’re offline. Try Recent or Quick add.');
     try {
-      const json = await fetchJSON(`${OFF_SEARCH}?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=25&fields=${OFF_FIELDS}`, 15000);
-      const products = (json.products || []).map(fromOFF).filter(p => p.per);
-      status.textContent = products.length ? `${products.length} results from Open Food Facts` : 'No matches with nutrition info. Try fewer words, or enter it manually.';
-      out.innerHTML = products.map((p, i) => resultRow(p, i)).join('');
-      out.onclick = ev => { const b = ev.target.closest('[data-i]'); if (b) showPortion(products[+b.dataset.i]); };
+      online = await searchOFF(q);
+      if (seq !== searchSeq) return;
+      draw(online.length ? '' : common.length || recent.length ? 'No branded matches on Open Food Facts. Try different words, or pick one above.' : 'No matches with nutrition info. Try fewer words, scan the barcode, or use Quick add.');
     } catch {
-      status.textContent = 'Search didn’t respond. Try again in a moment, or enter the food manually.';
+      if (seq !== searchSeq) return;
+      draw(common.length || recent.length ? 'Open Food Facts isn’t responding right now, so only everyday and recent foods are shown.' : 'Open Food Facts search isn’t responding right now. Try again in a minute, scan the barcode, or use Quick add.');
     }
   });
   function resultRow(p, i) {
-    return `<button type="button" class="foodResult" data-i="${i}"><span><b>${esc(p.name)}</b><small>${esc([p.brand, p.unit === 'g' ? `${fmt(p.per.kcal)} kcal per 100 g` : `${fmt(p.per.kcal)} kcal per portion`].filter(Boolean).join(', '))}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
+    return `<button type="button" class="foodResult" data-i="${i}"><span><b>${esc(p.name)}</b><small>${esc([p.brand === 'Common food' ? '' : p.brand, p.unit === 'g' ? `${fmt(p.per.kcal)} kcal per 100 g` : `${fmt(p.per.kcal)} kcal per portion`, p.per.protein >= 1 ? `${g1(p.per.protein)} g protein` : ''].filter(Boolean).join(', '))}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
   }
 
   // Recent foods, newest first, one per product
@@ -341,7 +384,7 @@
       ? [product.servingG && { g: product.servingG, label: `1 serving (${g1(product.servingG)} g)` }, product.servingG && { g: product.servingG * 2, label: '2 servings' }, { g: 100, label: '100 g' }].filter(Boolean)
       : [{ g: 0.5, label: 'Half' }, { g: 1, label: '1 portion' }, { g: 2, label: '2 portions' }];
     $('#pQuick').innerHTML = quick.map(q => `<button type="button" class="chip" data-g="${q.g}">${esc(q.label)}</button>`).join('');
-    $('#pSource').textContent = product.code ? `Nutrition from Open Food Facts${product.servingLabel ? `. Serving on pack: ${product.servingLabel}` : ''}.` : '';
+    $('#pSource').textContent = product.code ? `Nutrition from Open Food Facts${product.servingLabel ? `. Serving on pack: ${product.servingLabel}` : ''}.` : product.brand === 'Common food' ? 'Typical values for this food. Check the pack for a specific brand.' : '';
     $('#pSave').textContent = entry ? 'Save changes' : 'Add food';
     $('#pDelete').classList.toggle('hidden', !entry);
     renderMealChips();
