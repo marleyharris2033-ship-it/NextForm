@@ -2,7 +2,7 @@
 // Uses globals from app.js and rpg.js.
 (() => {
   const SESSION_KEY = 'nextform-session'; // in-progress workout, kept on this device only
-  const TYPES = ['Strength', 'Running', 'Boxing', 'Mobility', 'Mixed', 'Other'];
+  const WT = window.WORKOUT_TYPES, TYPES = WT.TYPES.map(t => t.id);
   const EFFORT = ['', 'Very easy', 'Easy', 'Easy', 'Moderate', 'Moderate', 'Moderately hard', 'Hard', 'Very hard', 'Near max', 'All out'];
   const DEFAULT_REST = 90;
   let session = load();
@@ -11,7 +11,8 @@
   // ---------- state ----------
   function load() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; } }
   function persist() { try { session ? localStorage.setItem(SESSION_KEY, JSON.stringify(session)) : localStorage.removeItem(SESSION_KEY); } catch {} }
-  const usesSets = t => !['Running', 'Boxing'].includes(t);
+  const usesSets = t => WT.typeDef(t).mode === 'sets';
+  const typeLabel = t => WT.typeDef(t).label;
   const mmss = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
   const elapsed = () => session && !session.past && session.startedAt ? (Date.now() - session.startedAt) / 1000 : 0;
   const started = () => !!(session && !session.past && session.startedAt);
@@ -38,7 +39,8 @@
     return sets.map(s => +s.kg ? `${g(s.kg)} kg × ${s.reps}` : `${s.reps} reps`).join(', ');
   }
   function newExercise(name, plan) {
-    const last = lastSets(name), timed = plan ? /s$/.test(String(plan.reps)) : last?.unit === 's';
+    const meta = EXERCISES.find(x => x.name.toLowerCase() === name.toLowerCase());
+    const last = lastSets(name), timed = plan ? /s$/.test(String(plan.reps)) : last ? last.unit === 's' : !!meta?.timed;
     let sets;
     if (last && last.sets.length) sets = last.sets.map(s => ({ kg: s.kg || '', reps: s.reps || '', done: false }));
     else sets = Array.from({ length: plan?.sets || 3 }, () => ({ kg: '', reps: plan ? targetReps(plan.reps) : '', done: false }));
@@ -55,10 +57,16 @@
       exercises: plan ? plan.exercises.map(e => newExercise(e.name, e)) : [],
       distance: '', runMinutes: '', rounds: '', roundLength: 3, restEnd: null
     };
+    applyTypeDefaults();
+    if (!plan && type !== 'Strength') session.name = typeLabel(type);
     persist(); go('train'); render();
   }
+  // Fill in the defaults a type's fields start with (e.g. 3-minute rounds, 40s work / 20s rest).
+  function applyTypeDefaults() {
+    for (const f of WT.typeDef(session.type).fields || []) if (f.def != null && (session[f.k] === '' || session[f.k] == null)) session[f.k] = f.def;
+  }
   function sessionHasWork() {
-    return session && (session.exercises.some(e => e.sets.some(s => s.done)) || session.distance || session.rounds);
+    return session && (session.exercises.some(e => e.sets.some(s => s.done)) || (WT.typeDef(session.type).fields || []).some(f => f.def == null && +session[f.k] > 0) || session.activity);
   }
   window.startPremadePlan = id => { const p = BUILTIN_PLANS.find(x => x.id === id); if (p) start({ plan: p }); };
   window.startPastSession = () => start({ past: true });
@@ -77,7 +85,8 @@
     $('#sessionClock').classList.toggle('idle', !session.past && !started());
     $('#startTimer').classList.toggle('hidden', session.past || started());
     $('#finishBtn').classList.toggle('quiet', !session.past && !started());
-    $('#sessionTypes').innerHTML = TYPES.map(t => `<button type="button" role="radio" aria-checked="${t === session.type}" class="chip${t === session.type ? ' active' : ''}" data-type="${t}" style="--c:${TYPE_COLORS[t]}">${t}</button>`).join('');
+    $('#sessionTypes').innerHTML = WT.TYPES.map(t => `<button type="button" role="radio" aria-checked="${t.id === session.type}" class="chip${t.id === session.type ? ' active' : ''}" data-type="${t.id}" style="--c:${t.color}">${esc(t.short || t.label)}</button>`).join('');
+    $('#sessionTypes').querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
     renderCardio();
     const sets = usesSets(session.type);
     $('#sessionExercises').classList.toggle('hidden', !sets);
@@ -94,7 +103,13 @@
     $('#setProgressFill').style.width = all.length ? `${done / all.length * 100}%` : '0';
     $('#setProgressText').textContent = `${done} of ${all.length} sets`;
   }
+  function renderTypeTiles() {
+    const box = $('#quickTypes'); if (!box || box.dataset.done) return;
+    box.innerHTML = WT.TYPES.filter(t => t.id !== 'Strength').map(t => `<button type="button" class="quickTile" data-start-type="${t.id}" style="--c:${t.color}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${t.icon}</svg><span>${esc(t.short || t.label)}</span></button>`).join('');
+    box.dataset.done = '1';
+  }
   function renderStart() {
+    renderTypeTiles();
     const day = DAYS[(new Date().getDay() + 6) % 7], planId = data.schedule?.[day], plan = BUILTIN_PLANS.find(p => p.id === planId);
     const first = (data.profile.name || '').trim().split(' ')[0], st = streak();
     $('#heroTitle').textContent = first ? `Ready to climb, ${first}?` : 'Ready to climb?';
@@ -141,11 +156,28 @@
   }
   const g = v => (v === '' || v == null ? '–' : Math.round(+v * 10) / 10);
   function renderCardio() {
-    const t = session.type, box = $('#cardioFields');
-    const f = (id, label, val, extra = '') => `<label>${label}<input data-cardio="${id}" type="number" min="0" ${extra} value="${val ?? ''}"></label>`;
-    box.innerHTML = t === 'Running' ? `<div class="card form2">${f('distance', 'Distance (km)', session.distance, 'step="0.01" inputmode="decimal"')}${f('runMinutes', 'Run time (min)', session.runMinutes, 'step="0.1" inputmode="decimal"')}</div>`
-      : t === 'Boxing' ? `<div class="card form2">${f('rounds', 'Rounds', session.rounds, 'inputmode="numeric"')}${f('roundLength', 'Round length (min)', session.roundLength, 'step="0.5" inputmode="decimal"')}</div>`
-      : '';
+    const t = WT.typeDef(session.type), box = $('#cardioFields');
+    if (t.mode !== 'cardio') { box.innerHTML = ''; return; }
+    const picks = (t.picks || []).map(p => {
+      const cur = p.multi ? (session[p.k] || []) : [session[p.k]];
+      return `<div class="pickGroup"><p class="optLabel">${esc(p.label)}${p.multi ? ' <small>(pick any)</small>' : ''}</p><div class="pickChips">${p.options.map(([name]) =>
+        `<button type="button" class="chip${cur.includes(name) ? ' active' : ''}" data-pick="${p.k}" data-opt="${esc(name)}" aria-pressed="${cur.includes(name)}">${esc(name)}</button>`).join('')}</div></div>`;
+    }).join('');
+    const fs = WT.fields(t, session).map(f => `<label><span>${esc(f.label)}${f.opt ? ' <small class="optTag">optional</small>' : ''}</span><input data-cardio="${f.k}" type="number" min="0" step="${f.step || 1}" inputmode="${f.step && f.step < 1 ? 'decimal' : 'numeric'}" value="${session[f.k] ?? ''}"></label>`).join('');
+    box.innerHTML = `<div class="card typeCard">${picks}<div class="form2">${fs}</div><p class="typeCalc" id="typeCalc"></p></div>`;
+    renderTypeCalc();
+  }
+  // Live line under the fields: pace, speed, active time.
+  function renderTypeCalc() {
+    const el = $('#typeCalc'); if (!el || !session) return;
+    const t = session.type, n = k => +session[k] || 0, out = [];
+    if (t === 'Running' && n('distance') && n('runMinutes')) { const p = n('runMinutes') / n('distance'); out.push(`Pace ${Math.floor(p)}:${String(Math.round((p % 1) * 60)).padStart(2, '0')} per km`); }
+    if (['Cycling', 'Walking', 'Cardio'].includes(t) && n('distance') && n('moveMinutes')) out.push(`Average ${(n('distance') / (n('moveMinutes') / 60)).toFixed(1)} km/h`);
+    if (t === 'Swimming' && n('metres') && n('moveMinutes')) { const p = n('moveMinutes') / (n('metres') / 100); out.push(`${Math.floor(p)}:${String(Math.round((p % 1) * 60)).padStart(2, '0')} per 100 m`); }
+    if (t === 'HIIT' && n('rounds')) out.push(`${Math.round(n('rounds') * (n('workSec') || 40) / 60 * 10) / 10} min work, ${Math.round(n('rounds') * ((n('workSec') || 40) + (n('restSec') || 20)) / 60 * 10) / 10} min total`);
+    if (t === 'Boxing' && n('rounds')) out.push(`${Math.round(n('rounds') * n('roundLength') * 10) / 10} min of rounds`);
+    el.textContent = out.join(' · ');
+    el.classList.toggle('hidden', !out.length);
   }
 
   // ---------- clock + rest ----------
@@ -215,18 +247,27 @@
 
   $('#sessionTypes').addEventListener('click', e => {
     const b = e.target.closest('[data-type]'); if (!b || !session) return;
-    session.type = b.dataset.type;
-    if (session.name === 'Workout' || TYPES.includes(session.name)) session.name = session.type === 'Strength' ? 'Workout' : session.type;
+    const wasLabel = session.name === 'Workout' || TYPES.includes(session.name) || WT.TYPES.some(t => t.label === session.name);
+    if (session.type !== b.dataset.type) { session.activity = ''; session.activities = []; session.moves = []; }
+    session.type = b.dataset.type; applyTypeDefaults();
+    if (wasLabel) session.name = session.type === 'Strength' ? 'Workout' : typeLabel(session.type);
     persist(); render();
   });
   $('#trainSession').addEventListener('input', e => {
     if (!session) return;
     const el = e.target;
-    if (el.dataset.cardio) { session[el.dataset.cardio] = el.value; return persist(); }
+    if (el.dataset.cardio) { session[el.dataset.cardio] = el.value; persist(); return renderTypeCalc(); }
     if (el.id === 'pastDate') { session.date = el.value; return persist(); }
     if (el.id === 'pastDuration') { session.duration = el.value; return persist(); }
     const card = el.closest('[data-ex]');
     if (card && el.dataset.field) { session.exercises[+card.dataset.ex].sets[+el.dataset.set][el.dataset.field] = el.value; persist(); }
+  });
+  $('#cardioFields').addEventListener('click', e => {
+    const b = e.target.closest('[data-pick]'); if (!b || !session) return;
+    const t = WT.typeDef(session.type), p = t.picks.find(x => x.k === b.dataset.pick), v = b.dataset.opt;
+    if (p.multi) { const cur = session[p.k] || []; session[p.k] = cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]; }
+    else session[p.k] = session[p.k] === v ? '' : v;
+    persist(); renderCardio();
   });
   $('#sessionExercises').addEventListener('click', e => {
     const card = e.target.closest('[data-ex]'); if (!card || !session) return;
@@ -304,17 +345,17 @@
 
   // ---------- exercise picker ----------
   let pickerCat = 'All';
-  function openPicker() { $('#exPicker').classList.remove('hidden'); document.body.classList.add('sheetOpen'); $('#exSearch').value = ''; renderPicker(); setTimeout(() => $('#exSearch').focus(), 50); }
+  function openPicker() { if (session?.type === 'Calisthenics') pickerCat = 'Calisthenics'; else if (pickerCat === 'Calisthenics') pickerCat = 'All'; $('#exPicker').classList.remove('hidden'); document.body.classList.add('sheetOpen'); $('#exSearch').value = ''; renderPicker(); setTimeout(() => $('#exSearch').focus(), 50); }
   function closePicker() { $('#exPicker').classList.add('hidden'); document.body.classList.remove('sheetOpen'); }
   function renderPicker() {
     const q = $('#exSearch').value.trim(), ql = q.toLowerCase();
-    const cats = ['All', ...new Set(EXERCISES.map(e => e.cat))];
+    const cats = ['All', 'Calisthenics', ...new Set(EXERCISES.map(e => e.cat))];
     $('#exCats').innerHTML = cats.map(c => `<button type="button" class="chip${c === pickerCat ? ' active' : ''}" data-cat="${c}">${c}</button>`).join('');
     const used = new Set([...data.workouts].reverse().flatMap(w => (w.exercises || []).map(e => e.name)));
-    let list = EXERCISES.filter(e => (pickerCat === 'All' || e.cat === pickerCat) && e.name.toLowerCase().includes(ql));
+    let list = EXERCISES.filter(e => (pickerCat === 'All' || e.cat === pickerCat || (pickerCat === 'Calisthenics' && e.cali)) && e.name.toLowerCase().includes(ql));
     list.sort((a, b) => (used.has(b.name) - used.has(a.name)) || a.name.localeCompare(b.name));
     const exact = EXERCISES.some(e => e.name.toLowerCase() === ql);
-    $('#exList').innerHTML = list.map(e => `<button type="button" class="foodResult" data-name="${esc(e.name)}"><span><b>${esc(e.name)}</b><small>${esc(e.cat)}${used.has(e.name) ? ', done before' : ''}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>`).join('') +
+    $('#exList').innerHTML = list.map(e => `<button type="button" class="foodResult" data-name="${esc(e.name)}"><span><b>${esc(e.name)}</b><small>${esc(e.cat)}${e.timed ? ', timed hold' : ''}${used.has(e.name) ? ', done before' : ''}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>`).join('') +
       (q && !exact ? `<button type="button" class="foodResult" data-new="${esc(q)}"><span><b>Add “${esc(q)}”</b><small>As a new exercise</small></span></button>` : '');
   }
   $('#addExerciseBtn').addEventListener('click', openPicker);
@@ -344,13 +385,13 @@
     }
     const nSets = ex.reduce((a, x) => a + x.sets.length, 0);
     const vol = ex.reduce((a, x) => a + (x.e.unit === 's' ? 0 : x.sets.reduce((v, s) => v + (+s.kg || 0) * (+s.reps || 0), 0)), 0);
-    const mins = session.past ? (+session.duration || 45) : started() ? Math.max(1, Math.round(elapsed() / 60)) : '';
-    $('#finishSummary').innerHTML = [
-      ['Exercises', ex.length], ['Sets', nSets], ['Volume', `${fmt(vol)} kg`],
-      session.type === 'Running' ? ['Distance', `${+session.distance || 0} km`] : null,
-      session.type === 'Boxing' ? ['Rounds', +session.rounds || 0] : null
-    ].filter(Boolean).filter(([k]) => usesSets(session.type) || !['Exercises', 'Sets', 'Volume'].includes(k))
-      .map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+    const t = WT.typeDef(session.type);
+    const typed = usesSets(session.type) ? 0 : session.type === 'HIIT' && +session.rounds ? Math.round(+session.rounds * ((+session.workSec || 40) + (+session.restSec || 20)) / 60) : Math.round(WT.activeMinutes({ ...session, duration: 0 })); // time entered in the fields
+    const mins = session.past ? (+session.duration || 45) : started() ? Math.max(1, Math.round(elapsed() / 60)) : typed || '';
+    const rows = usesSets(session.type) ? [['Exercises', ex.length], ['Sets', nSets], ['Volume', `${fmt(vol)} kg`]]
+      : [session.activity || (session.activities || []).length ? [(t.picks || [])[0]?.label || 'Type', esc(session.activity || session.activities.join(', '))] : null,
+         ...WT.fields(t, session).filter(f => +session[f.k] > 0).map(f => { const m = f.label.match(/^(.*?)\s*\((.*)\)$/); return m ? [m[1], `${+session[f.k]} ${m[2]}`] : [f.label, +session[f.k]]; })].filter(Boolean);
+    $('#finishSummary').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     $('#finishDuration').value = mins;
     $('#finishEffort').value = session.effort || 7; effortLabel();
     $('#finishNotes').value = session.notes || '';
@@ -370,18 +411,22 @@
       const best = e.unit === 's' ? sets.reduce((a, s) => (s.reps > a.reps ? s : a)) : sets.reduce((a, s) => (e1rm(s.kg, s.reps) > e1rm(a.kg, a.reps) || (!a.kg && s.reps > a.reps) ? s : a));
       return { name: e.name, sets: sets.length, reps: best.reps, weight: best.kg, setsDetail: sets, ...(e.unit === 's' ? { unit: 's' } : {}) };
     }).filter(Boolean);
-    const cardio = !usesSets(session.type) && (+session.distance || +session.rounds);
+    const t = WT.typeDef(session.type);
+    const detail = !usesSets(session.type) && ((t.fields || []).some(f => f.def == null && +session[f.k] > 0) || session.activity || (session.activities || []).length);
     if (usesSets(session.type) && !exercises.length && !confirm('No sets were logged. Save the workout anyway?')) return;
-    if (!usesSets(session.type) && !cardio && !confirm(`No ${session.type === 'Running' ? 'distance' : 'rounds'} entered. Save anyway?`)) return;
+    if (!usesSets(session.type) && !detail && !confirm(`No details entered for this ${t.label.toLowerCase()} session. Save anyway?`)) return;
     $('#saveFinish').disabled = true; setTimeout(() => { $('#saveFinish').disabled = false; }, 1500);
 
     const w = {
       id: newId(), updatedAt: Date.now(), date: session.past ? (session.date || today()) : localDate(new Date(session.startedAt || session.createdAt || Date.now())),
       type: session.type, duration, effort: +$('#finishEffort').value, notes: $('#finishNotes').value.trim(), exercises,
-      distance: session.type === 'Running' ? +session.distance || 0 : 0, runMinutes: session.type === 'Running' ? +session.runMinutes || 0 : 0,
-      rounds: session.type === 'Boxing' ? +session.rounds || 0 : 0, roundLength: session.type === 'Boxing' ? +session.roundLength || 0 : 0,
+      distance: 0, runMinutes: 0, rounds: 0, roundLength: 0,
       planId: session.planId || null
     };
+    if (!usesSets(session.type)) {
+      for (const f of WT.fields(t, session)) w[f.k] = +session[f.k] || 0;
+      for (const p of t.picks || []) { const v = session[p.k]; if (p.multi ? (v || []).length : v) w[p.k] = p.multi ? [...v] : v; }
+    }
     const before = { xp: data.xp, ch: characterFrom(data.workouts), readyQuests: readyQuests() };
     w.result = grade(w);
     const { records } = workoutSkillXp(w, new Map(before.ch.bests));
