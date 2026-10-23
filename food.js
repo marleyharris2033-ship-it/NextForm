@@ -79,7 +79,7 @@
     $('#macroBars').innerHTML = MACROS.map(m => macroRow(m, sum[m.key], t[m.key])).join('');
 
     $('#mealList').innerHTML = MEALS.map(meal => {
-      const items = list.filter(e => e.meal === meal), mt = totals(items);
+      const items = list.filter(e => e.meal === meal || (meal === 'Snacks' && !MEALS.includes(e.meal))), mt = totals(items);
       const mi = MEAL_ICONS[meal];
       return `<section class="card mealCard"><div class="sectionHead"><div class="secTitle"><span class="secIcon" style="--c:${mi[1]}">${icon(mi[0])}</span><h2>${meal}</h2></div><div class="row"><span class="muted">${items.length ? `${fmt(mt.kcal)} kcal` : ''}</span><button type="button" class="iconBtn addMeal" data-meal="${meal}" aria-label="Add food to ${meal}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div></div>
         ${items.length ? `<ul class="foodItems">${items.map(e => `<li><button type="button" class="foodItem" data-entry="${esc(e.id)}"><span><b>${esc(e.name)}</b><small>${esc(amountText(e))}${e.brand ? `, ${esc(e.brand)}` : ''}</small></span><span class="foodKcal">${fmt(e.kcal)}</span></button></li>`).join('')}</ul>` : `<p class="muted small emptyMeal">Nothing logged yet.</p>`}

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=plans1">
+<link rel="stylesheet" href="ui.css?v=fix1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -93,7 +93,7 @@
 </button>
 
 <div class="tiles">
-  <div class="tile tint-amber"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-2.6 1.6-4.4 3-5.8.3 1.6 1.1 2.7 2.2 3.2C10.3 9 11.5 5.6 14.5 3c-.2 2.6.6 4.4 2 6 1.3 1.5 2 3.2 2 5.3C18.5 18.2 15.9 21 12 21z"/></svg></span><p class="tileLabel">Streak</p><p class="tileValue"><b id="streak">0</b> <span id="streakUnit">days</span></p><p class="tileSub" id="streakSub">Train today to start one</p></div>
+  <div class="tile tint-amber"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-2.6 1.6-4.4 3-5.8.3 1.6 1.1 2.7 2.2 3.2C10.3 9 11.5 5.6 14.5 3c-.2 2.6.6 4.4 2 6 1.3 1.5 2 3.2 2 5.3C18.5 18.2 15.9 21 12 21z"/></svg></span><p class="tileLabel">Streak</p><p class="tileValue"><b id="streak">0</b> <span id="streakUnit">weeks</span></p><p class="tileSub" id="streakSub">Train today to start one</p></div>
   <div class="tile tint-glacier"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8.5 10a3.5 3.5 0 0 1 7 0"/><path d="M12 10l1.5-2"/></svg></span><p class="tileLabel">Body weight</p><p class="tileValue"><b id="weightNow">–</b> <span>kg</span></p><svg class="spark" id="weightSpark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"></svg><p class="tileSub" id="weightSub"></p></div>
   <div class="tile tint-pine"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg></span><p class="tileLabel">Volume this week</p><p class="tileValue"><b id="weekVolume">0</b> <span>kg</span></p><p class="tileSub" id="volumeSub">Weights × reps × sets</p></div>
   <div class="tile tint-lichen"><span class="tileIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg></span><p class="tileLabel">Personal bests</p><p class="tileValue"><b id="weekPBs">0</b> <span>this week</span></p><p class="tileSub" id="pbSub"></p></div>
@@ -224,7 +224,7 @@
     <span>Change photo</span>
   </label>
   <div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
-</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
+</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
 
 <nav class="tabbar" aria-label="Main"><button type="button" data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button><button type="button" data-page="planner" aria-label="Plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Plan</span></button><button type="button" data-page="progress" aria-label="Progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg><span>Progress</span></button><button type="button" data-page="train" class="trainTab" aria-label="Train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg><span>Train</span></button><button type="button" data-page="food" aria-label="Food"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/></svg><span>Food</span></button><button type="button" data-page="challenges" aria-label="Quests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg><span>Quests</span></button><button type="button" data-page="profile" aria-label="Profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1-3.5 3.7-5 7-5s6 1.5 7 5"/></svg><span>Profile</span></button></nav>
@@ -299,6 +299,11 @@
     <p id="plateText" class="plateText"></p>
   </div>
 </div>
+<div id="logEditSheet" class="sheet planSheet hidden" role="dialog" aria-modal="true" aria-labelledby="logEditTitle">
+  <div class="sheetHead"><span></span><h2 id="logEditTitle">Edit workout</h2><button type="button" class="iconBtn" id="logEditClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheetBody" id="logEditBody"></div>
+  <div class="pFoot"><button type="button" class="primary full" id="logEditSave">Save changes</button></div>
+</div>
 <div id="planSheet" class="sheet planSheet hidden" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle">
   <div class="sheetHead"><span></span><h2 id="planSheetTitle">New plan</h2><button type="button" class="iconBtn" id="planClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody">
@@ -351,4 +356,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=plans1"></script><script src="rpg.js?v=plans1"></script><script src="app.js?v=plans1"></script><script src="food.js?v=plans1"></script><script src="coach.js?v=plans1"></script><script src="train.js?v=plans1"></script><script src="plans.js?v=plans1"></script><script src="welcome.js?v=plans1"></script><script type="module" src="auth.js?v=plans1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=fix1"></script><script src="rpg.js?v=fix1"></script><script src="app.js?v=fix1"></script><script src="food.js?v=fix1"></script><script src="coach.js?v=fix1"></script><script src="train.js?v=fix1"></script><script src="plans.js?v=fix1"></script><script src="log-edit.js?v=fix1"></script><script src="welcome.js?v=fix1"></script><script type="module" src="auth.js?v=fix1"></script></body></html>

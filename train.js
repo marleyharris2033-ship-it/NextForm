@@ -111,9 +111,9 @@
   function renderStart() {
     renderTypeTiles();
     const day = DAYS[(new Date().getDay() + 6) % 7], planId = data.schedule?.[day], plan = allPlans().find(p => p.id === planId);
-    const first = (data.profile.name || '').trim().split(' ')[0], st = streak();
+    const first = (data.profile.name || '').trim().split(' ')[0], st = weekStreak();
     $('#heroTitle').textContent = first ? `Ready to climb, ${first}?` : 'Ready to climb?';
-    $('#heroKicker').textContent = st > 1 ? `${st}-day streak. Keep it going.` : plan ? `Today: ${plan.name}` : 'Every set counts towards your skills';
+    $('#heroKicker').textContent = st > 1 ? `${st}-week streak. Keep it going.` : plan ? `Today: ${plan.name}` : 'Every set counts towards your skills';
     $('#todayPlan').innerHTML = plan ? `<div class="card todayCard"><p class="muted small">Today’s plan</p><h2>${esc(plan.name)}</h2><p class="muted small">${plan.exercises.map(e => esc(e.name)).join(', ')}</p><button type="button" class="primary full" data-plan="${plan.id}">Start ${esc(plan.name)}</button></div>` : '';
     $('#startEmpty').classList.toggle('secondary', !!plan);
     $('#startEmpty').classList.toggle('primary', !plan);
@@ -144,7 +144,7 @@
         <button type="button" class="iconBtn exRemove" data-remove="${i}" aria-label="Remove ${esc(e.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       ${sugHtml}
       ${session.past ? '' : `<div class="exTools">${barbell ? `<button type="button" class="toolBtn" data-plates="${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20M6 7v10M9 5v14M15 5v14M18 7v10"/></svg>Plates</button>` : ''}
-        <label class="toolBtn restSel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Rest <select data-restsel="${i}" aria-label="Rest between sets for ${esc(e.name)}">${restOpts.sort((a, b) => a - b).map(v => `<option value="${v}"${v === rest ? ' selected' : ''}>${mmss(v)}</option>`).join('')}</select></label></div>`}
+        <label class="toolBtn restSel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Rest <b class="restVal">${mmss(rest)}</b><select data-restsel="${i}" aria-label="Rest between sets for ${esc(e.name)}">${restOpts.sort((a, b) => a - b).map(v => `<option value="${v}"${v === rest ? ' selected' : ''}>${mmss(v)}</option>`).join('')}</select></label></div>`}
       <div class="setGrid${session.past ? ' past' : ''}"><span>Set</span><span>kg</span><span>${timed ? 'sec' : 'reps'}</span>${session.past ? '' : '<span aria-hidden="true"></span>'}
         ${e.sets.map((s, j) => `<span class="setNo${s.done ? ' done' : ''}">${j + 1}</span>
           <input type="number" inputmode="decimal" min="0" step="0.5" value="${s.kg}" placeholder="–" class="${s.done ? 'done' : ''}" data-field="kg" data-set="${j}" aria-label="Set ${j + 1} kg">
@@ -301,6 +301,7 @@
   $('#sessionExercises').addEventListener('change', e => {
     const sel = e.target.closest('[data-restsel]'); if (!sel || !session) return;
     const ex = session.exercises[+sel.dataset.restsel]; prefs().rest[ex.name.toLowerCase()] = +sel.value; save();
+    const v = sel.parentElement.querySelector('.restVal'); if (v) v.textContent = mmss(+sel.value);
   });
 
   // ---------- plate maths ----------
