@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { planSignIn, mergeData } from './sync-core.js?v=food1';
+import { planSignIn, mergeData, joinData, mergeIntoCloud } from './sync-core.js?v=split1';
 
 const SDK = 'https://www.gstatic.com/firebasejs/13.1.0/';
 const panel = document.getElementById('accountCard');
@@ -17,6 +17,10 @@ window.NextFormCloud = {
   get signedIn() { return !!user && ready; },
   async deleteCloud() {
     if (!user) return;
+    const snap = await fs.getDoc(userDoc());
+    let keys = [];
+    try { keys = snap.exists() ? JSON.parse(snap.data().payload).chunkKeys || [] : []; } catch {}
+    for (const key of keys) { try { await fs.deleteDoc(chunkDoc(key)); } catch {} }
     await fs.deleteDoc(userDoc());
     localStorage.removeItem(NF.OWNER_KEY);
   }
@@ -60,11 +64,27 @@ function syncError(error) {
 }
 
 const userDoc = () => fs.doc(db, 'users', user.uid);
+const chunkDoc = key => fs.doc(db, 'users', user.uid, 'chunks', key);
+// Split backup (see sync-core.js). If the cloud rules don't allow the split documents yet, fall back to
+// the single document so backups keep working, and try the split format again next time the app opens.
+let chunked = true, legacyNote = '';
 const isDirty = () => localStorage.getItem(NF.DIRTY_KEY) === '1';
-function decode(snap) {
+// Whole cloud copy: main document plus any workout/food chunks it lists.
+async function fetchRemote() {
+  const snap = await fs.getDoc(userDoc());
   if (!snap.exists()) return null;
-  try { return NF.normalize(JSON.parse(snap.data().payload)); } catch { return null; }
+  let base; try { base = JSON.parse(snap.data().payload); } catch { return null; }
+  const keys = Array.isArray(base.chunkKeys) ? base.chunkKeys : [];
+  const parts = await Promise.all(keys.map(k => fs.getDoc(chunkDoc(k))));
+  const chunks = {};
+  parts.forEach((p, i) => { if (p.exists()) { try { chunks[keys[i]] = JSON.parse(p.data().payload); } catch {} } });
+  return NF.normalize(joinData(base, chunks));
 }
+const txAdapter = tx => ({
+  get: async ref => { const s = await tx.get(ref); return { exists: s.exists(), payload: s.exists() ? s.data().payload : null }; },
+  set: (ref, value) => tx.set(ref, value),
+  delete: ref => tx.delete(ref)
+});
 function timeLabel() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
@@ -76,13 +96,17 @@ async function push() {
   syncState('busy', 'Backing up…');
   pushing = (async () => {
     // Read-merge-write in one transaction so changes made on another device are never overwritten.
-    const merged = await fs.runTransaction(db, async tx => {
-      const remote = decode(await tx.get(userDoc()));
-      const next = remote ? mergeData(NF.data, remote, NF.challengeXp) : { ...NF.data };
-      next.updatedAt = Math.max(next.updatedAt || 0, Date.now());
-      tx.set(userDoc(), { payload: JSON.stringify(next), updatedAt: next.updatedAt, schema: 1 });
-      return next;
-    });
+    const round = useChunks => fs.runTransaction(db, async tx =>
+      (await mergeIntoCloud(txAdapter(tx), { main: userDoc(), chunk: chunkDoc }, NF.data, { challengeXp: NF.challengeXp, chunked: useChunks })).data);
+    let merged;
+    try { merged = await round(chunked); legacyNote = chunked ? '' : legacyNote; }
+    catch (error) {
+      if (!chunked || !String(error?.code || '').includes('permission-denied')) throw error;
+      // The split documents aren't allowed by the cloud rules yet: back up the old way for now.
+      chunked = false; legacyNote = ' (single-file backup: publish the new Firestore rules to keep backups working long-term)';
+      merged = await round(false);
+    }
+    merged = NF.normalize(merged);
     if ((NF.data.updatedAt || 0) > startStamp) {
       // Edited while uploading: keep those edits and back up again shortly.
       const combined = mergeData(NF.data, merged, NF.challengeXp);
@@ -93,7 +117,7 @@ async function push() {
       NF.replace(merged);
       localStorage.removeItem(NF.DIRTY_KEY);
     }
-    syncState('ok', `Backed up to your Google account · ${timeLabel()}`);
+    syncState('ok', `Backed up to your Google account · ${timeLabel()}${legacyNote}`);
   })()
     .catch(error => { syncState('error', syncError(error)); throw error; })
     .finally(() => { pushing = null; });
@@ -115,7 +139,8 @@ async function runStartSync(u) {
   user = u;
   syncState('busy', 'Loading your backup…');
   try {
-    const remote = decode(await fs.getDoc(userDoc()));
+    chunked = true;
+    const remote = await fetchRemote();
     const owner = localStorage.getItem(NF.OWNER_KEY);
     const plan = planSignIn({ uid: u.uid, owner, dirty: isDirty(), local: NF.data, remote }, NF.challengeXp);
     if (plan.action === 'replace-foreign' && isDirty()) {
@@ -142,12 +167,15 @@ async function runStartSync(u) {
   if (!ready) return;
   // Pick up changes made on other devices while the app is open.
   if (unsubscribe) unsubscribe();
-  unsubscribe = fs.onSnapshot(userDoc(), snap => {
-    if (snap.metadata.hasPendingWrites) return;
-    const remote = decode(snap);
-    if (!remote || (remote.updatedAt || 0) <= (NF.data.updatedAt || 0)) return;
-    if (isDirty()) schedulePush(); // push() merges both sides
-    else { NF.replace(remote); syncState('ok', `Updated from another device · ${timeLabel()}`); }
+  unsubscribe = fs.onSnapshot(userDoc(), async snap => {
+    if (snap.metadata.hasPendingWrites || !snap.exists()) return;
+    if ((+snap.data().updatedAt || 0) <= (NF.data.updatedAt || 0)) return;
+    if (isDirty()) return schedulePush(); // push() merges both sides
+    try {
+      const remote = await fetchRemote();
+      if (!remote || (remote.updatedAt || 0) <= (NF.data.updatedAt || 0)) return;
+      if (isDirty()) schedulePush(); else { NF.replace(remote); syncState('ok', `Updated from another device · ${timeLabel()}`); }
+    } catch {}
   }, () => {});
 }
 

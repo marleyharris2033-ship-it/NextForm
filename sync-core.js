@@ -77,3 +77,66 @@ export function planSignIn({ uid, owner, dirty, local, remote }, challengeXp = {
   if ((remote.updatedAt || 0) >= (local.updatedAt || 0)) return { action: 'download', data: remote };
   return { action: 'upload', data: local };
 }
+
+// ---------- Split backup ----------
+// The cloud copy is a small main document (profile, settings, plans...) plus "chunks": workouts grouped
+// by year ("w-2026") and food grouped by month ("f-2026-10"). One document has a ~1 MB limit, which a
+// year of daily food logging would reach; chunks keep every document far below it.
+const yearOf = d => (/^\d{4}/.test(String(d || '')) ? String(d).slice(0, 4) : '0000');
+const monthOf = d => (/^\d{4}-\d{2}/.test(String(d || '')) ? String(d).slice(0, 7) : '0000-00');
+export function chunkKeyFor(kind, entry) { return kind === 'w' ? `w-${yearOf(entry.date)}` : `f-${monthOf(entry.date)}`; }
+
+// data -> { base, chunks: { key: [entries] } }. base.chunkKeys lists every chunk.
+export function splitData(data) {
+  const { workouts = [], foodLog = [], ...rest } = data || {};
+  const chunks = {};
+  for (const w of workouts) (chunks[chunkKeyFor('w', w)] ||= []).push(w);
+  for (const f of foodLog) (chunks[chunkKeyFor('f', f)] ||= []).push(f);
+  for (const list of Object.values(chunks)) list.sort(byDateThenId); // stable order, so unchanged chunks aren't rewritten
+  return { base: { ...rest, chunkKeys: Object.keys(chunks).sort() }, chunks };
+}
+// { base, chunks } -> data (base without chunkKeys, workouts and food put back together).
+export function joinData(base, chunks = {}) {
+  if (!base) return null;
+  const { chunkKeys, ...rest } = base;
+  const workouts = [...(rest.workouts || [])], foodLog = [...(rest.foodLog || [])];
+  for (const [key, list] of Object.entries(chunks)) {
+    if (!Array.isArray(list)) continue;
+    if (key.startsWith('w-')) workouts.push(...list); else if (key.startsWith('f-')) foodLog.push(...list);
+  }
+  return { ...rest, workouts: workouts.sort(byDateThenId), foodLog: foodLog.sort(byDateThenId) };
+}
+
+// One backup round inside a transaction: read the cloud copy (main + chunks), merge with this device,
+// write back only what changed. tx: { get(ref) -> {exists, payload}, set(ref, value), delete(ref) }.
+// refs: { main, chunk(key) }. chunked=false writes everything into the main document (old format).
+export async function mergeIntoCloud(tx, refs, local, { challengeXp = {}, chunked = true, now = Date.now() } = {}) {
+  const main = await tx.get(refs.main);
+  let base = null; const remoteChunks = {}, remoteRaw = {};
+  if (main.exists) {
+    try { base = JSON.parse(main.payload); } catch { base = null; }
+  }
+  const keys = Array.isArray(base?.chunkKeys) ? base.chunkKeys : [];
+  for (const key of keys) {
+    const c = await tx.get(refs.chunk(key));
+    if (!c.exists) continue;
+    remoteRaw[key] = c.payload;
+    try { remoteChunks[key] = JSON.parse(c.payload); } catch { remoteChunks[key] = []; }
+  }
+  const remote = base ? joinData(base, remoteChunks) : null;
+  const next = remote ? mergeData(local, remote, challengeXp) : { ...local };
+  next.updatedAt = Math.max(next.updatedAt || 0, now);
+  if (!chunked) {
+    tx.set(refs.main, { payload: JSON.stringify(next), updatedAt: next.updatedAt, schema: 1 });
+    return { data: next, wrote: ['main'] };
+  }
+  const { base: nb, chunks } = splitData(next), wrote = [];
+  for (const [key, list] of Object.entries(chunks)) {
+    const payload = JSON.stringify(list);
+    if (remoteRaw[key] !== payload) { tx.set(refs.chunk(key), { payload, updatedAt: next.updatedAt }); wrote.push(key); }
+  }
+  for (const key of keys) if (!chunks[key]) { tx.delete(refs.chunk(key)); wrote.push('-' + key); }
+  tx.set(refs.main, { payload: JSON.stringify(nb), updatedAt: next.updatedAt, schema: 2 });
+  wrote.push('main');
+  return { data: next, wrote };
+}

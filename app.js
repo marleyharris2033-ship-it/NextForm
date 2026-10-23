@@ -201,9 +201,9 @@ const CHALLENGES=[
 ["twentyfive","Quarter Century","Complete 25 workouts",25,600,d=>d.workouts.length],
 ["fifty","Fifty Club","Complete 50 workouts",50,1000,d=>d.workouts.length],
 ["hundred","Centurion","Complete 100 workouts",100,2000,d=>d.workouts.length],
-["streak3","Consistency I","Reach a 3-day training streak",3,150,d=>bestStreak()],
-["streak5","Consistency II","Reach a 5-day training streak",5,250,d=>bestStreak()],
-["streak7","Consistency III","Reach a 7-day training streak",7,400,d=>bestStreak()],
+["streak3","Consistency I","Hit your weekly goal 2 weeks in a row",2,150,d=>bestWeekStreak()],
+["streak5","Consistency II","Hit your weekly goal 4 weeks in a row",4,250,d=>bestWeekStreak()],
+["streak7","Consistency III","Hit your weekly goal 8 weeks in a row",8,400,d=>bestWeekStreak()],
 ["pb1","Breakthrough","Set 1 strength PB",1,100,d=>d.workouts.reduce((s,w)=>s+(w.result?.pbs||0),0)],
 ["pb5","PB Hunter","Set 5 strength PBs",5,300,d=>d.workouts.reduce((s,w)=>s+(w.result?.pbs||0),0)],
 ["pb20","Progress Machine","Set 20 strength PBs",20,800,d=>d.workouts.reduce((s,w)=>s+(w.result?.pbs||0),0)],
@@ -445,7 +445,14 @@ function grade(w){
 function bestStreak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort(),best=0,run=0;for(let i=0;i<ds.length;i++){run=i&&(new Date(ds[i])-new Date(ds[i-1]))/86400000<=1?run+1:1;best=Math.max(best,run)}return best}
 function streak(){let ds=[...new Set(data.workouts.map(w=>w.date))].sort().reverse();if(!ds.length)return 0;if((new Date(today())-new Date(ds[0]))/86400000>1)return 0;let n=1;for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/86400000<=1)n++;else break}return n}
 function week(){let n=new Date(),d=(n.getDay()+6)%7,s=new Date(n);s.setDate(n.getDate()-d);s.setHours(0,0,0,0);let ws=data.workouts.filter(w=>new Date(w.date+"T12:00:00")>=s),mins=ws.reduce((a,w)=>a+(+w.duration||0),0),xp=ws.reduce((a,w)=>a+(w.result?.xp||0),0),vol=ws.reduce((a,w)=>a+(w.result?.volume||0),0),pbs=ws.reduce((a,w)=>a+(w.result?.pbs||0),0),avg=ws.length?ws.reduce((a,w)=>a+(w.result?.score||0),0)/ws.length:0,g=avg>=90?"S":avg>=78?"A":avg>=66?"B":avg>=52?"C":ws.length?"D":"—";return{ws,mins,xp,vol,pbs,g}}
-const WEEK_GOALS={sessions:4,minutes:150,xp:1500};
+const WEEK_GOALS={get sessions(){return weekGoal()},minutes:150,xp:1500};
+// Weekly streak: weeks in a row (Monday to Sunday) where you hit your session goal. Rest days never break it.
+function weekGoal(){const g=+data.profile?.weekGoal;return g>=1&&g<=7?Math.round(g):3}
+function weekKey(ds){const d=new Date(String(ds)+"T12:00:00");if(isNaN(d))return"";d.setDate(d.getDate()-(d.getDay()+6)%7);return localDate(d)}
+function weekCounts(){const c={};for(const w of data.workouts){const k=weekKey(w.date);if(k)c[k]=(c[k]||0)+1}return c}
+function shiftWeek(k,n){const d=new Date(k+"T12:00:00");d.setDate(d.getDate()+7*n);return localDate(d)}
+function weekStreak(){const c=weekCounts(),g=weekGoal(),now=weekKey(today());let n=(c[now]||0)>=g?1:0,k=shiftWeek(now,-1);while((c[k]||0)>=g){n++;k=shiftWeek(k,-1)}return n}
+function bestWeekStreak(){const c=weekCounts(),g=weekGoal(),ks=Object.keys(c).sort();if(!ks.length)return 0;let best=0,run=0;for(let k=ks[0],end=weekKey(today());k<=end;k=shiftWeek(k,1)){run=(c[k]||0)>=g?run+1:0;best=Math.max(best,run)}return best}
 const TYPE_COLORS=Object.fromEntries(WORKOUT_TYPES.TYPES.map(t=>[t.id,t.color]));
 const titleCase=t=>t.charAt(0)+t.slice(1).toLowerCase();
 const GRADE_RANK={S:5,A:4,B:3,C:2,D:1};
@@ -509,8 +516,9 @@ function renderHome(){
   $("#weekGrade").textContent=w.g;
   $("#weekInsight").textContent=w.ws.length?`${w.ws.length} session${w.ws.length>1?"s":""} so far.${w.pbs?` ${w.pbs} new PB${w.pbs>1?"s":""}.`:""} ${w.mins>=WEEK_GOALS.minutes?"You've hit your weekly minutes.":`${WEEK_GOALS.minutes-w.mins} minutes to your weekly goal.`}`:"Log a workout to start your weekly report.";
   // Tiles
-  const st=streak();$("#streak").textContent=st;$("#streakUnit").textContent=st===1?"day":"days";
-  $("#streakSub").textContent=st?`Best ever: ${bestStreak()} days`:"Train today to start one";
+  const st=weekStreak(),g=weekGoal(),done=weekCounts()[weekKey(today())]||0,best=bestWeekStreak();
+  $("#streak").textContent=st;$("#streakUnit").textContent=st===1?"week":"weeks";
+  $("#streakSub").textContent=done>=g?`Goal hit this week${best>st?`. Best: ${best} weeks`:""}`:`This week: ${done} of ${g} sessions`;
   const ws=[...data.weights].sort((a,b)=>a.date.localeCompare(b.date)),cur=weight();
   $("#weightNow").textContent=cur?cur.toFixed(1):"–";
   const recent=ws.slice(-12);
@@ -554,7 +562,7 @@ $("#nudgeExport")?.addEventListener("click",()=>$("#exportBtn").click());
 window.addEventListener("nextform-auth",renderBackupNudge);
 // Ask the browser not to clear NextForm's storage automatically (helps on Safari/Chrome when granted).
 navigator.storage?.persist?.().catch(()=>{});
-const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Reach a 3-day streak",()=>bestStreak()>=3],["🔥","On Fire","Reach a 7-day streak",()=>bestStreak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
+const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Hit your weekly goal 3 weeks in a row",()=>bestWeekStreak()>=3||bestStreak()>=3],["🔥","On Fire","Hit your weekly goal 8 weeks in a row",()=>bestWeekStreak()>=8||bestStreak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
 function renderAchievements(){
   const items=ACH.map(([ic,t,d,fn])=>({ic,t,d,on:fn()}));
   const card=a=>`<div class="achievement ${a.on?"":"locked"}"><div class="icon">${a.ic}</div><strong>${a.t}</strong><span>${a.on?"Unlocked":a.d}</span></div>`;
@@ -565,6 +573,9 @@ function renderAchievements(){
 $("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
 
 // ===== EDITABLE TRAINING LOG =====
+let pbsAll=false,logShown=10;
+// "60 kg × 8, 8, 6" (same weight) or "60 kg × 8, 62.5 kg × 6"; holds in seconds.
+function logSetsText(e){const ss=setsOf(e).filter(s=>s.reps>0);if(!ss.length)return`${e.sets||0} sets`;if(e.unit==="s")return ss.map(s=>`${s.reps}s`).join(", ");const kgs=[...new Set(ss.map(s=>s.kg))];if(kgs.length===1)return kgs[0]?`${kgs[0]} kg × ${ss.map(s=>s.reps).join(", ")}`:`${ss.map(s=>s.reps).join(", ")} reps`;return ss.map(s=>s.kg?`${s.kg} kg × ${s.reps}`:`${s.reps} reps`).join(", ")}
 function logExerciseOptions(selected=""){
   const cats=[...new Set(EXERCISES.map(e=>e.cat))];
   return `<option value="">Choose exercise</option>`+
@@ -633,7 +644,7 @@ window.openAddExerciseToWorkout=id=>{
   };
 };
 
-function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.unit!=="s").forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);$("#pbs").innerHTML=es.length?es.map(([n,e])=>`<div class="pb"><div><b>${n}</b><small>${e.date} · est. 1RM ${e.est.toFixed(1)} kg</small></div><b>${e.weight} × ${e.reps}</b></div>`).join(""):`<p class="muted">No strength PBs yet.</p>`;let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option>${n}</option>`).join("");$("#history").innerHTML=[...data.workouts].reverse().map(w=>`
+function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.unit!=="s").forEach(e=>{let est=e1rm(+e.weight,+e.reps);if(e.weight&&(!all[e.name]||est>all[e.name].est))all[e.name]={...e,est,date:w.date}}));let es=Object.entries(all).sort((a,b)=>b[1].est-a[1].est);const pbShow=pbsAll?es:es.slice(0,5);$("#pbs").innerHTML=es.length?pbShow.map(([n,e])=>`<div class="pb"><div><b>${esc(n)}</b><small>${e.date} · est. 1-rep max ${e.est.toFixed(1)} kg</small></div><b>${e.weight} kg × ${e.reps}</b></div>`).join("")+(es.length>5?`<button type="button" class="link showMore" id="pbsToggle">${pbsAll?"Show top 5":`Show all ${es.length}`}</button>`:""):`<p class="muted">No strength PBs yet.</p>`;$("#pbsToggle")?.addEventListener("click",()=>{pbsAll=!pbsAll;renderProgress()});let names=[...new Set(data.workouts.flatMap(w=>(w.exercises||[]).map(e=>e.name)))].sort();const histSel=$("#historyExercise").value;$("#historyExercise").innerHTML=`<option value="">Choose exercise</option>`+names.map(n=>`<option value="${esc(n)}"${n===histSel?" selected":""}>${esc(n)}</option>`).join("");const logAll=[...data.workouts].sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.id).localeCompare(String(a.id)));$("#history").innerHTML=logAll.slice(0,logShown).map(w=>`
   <div class="logWorkoutCard">
     <div class="row between">
       <div>
@@ -648,18 +659,16 @@ function renderProgress(){let all={};data.workouts.forEach(w=>(w.exercises||[]).
     <div class="logExercises">
       ${(w.exercises||[]).length?(w.exercises||[]).map((e,ei)=>`
         <div class="logExerciseItem">
-          <div><b>${e.name}</b><span>${e.sets||0} sets · ${e.unit==="s"?`${e.reps||0}s hold`:`${e.weight||0} kg × ${e.reps||0}`}</span></div>
-          <button class="miniDelete" onclick="deleteExerciseEntry('${w.id}',${ei})">Delete</button>
-        </div>`).join(""):`<div class="tiny muted">No exercises logged.</div>`}
+          <div><b>${esc(e.name)}</b><span>${esc(logSetsText(e))}</span></div>
+        </div>`).join(""):(WORKOUT_TYPES.typeDef(w.type).mode==="sets"?`<div class="tiny muted">No exercises logged.</div>`:"")}
     </div>
 
     <div class="logActions">
-      <button class="secondary" onclick="openAddExerciseToWorkout('${w.id}')">+ Exercise</button>
-      <button class="danger" onclick="deleteWorkoutEntry('${w.id}')">Delete workout</button>
+      <button class="secondary" type="button" data-edit-workout="${esc(String(w.id))}">Edit</button>
+      <button class="danger" onclick="deleteWorkoutEntry('${esc(String(w.id))}')">Delete workout</button>
     </div>
-    <div id="add-ex-${w.id}" class="inlineExerciseEditor hidden"></div>
-  </div>`).join("")||`<p class="muted">No workouts yet. Your completed sessions will appear here.</p>`;$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
-$("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));$("#exerciseHistory").innerHTML=logs.reverse().map(e=>`<div class="history"><div><b>${e.weight} kg × ${e.reps}</b><small>${e.date} · ${e.sets} sets</small></div><b>${e.est.toFixed(1)} e1RM</b></div>`).join("")}
+  </div>`).join("")+(logAll.length>logShown?`<button type="button" class="secondary full showMoreLog" id="logMore">Show ${Math.min(10,logAll.length-logShown)} more of ${logAll.length-logShown}</button>`:"")||`<p class="muted">No workouts yet. Your completed sessions will appear here.</p>`;$("#logMore")?.addEventListener("click",()=>{logShown+=10;renderProgress()});$("#goalWeight").value=data.profile.goalWeight||"";drawWeight();renderAchievements()}
+$("#historyExercise").onchange=()=>{let n=$("#historyExercise").value,logs=[];if(!n)return $("#exerciseHistory").innerHTML="";data.workouts.forEach(w=>(w.exercises||[]).filter(e=>e.name===n).forEach(e=>logs.push({date:w.date,...e,est:e1rm(+e.weight,+e.reps)})));logs.sort((a,b)=>String(b.date).localeCompare(String(a.date)));$("#exerciseHistory").innerHTML=logs.map(e=>`<div class="history"><div><b>${esc(logSetsText(e))}</b><small>${e.date} · ${e.sets} sets</small></div>${e.unit==="s"||!e.weight?"":`<b>${e.est.toFixed(1)} kg est. max</b>`}</div>`).join("")}
 function drawWeight(){
   const c=$("#weightChart"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(280,r.width),h=220;
   c.width=w*dpr;c.height=h*dpr;const x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);
@@ -692,8 +701,10 @@ function drawWeight(){
   const last=vals.at(-1);x.fillStyle=pine;x.beginPath();x.arc(px(last.date),py(last.value),4.5,0,Math.PI*2);x.fill();
 }
 $("#trendMode").onchange=drawWeight;
-let activeCat="All";function renderLearn(){let cats=["All",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$(".chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat)&&e.name.toLowerCase().includes(q));$("#exerciseLibrary").innerHTML=list.map(e=>`<div class="learnCard"><h3>${e.name}</h3><span class="tiny muted">${e.cat}</span><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></div>`).join("")}$("#learnSearch").oninput=renderLearn;
-function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male"}$("#saveProfile").onclick=()=>{data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`nextform-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);data.lastExport=Date.now();save()};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||!Array.isArray(o.workouts))throw 0;if(!confirm(`Replace this device's data with the backup (${o.workouts.length} workouts)?`))return;data=normalize(o);save();alert("Backup imported.")}catch{alert("That file isn't a NextForm backup.")}finally{e.target.value=""}};r.readAsText(f)};$("#resetBtn").onclick=async()=>{const cloud=window.NextFormCloud?.signedIn;if(!confirm(cloud?"Delete all NextForm data on this device AND in your Google account backup? This can't be undone.":"Delete all NextForm data on this device? Export a backup first if you might want it."))return;if(cloud){try{await window.NextFormCloud.deleteCloud()}catch{alert("Couldn't delete your cloud backup. Check your connection and try again.");return}}[KEY,DIRTY_KEY].forEach(k=>localStorage.removeItem(k));location.reload()}
+let activeCat="All";function renderLearn(){let cats=["All","Calisthenics",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$("#categoryChips .chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat||(activeCat==="Calisthenics"&&e.cali))&&e.name.toLowerCase().includes(q));
+  // Compact list: tap an exercise to see its tips and the form video.
+  $("#exerciseLibrary").innerHTML=`<p class="libCount muted small">${list.length} exercise${list.length===1?"":"s"}</p>`+list.map(e=>`<details class="learnCard"><summary><span><b>${esc(e.name)}</b><small>${esc(e.cat)}${e.timed?", timed hold":""}${e.cali?", bodyweight":""}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><ul>${e.cues.map(c=>`<li>${esc(c)}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></details>`).join("")||`<p class="muted">No exercises match “${esc(q)}”.</p>`}$("#learnSearch").oninput=renderLearn;
+function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male";$("#weekGoal").value=String(weekGoal())}$("#saveProfile").onclick=()=>{data.profile.weekGoal=+$("#weekGoal").value||3;data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`nextform-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);data.lastExport=Date.now();save()};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||!Array.isArray(o.workouts))throw 0;if(!confirm(`Replace this device's data with the backup (${o.workouts.length} workouts)?`))return;data=normalize(o);save();alert("Backup imported.")}catch{alert("That file isn't a NextForm backup.")}finally{e.target.value=""}};r.readAsText(f)};$("#resetBtn").onclick=async()=>{const cloud=window.NextFormCloud?.signedIn;if(!confirm(cloud?"Delete all NextForm data on this device AND in your Google account backup? This can't be undone.":"Delete all NextForm data on this device? Export a backup first if you might want it."))return;if(cloud){try{await window.NextFormCloud.deleteCloud()}catch{alert("Couldn't delete your cloud backup. Check your connection and try again.");return}}[KEY,DIRTY_KEY].forEach(k=>localStorage.removeItem(k));location.reload()}
 
 
 

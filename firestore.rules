@@ -10,6 +10,16 @@ service cloud.firestore {
         && request.resource.data.payload.size() < 900000
         && request.resource.data.updatedAt is int;
     }
+    // Split backup: workouts by year and food by month, each in its own small document.
+    match /users/{uid}/chunks/{key} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && key.matches('^(w-[0-9]{4}|f-[0-9]{4}-[0-9]{2})$')
+        && request.resource.data.keys().hasOnly(['payload', 'updatedAt'])
+        && request.resource.data.payload is string
+        && request.resource.data.payload.size() < 900000
+        && request.resource.data.updatedAt is int;
+    }
     // Everything else is closed.
     match /{document=**} {
       allow read, write: if false;
