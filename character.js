@@ -126,8 +126,6 @@
     renderBuilder();
   }
   function closeBuilder() { $('#charSheet').classList.add('hidden'); document.body.classList.remove('sheetOpen'); draft = null; }
-  // Each drawn hairstyle has its own colour; beards can match it.
-  const hairTone = d => (HAIR_ART[d.hair] ? HAIR_ART[d.hair][4] : d.hairColor);
   const group = (label, inner, extra = '') => `<div class="optGroup"><div class="optHead"><p class="optLabel">${label}</p>${extra}</div>${inner}</div>`;
   const swatches = (key, label, extraBtn = '') => {
     const preset = AVATAR_OPTIONS[{ beardColor: 'hairColor', hatColor: 'topColor' }[key] || key], cur = draft[key], custom = !preset.includes(cur);
@@ -157,7 +155,7 @@
     if (tab === 'Body') h = swatches('skin', 'Skin tone') + Object.keys(SLIDERS).map(slider).join('');
     if (tab === 'Face') h = thumbs('face', 'Face shape') + thumbs('eyes', 'Eyes', 'eyes', 'wide') + swatches('eyeColor', 'Eye colour') + thumbs('brows', 'Eyebrows', 'brows', 'wide')
       + thumbs('nose', 'Nose', 'nose', 'tall') + thumbs('mouth', 'Mouth', 'mouth', 'wide') + thumbs('ears', 'Ears') + toggles(['freckles', 'mole', 'smileLines', 'foreheadLines'], 'Details');
-    if (tab === 'Hair') h = thumbs('hair', 'Style') + thumbs('hairAcc', 'Hair accessory');
+    if (tab === 'Hair') h = swatches('hairColor', 'Hair colour') + thumbs('hair', 'Style') + thumbs('hairAcc', 'Hair accessory');
     if (tab === 'Beard') h = swatches('beardColor', 'Beard colour', `<button type="button" class="chip matchHair" data-match="1">Match hair</button>`) + thumbs('beard', 'Style');
     if (tab === 'Outfit') h = chips('top', 'Top') + swatches('topColor', 'Top colour') + chips('topPattern', 'Pattern') + chips('bottom', 'Bottoms') + swatches('bottomColor', 'Bottoms colour') + swatches('shoes', 'Trainers') + chips('socks', 'Socks');
     if (tab === 'Extras') h = thumbs('hat', 'Headwear') + swatches('hatColor', 'Headwear and accessory colour') + thumbs('glasses', 'Glasses') + thumbs('earrings', 'Earrings') + thumbs('necklace', 'Necklace', 'neck', 'wide') + toggles(['headphones', 'wristbands', 'watch'], 'Accessories') + chips('tattoo', 'Tattoo');
@@ -177,7 +175,7 @@
     ['skin', 'face', 'eyes', 'eyeColor', 'brows', 'nose', 'mouth', 'ears', 'hair', 'hairColor', 'top', 'topColor', 'bottom', 'bottomColor', 'shoes', 'socks'].forEach(k => { draft[k] = pick(k); });
     draft.topPattern = Math.random() < 0.2 ? pick('topPattern') : 'none'; draft.hatColor = pick('topColor');
     draft.earrings = Math.random() < 0.3 ? pick('earrings') : 'none'; draft.necklace = Math.random() < 0.2 ? pick('necklace') : 'none'; draft.hairAcc = Math.random() < 0.15 ? pick('hairAcc') : 'none';
-    draft.beard = Math.random() < 0.5 ? 'none' : pick('beard'); draft.beardColor = hairTone(draft);
+    draft.beard = Math.random() < 0.5 ? 'none' : pick('beard'); draft.beardColor = draft.hairColor;
     Object.keys(SLIDERS).forEach(k => { draft[k] = 0.15 + rnd() * 0.7; });
     draft.hat = Math.random() < 0.2 ? pick('hat') : 'none'; draft.glasses = Math.random() < 0.25 ? pick('glasses') : 'none';
     draft.tattoo = Math.random() < 0.2 ? pick('tattoo') : 'none';
@@ -189,7 +187,7 @@
     const b = e.target.closest('[data-key],[data-toggle],[data-gear],[data-match]'); if (!b || !draft) return;
     if (b.dataset.key) draft[b.dataset.key] = b.dataset.val;
     if (b.dataset.toggle) draft[b.dataset.toggle] = !draft[b.dataset.toggle];
-    if (b.dataset.match) draft.beardColor = hairTone(draft);
+    if (b.dataset.match) draft.beardColor = draft.hairColor;
     if (b.dataset.gear) { const id = b.dataset.gear; draft.gear = draft.gear.includes(id) ? draft.gear.filter(x => x !== id) : [...draft.gear, id]; }
     refresh();
   });
