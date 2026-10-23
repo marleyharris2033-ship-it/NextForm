@@ -102,3 +102,41 @@ function classTitle(xp) {
   if (sorted[0][1] / total >= 0.6) return sorted[0][0];
   return 'Hybrid';
 }
+
+// ---------- Level ring ----------
+// Where the XP in your current level came from, by discipline. Walks back from your newest workouts and
+// quest rewards until it has covered the XP earned since your last level-up. A workout's XP is shared
+// between disciplines in the same proportions as the skill XP it earned.
+const DISCIPLINES = [
+  { id: 'strength', name: 'Strength', color: '#a6c46f' },
+  { id: 'endurance', name: 'Endurance', color: '#6fb7d6' },
+  { id: 'combat', name: 'Combat', color: '#f0a03c' },
+  { id: 'mobility', name: 'Mobility', color: '#c7a6e8' },
+  { id: 'quests', name: 'Quests', color: '#f6d76b' }
+];
+const SKILL_DISCIPLINE = { chest: 'strength', back: 'strength', shoulders: 'strength', arms: 'strength', legs: 'strength', posterior: 'strength', core: 'strength', endurance: 'endurance', boxing: 'combat', mobility: 'mobility' };
+function disciplineShares(w) {
+  const { gain } = workoutSkillXp(w, new Map()), out = {};
+  let total = 0;
+  for (const [k, v] of Object.entries(gain)) { const d = SKILL_DISCIPLINE[k] || 'strength'; out[d] = (out[d] || 0) + v; total += v; }
+  if (!total) return { [(WORKOUT_TYPES.typeDef(w.type).mode === 'sets' ? 'strength' : 'endurance')]: 1 };
+  for (const k in out) out[k] /= total;
+  return out;
+}
+function levelBreakdown(d, challenges) {
+  const l = levelInfo(d.xp || 0), parts = Object.fromEntries(DISCIPLINES.map(x => [x.id, 0]));
+  const at = ds => new Date(String(ds) + 'T12:00:00').getTime() || 0;
+  const events = [
+    ...(d.workouts || []).map(w => ({ t: at(w.date), id: String(w.id), xp: +w.result?.xp || 0, w })),
+    ...(d.claimedChallenges || []).map(id => ({ t: +(d.claimTimes || {})[id] || 0, id, xp: +(challenges.find(c => c[0] === id)?.[4]) || 0, quest: true }))
+  ].filter(e => e.xp > 0).sort((a, b) => b.t - a.t || (b.id > a.id ? 1 : -1));
+  let left = l.into;
+  for (const e of events) {
+    if (left <= 0) break;
+    const take = Math.min(left, e.xp); left -= take;
+    if (e.quest) { parts.quests += take; continue; }
+    for (const [k, share] of Object.entries(disciplineShares(e.w))) parts[k] += take * share;
+  }
+  if (left > 0) parts.quests += left; // anything unaccounted for (e.g. older imported totals)
+  return { ...l, parts: DISCIPLINES.map(x => ({ ...x, xp: Math.round(parts[x.id]) })) };
+}
