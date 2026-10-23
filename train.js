@@ -288,11 +288,12 @@
     w.result = grade(w);
     const { records } = workoutSkillXp(w, new Map(before.ch.bests));
     data.workouts.push(w); data.xp += w.result.xp;
+    const newGear = window.NextFormCharacter?.claimNewGear() || [];
     session = null; persist();
     $('#finishSheet').classList.add('hidden'); document.body.classList.remove('sheetOpen');
     save();
     render();
-    showReward(w, before, records);
+    showReward(w, before, records, newGear);
   });
   const readyQuests = () => CHALLENGES.filter(c => challengeStatus(c).done && !data.claimedChallenges.includes(c[0])).length;
 
@@ -304,7 +305,7 @@
     const step = t => { const k = Math.min(1, (t - t0) / ms); el.textContent = fmt(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
     requestAnimationFrame(step);
   }
-  function showReward(w, before, records) {
+  function showReward(w, before, records, newGear = []) {
     const r = $('#reward'), after = characterFrom(data.workouts);
     const lb = levelInfo(before.xp), la = levelInfo(data.xp);
     r.classList.remove('hidden', 'play'); document.body.classList.add('sheetOpen');
@@ -321,6 +322,9 @@
         <span class="hex">${x.b.level}</span><div class="skillInfo"><div class="skillHead"><span>${x.s.name}</span><small>+${fmt(x.gain)} XP</small></div>
         <div class="tinybar"><i style="width:${x.s.level > x.b.level ? 0 : x.b.into / x.b.need * 100}%"></i></div></div></div>`).join('') : '';
     $('#rewardRecords').innerHTML = records.length ? `<p class="rewardHead">New records</p>` + records.map(rc => `<div class="rRecord"><span class="trophy" aria-hidden="true">★</span><span><b>${esc(rc.name)}</b><small>${g(rc.kg)} kg × ${rc.reps}, estimated 1-rep max ${fmt(rc.e1rm)} kg</small></span></div>`).join('') : '';
+    const ch = window.NextFormCharacter?.rewardHtml(newGear);
+    $('#rewardChar').innerHTML = ch ? ch.figure : '';
+    $('#rewardGear').innerHTML = ch ? ch.gear : '';
     const quests = readyQuests();
     $('#rewardQuests').textContent = quests > before.readyQuests ? `${quests} quest${quests > 1 ? 's' : ''} ready to claim on the Quests page.` : '';
 
