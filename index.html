@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=1">
-<link rel="stylesheet" href="ui.css?v=fix1">
+<link rel="stylesheet" href="ui.css?v=meals1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -86,6 +86,7 @@
   <div class="weekBody"><svg class="rings" id="weekRings" viewBox="0 0 120 120" aria-hidden="true"></svg><ul class="ringLegend" id="weekLegend"></ul></div>
   <p id="weekInsight" class="insight">Log a workout to start your weekly report.</p>
 </div>
+<div class="card weekReview hidden" id="weekReview"></div>
 
 <button type="button" class="card fuelCard" data-go="food" aria-label="Open food log">
   <div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/></svg></span><h2>Food today</h2></div><span class="muted" id="fuelLeft"></span></div>
@@ -152,7 +153,7 @@
 
 <section id="progress" class="page">
 <div class="card"><div class="row between"><h2>Body weight</h2><button class="secondary" id="showWeight">+ Add</button></div><div id="weightEntry" class="form3 hidden"><input id="weightValue" type="number" step=".1" placeholder="kg"><input id="weightDate" type="date"><button id="saveWeight" class="primary">Save</button></div><canvas id="weightChart" height="230"></canvas><div class="form2 topgap"><label>Goal weight<input id="goalWeight" type="number" step=".1" placeholder="kg"></label><label>Weight trend<select id="trendMode"><option value="raw">Raw weights</option><option value="avg">Smoothed average</option></select></label></div><button class="secondary full" id="saveGoal">Save goal</button></div>
-<div class="card"><h2>Personal bests</h2><div id="pbs"></div></div><div class="card"><h2>Exercise history</h2><select id="historyExercise"></select><div id="exerciseHistory"></div></div><div class="card"><h2>Achievements</h2><div id="achievements" class="achievementGrid"></div></div>
+<div class="card"><h2>Personal bests</h2><div id="pbs"></div></div><div class="card"><h2>Exercise history</h2><select id="historyExercise"></select><div id="exerciseChartBox" class="exChartBox hidden"><div class="exStat" id="exerciseStat"></div><canvas id="exerciseChart" height="190" aria-label="Progress chart for the chosen exercise"></canvas></div><div id="exerciseHistory"></div></div><div class="card"><h2>Achievements</h2><div id="achievements" class="achievementGrid"></div></div>
 <div class="card">
   <div class="row between">
     <div><h2>Training log</h2><p class="muted small">Review or correct past workouts.</p></div>
@@ -239,7 +240,8 @@
     <button type="button" class="chip" data-tab="search" role="tab">Search</button>
     <button type="button" class="chip" data-tab="scan" role="tab">Scan</button>
     <button type="button" class="chip" data-tab="recent" role="tab">Recent</button>
-    <button type="button" class="chip" data-tab="manual" role="tab">Enter manually</button>
+    <button type="button" class="chip" data-tab="saved" role="tab">Saved meals</button>
+    <button type="button" class="chip" data-tab="manual" role="tab">Quick add</button>
   </div>
   <div class="sheetBody">
     <div data-pane="search">
@@ -253,16 +255,17 @@
       <form id="barcodeForm" class="searchRow"><input id="barcodeInput" inputmode="numeric" pattern="[0-9]*" placeholder="Or type the barcode number" autocomplete="off"><button class="secondary" type="submit">Look up</button></form>
     </div>
     <div data-pane="recent"><div id="recentFoods" class="foodResults"></div></div>
+    <div data-pane="saved"><div id="savedMeals"></div></div>
     <div data-pane="manual">
       <form id="manualForm">
-        <label>Food name<input id="mName" required placeholder="e.g. Chicken wrap"></label>
+        <label>Name <small class="optTag">optional</small><input id="mName" placeholder="e.g. Chicken wrap"></label>
         <div class="form2 topgap">
           <label>Calories (kcal)<input id="mKcal" type="number" min="0" step="1" inputmode="decimal" required></label>
           <label>Protein (g)<input id="mProtein" type="number" min="0" step=".1" inputmode="decimal"></label>
           <label>Carbs (g)<input id="mCarbs" type="number" min="0" step=".1" inputmode="decimal"></label>
           <label>Fat (g)<input id="mFat" type="number" min="0" step=".1" inputmode="decimal"></label>
         </div>
-        <p class="muted small topgap">Enter the totals for what you ate.</p>
+        <p class="muted small topgap">Just know the numbers? Enter the calories (and protein if you can) for what you ate.</p>
         <button class="primary full" type="submit">Add food</button>
       </form>
     </div>
@@ -356,4 +359,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=fix1"></script><script src="rpg.js?v=fix1"></script><script src="app.js?v=fix1"></script><script src="food.js?v=fix1"></script><script src="coach.js?v=fix1"></script><script src="train.js?v=fix1"></script><script src="plans.js?v=fix1"></script><script src="log-edit.js?v=fix1"></script><script src="welcome.js?v=fix1"></script><script type="module" src="auth.js?v=fix1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=meals1"></script><script src="rpg.js?v=meals1"></script><script src="app.js?v=meals1"></script><script src="food.js?v=meals1"></script><script src="coach.js?v=meals1"></script><script src="train.js?v=meals1"></script><script src="plans.js?v=meals1"></script><script src="log-edit.js?v=meals1"></script><script src="insights.js?v=meals1"></script><script src="welcome.js?v=meals1"></script><script type="module" src="auth.js?v=meals1"></script></body></html>
