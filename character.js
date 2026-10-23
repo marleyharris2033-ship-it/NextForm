@@ -20,20 +20,33 @@
     crown: '<path d="M4 18l-1-10 5 4 4-7 4 7 5-4-1 10z"/><path d="M4 21h16"/>'
   };
   const LABELS = {
-    face: { oval: 'Oval', round: 'Round', square: 'Square' },
-    build: { slim: 'Slim', athletic: 'Athletic', broad: 'Broad' },
-    height: { short: 'Short', average: 'Average', tall: 'Tall' },
-    hair: { crop: 'Crop', sidepart: 'Side part', curly: 'Curly', buzz: 'Buzz', fade: 'Fade', long: 'Long', ponytail: 'Ponytail', bun: 'Bun', bald: 'Bald' },
-    facialHair: { none: 'None', stubble: 'Stubble', moustache: 'Moustache', short: 'Short beard', full: 'Full beard' },
-    top: { tee: 'T-shirt', tank: 'Tank', hoodie: 'Hoodie', crop: 'Crop top' },
-    bottom: { shorts: 'Shorts', joggers: 'Joggers', leggings: 'Leggings' }
+    face: { oval: 'Oval', round: 'Round', square: 'Square', long: 'Long', heart: 'Heart', diamond: 'Diamond' },
+    eyes: { almond: 'Almond', round: 'Round', hooded: 'Hooded', narrow: 'Narrow', wide: 'Wide', downturned: 'Downturned', upturned: 'Upturned' },
+    brows: { natural: 'Natural', thin: 'Thin', thick: 'Thick', arched: 'Arched', straight: 'Straight', bushy: 'Bushy', angled: 'Angled' },
+    nose: { straight: 'Straight', button: 'Button', wide: 'Wide', roman: 'Roman', small: 'Small', long: 'Long' },
+    mouth: { neutral: 'Neutral', smile: 'Smile', grin: 'Grin', full: 'Full lips', thin: 'Thin lips', smirk: 'Smirk' },
+    ears: { average: 'Average', small: 'Small', large: 'Large', protruding: 'Protruding' },
+    hair: { buzz: 'Buzz', crop: 'Crop', fade: 'Fade', undercut: 'Undercut', sidepart: 'Side part', slickback: 'Slick back', quiff: 'Quiff', messy: 'Messy', hightop: 'High top', receding: 'Receding', curly: 'Curly', afro: 'Afro', afroPuff: 'Afro puff', twists: 'Twists', locs: 'Locs', cornrows: 'Cornrows', mohawk: 'Mohawk', pixie: 'Pixie', bob: 'Bob', lob: 'Lob', shag: 'Shag', long: 'Long', longBangs: 'Long + fringe', sideSwept: 'Side swept', wavy: 'Wavy', wavyBangs: 'Wavy + fringe', curlyLong: 'Long curls', ponytail: 'Ponytail', highPonytail: 'High ponytail', pigtails: 'Pigtails', plaits: 'Plaits', sideBraid: 'Side braid', braids: 'Box braids', bun: 'Top bun', spaceBuns: 'Space buns', bald: 'Bald' },
+    beard: { none: 'None', stubble: 'Stubble', heavyStubble: 'Heavy stubble', moustache: 'Moustache', handlebar: 'Handlebar', soulPatch: 'Soul patch', goatee: 'Goatee', vandyke: 'Van Dyke', circle: 'Circle', chinstrap: 'Chinstrap', mutton: 'Mutton chops', short: 'Short', full: 'Full', bushy: 'Bushy', long: 'Long' },
+    top: { tee: 'T-shirt', vneck: 'V-neck', polo: 'Polo', shirt: 'Shirt', jersey: 'Jersey', longsleeve: 'Long sleeve', sweater: 'Sweater', tank: 'Tank', stringer: 'Stringer', hoodie: 'Hoodie', zip: 'Zip hoodie', crop: 'Crop top', sportsbra: 'Sports bra' },
+    topPattern: { none: 'Plain', stripes: 'Stripes', dots: 'Dots', check: 'Check' },
+    bottom: { shortShorts: 'Short shorts', shorts: 'Shorts', longShorts: 'Long shorts', bikeShorts: 'Bike shorts', tennisSkirt: 'Tennis skirt', joggers: 'Joggers', trackpants: 'Track pants', cargos: 'Cargos', jeans: 'Jeans', leggings: 'Leggings', capris: '3/4 tights' },
+    socks: { crew: 'White crew', crewBlack: 'Black crew', ankle: 'Ankle', none: 'No-show' },
+    hat: { none: 'None', cap: 'Cap', backwardsCap: 'Backwards cap', beanie: 'Beanie', bucket: 'Bucket hat', bandana: 'Bandana', headwrap: 'Head wrap', turban: 'Turban', hijab: 'Hijab' },
+    glasses: { none: 'None', round: 'Round', square: 'Square', catEye: 'Cat-eye', aviator: 'Aviator', heart: 'Heart', sport: 'Sport shades' },
+    earrings: { none: 'None', stud: 'Studs', hoops: 'Hoops', drops: 'Drops' },
+    necklace: { none: 'None', chain: 'Chain', pendant: 'Pendant', pearls: 'Pearls', beads: 'Beads' },
+    hairAcc: { none: 'None', flower: 'Flower', clip: 'Clip', bow: 'Bow' },
+    tattoo: { none: 'None', band: 'Arm band', rose: 'Rose', script: 'Script', sleeve: 'Sleeve' }
   };
-  const EXTRAS = [['glasses', 'Glasses'], ['cap', 'Cap'], ['headphones', 'Headphones'], ['wristbands', 'Wristbands']];
-  const TABS = ['Body', 'Hair', 'Outfit', 'Extras', 'Gear'];
+  const SLIDERS = { height: ['Height', 'Shorter', 'Taller'], muscle: ['Muscle', 'Lean', 'Muscular'], shoulders: ['Shoulders', 'Narrow', 'Broad'], waist: ['Waist', 'Slim', 'Wide'], legs: ['Leg length', 'Shorter', 'Longer'] };
+  const TOGGLES = { freckles: 'Freckles', mole: 'Beauty mark', smileLines: 'Smile lines', foreheadLines: 'Forehead lines', headphones: 'Headphones', wristbands: 'Wristbands', watch: 'Watch' };
+  const TABS = ['Body', 'Face', 'Hair', 'Beard', 'Outfit', 'Extras', 'Gear'];
+  const ZOOM = { Face: 'face', Hair: 'face', Beard: 'face', Extras: 'upper' };
 
   // ---------- state ----------
   const hasCharacter = () => !!(data.profile && data.profile.avatar);
-  const config = () => ({ ...AVATAR_DEFAULT, ...(data.profile.avatar || {}), gear: [...((data.profile.avatar || {}).gear || [])] });
+  const config = () => normalizeAvatar(data.profile.avatar || {});
   const frameFor = level => ({ NOVICE: 'novice', BRONZE: 'bronze', SILVER: 'silver', GOLD: 'gold', ELITE: 'elite', MASTER: 'master' })[rankFor(level)] || 'novice';
   const currentFrame = () => frameFor(levelInfo(data.xp).level);
 
@@ -66,7 +79,7 @@
   const cache = new Map();
   function art(cfg, opts) {
     const key = JSON.stringify([cfg, opts]);
-    if (!cache.has(key)) { if (cache.size > 40) cache.clear(); cache.set(key, renderAvatar(cfg, opts)); }
+    if (!cache.has(key)) { if (cache.size > 160) cache.clear(); cache.set(key, renderAvatar(cfg, opts)); }
     return cache.get(key);
   }
   const gearIcon = id => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${GEAR_ICONS[id] || ''}</svg>`;
@@ -113,20 +126,39 @@
     renderBuilder();
   }
   function closeBuilder() { $('#charSheet').classList.add('hidden'); document.body.classList.remove('sheetOpen'); draft = null; }
-  const swatches = (key, label) => `<div class="optGroup"><p class="optLabel">${label}</p><div class="swatches" role="radiogroup" aria-label="${label}">${AVATAR_OPTIONS[key].map((v, i) =>
-    `<button type="button" class="swatch${draft[key] === v ? ' on' : ''}" style="--sw:${v}" data-key="${key}" data-val="${v}" role="radio" aria-checked="${draft[key] === v}" aria-label="${label} ${i + 1}"></button>`).join('')}</div></div>`;
-  const chips = (key, label) => `<div class="optGroup"><p class="optLabel">${label}</p><div class="optChips" role="radiogroup" aria-label="${label}">${AVATAR_OPTIONS[key].map(v =>
-    `<button type="button" class="chip${draft[key] === v ? ' active' : ''}" data-key="${key}" data-val="${v}" role="radio" aria-checked="${draft[key] === v}">${LABELS[key][v]}</button>`).join('')}</div></div>`;
+  const group = (label, inner, extra = '') => `<div class="optGroup"><div class="optHead"><p class="optLabel">${label}</p>${extra}</div>${inner}</div>`;
+  const swatches = (key, label, extraBtn = '') => {
+    const preset = AVATAR_OPTIONS[{ beardColor: 'hairColor', hatColor: 'topColor' }[key] || key], cur = draft[key], custom = !preset.includes(cur);
+    return group(label, `<div class="swatches" role="radiogroup" aria-label="${label}">${extraBtn}${preset.map((v, i) =>
+      `<button type="button" class="swatch${cur === v ? ' on' : ''}" style="--sw:${v}" data-key="${key}" data-val="${v}" role="radio" aria-checked="${cur === v}" aria-label="${label} ${i + 1}"></button>`).join('')}
+      <label class="swatch custom${custom ? ' on' : ''}" style="${custom ? `--sw:${cur}` : ''}" title="Custom colour"><input type="color" value="${cur}" data-color="${key}" aria-label="Custom ${label.toLowerCase()}"><span aria-hidden="true">${custom ? '' : '+'}</span></label></div>`);
+  };
+  const chips = (key, label) => group(label, `<div class="optChips" role="radiogroup" aria-label="${label}">${AVATAR_OPTIONS[key].map(v =>
+    `<button type="button" class="chip${draft[key] === v ? ' active' : ''}" data-key="${key}" data-val="${v}" role="radio" aria-checked="${draft[key] === v}">${LABELS[key][v]}</button>`).join('')}</div>`);
+  // Picture options: each choice is drawn on your own character.
+  const thumbs = (key, label, view = 'face', cls = '') => group(label, `<div class="thumbGrid ${cls}" role="radiogroup" aria-label="${label}">${AVATAR_OPTIONS[key].map(v =>
+    `<button type="button" class="thumb${draft[key] === v ? ' on' : ''}" data-key="${key}" data-val="${v}" role="radio" aria-checked="${draft[key] === v}"><span class="thumbArt">${art({ ...draft, [key]: v, gear: [] }, { id: `th-${key}-${v}`, view, scenery: view === 'face', lite: true })}</span><span class="thumbLabel">${LABELS[key][v]}</span></button>`).join('')}</div>`);
+  const slider = key => { const [l, lo, hi] = SLIDERS[key]; return `<div class="sliderRow"><div class="optHead"><p class="optLabel">${l}</p></div><input type="range" min="0" max="100" value="${Math.round(draft[key] * 100)}" data-slider="${key}" aria-label="${l}"><div class="sliderEnds"><span>${lo}</span><span>${hi}</span></div></div>`; };
+  const toggles = (keys, label) => group(label, `<div class="optChips">${keys.map(k => `<button type="button" class="chip toggle${draft[k] ? ' active' : ''}" data-toggle="${k}" aria-pressed="${!!draft[k]}">${TOGGLES[k]}</button>`).join('')}</div>`);
+
+  function renderStage() {
+    const zoom = ZOOM[tab], stage = $('#charStage');
+    stage.classList.toggle('zoomed', !!zoom);
+    stage.classList.toggle('upper', zoom === 'upper');
+    stage.innerHTML = art(draft, { id: 'bld', frame: currentFrame(), view: zoom || 'full' });
+  }
   function renderBuilder() {
     if (!draft) return;
-    $('#charStage').innerHTML = art(draft, { id: 'bld', frame: currentFrame() });
+    renderStage();
     $('#charTabs').innerHTML = TABS.map(t => `<button type="button" class="chip${t === tab ? ' active' : ''}" data-tab="${t}" role="tab" aria-selected="${t === tab}">${t}</button>`).join('');
     let h = '';
-    if (tab === 'Body') h = swatches('skin', 'Skin tone') + chips('face', 'Face shape') + chips('build', 'Build') + chips('height', 'Height');
-    if (tab === 'Hair') h = chips('hair', 'Style') + swatches('hairColor', 'Colour') + chips('facialHair', 'Facial hair');
-    if (tab === 'Outfit') h = chips('top', 'Top') + swatches('topColor', 'Top colour') + chips('bottom', 'Bottoms') + swatches('bottomColor', 'Bottoms colour') + swatches('shoes', 'Trainers');
-    if (tab === 'Extras') h = `<div class="optGroup"><p class="optLabel">Accessories</p><div class="optChips">${EXTRAS.map(([k, l]) =>
-      `<button type="button" class="chip toggle${draft[k] ? ' active' : ''}" data-toggle="${k}" aria-pressed="${!!draft[k]}">${l}</button>`).join('')}</div></div>`;
+    if (tab === 'Body') h = swatches('skin', 'Skin tone') + Object.keys(SLIDERS).map(slider).join('');
+    if (tab === 'Face') h = thumbs('face', 'Face shape') + thumbs('eyes', 'Eyes', 'eyes', 'wide') + swatches('eyeColor', 'Eye colour') + thumbs('brows', 'Eyebrows', 'brows', 'wide')
+      + thumbs('nose', 'Nose', 'nose', 'tall') + thumbs('mouth', 'Mouth', 'mouth', 'wide') + thumbs('ears', 'Ears') + toggles(['freckles', 'mole', 'smileLines', 'foreheadLines'], 'Details');
+    if (tab === 'Hair') h = swatches('hairColor', 'Hair colour') + thumbs('hair', 'Style') + thumbs('hairAcc', 'Hair accessory');
+    if (tab === 'Beard') h = swatches('beardColor', 'Beard colour', `<button type="button" class="chip matchHair" data-match="1">Match hair</button>`) + thumbs('beard', 'Style');
+    if (tab === 'Outfit') h = chips('top', 'Top') + swatches('topColor', 'Top colour') + chips('topPattern', 'Pattern') + chips('bottom', 'Bottoms') + swatches('bottomColor', 'Bottoms colour') + swatches('shoes', 'Trainers') + chips('socks', 'Socks');
+    if (tab === 'Extras') h = thumbs('hat', 'Headwear') + swatches('hatColor', 'Headwear and accessory colour') + thumbs('glasses', 'Glasses') + thumbs('earrings', 'Earrings') + thumbs('necklace', 'Necklace', 'neck', 'wide') + toggles(['headphones', 'wristbands', 'watch'], 'Accessories') + chips('tattoo', 'Tattoo');
     if (tab === 'Gear') h = `<p class="muted small gearIntro">Gear is earned by training. Tap unlocked gear to wear it or take it off.</p><div class="gearList">${gearState().map(g => {
       const on = draft.gear.includes(g.id), pct = Math.min(100, (g.cur / g.target) * 100);
       return `<button type="button" class="gearItem${g.unlocked ? ' unlocked' : ''}${on ? ' worn' : ''}" ${g.unlocked ? `data-gear="${g.id}" aria-pressed="${on}"` : 'disabled'}>
@@ -137,20 +169,35 @@
     }).join('')}</div>`;
     $('#charOptions').innerHTML = h;
   }
+  function refresh() { const y = $('#charOptions').scrollTop; renderBuilder(); $('#charOptions').scrollTop = y; }
   function randomise() {
-    const pick = k => AVATAR_OPTIONS[k][Math.floor(Math.random() * AVATAR_OPTIONS[k].length)];
-    ['skin', 'face', 'build', 'height', 'hair', 'hairColor', 'facialHair', 'top', 'topColor', 'bottom', 'bottomColor', 'shoes'].forEach(k => { draft[k] = pick(k); });
-    EXTRAS.forEach(([k]) => { draft[k] = Math.random() < 0.25; });
-    renderBuilder();
+    const pick = k => AVATAR_OPTIONS[k][Math.floor(Math.random() * AVATAR_OPTIONS[k].length)], rnd = () => Math.round(Math.random() * 100) / 100;
+    ['skin', 'face', 'eyes', 'eyeColor', 'brows', 'nose', 'mouth', 'ears', 'hair', 'hairColor', 'top', 'topColor', 'bottom', 'bottomColor', 'shoes', 'socks'].forEach(k => { draft[k] = pick(k); });
+    draft.topPattern = Math.random() < 0.2 ? pick('topPattern') : 'none'; draft.hatColor = pick('topColor');
+    draft.earrings = Math.random() < 0.3 ? pick('earrings') : 'none'; draft.necklace = Math.random() < 0.2 ? pick('necklace') : 'none'; draft.hairAcc = Math.random() < 0.15 ? pick('hairAcc') : 'none';
+    draft.beard = Math.random() < 0.5 ? 'none' : pick('beard'); draft.beardColor = draft.hairColor;
+    Object.keys(SLIDERS).forEach(k => { draft[k] = 0.15 + rnd() * 0.7; });
+    draft.hat = Math.random() < 0.2 ? pick('hat') : 'none'; draft.glasses = Math.random() < 0.25 ? pick('glasses') : 'none';
+    draft.tattoo = Math.random() < 0.2 ? pick('tattoo') : 'none';
+    Object.keys(TOGGLES).forEach(k => { draft[k] = Math.random() < 0.15; });
+    refresh();
   }
   $('#charTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; renderBuilder(); $('#charOptions').scrollTop = 0; } });
   $('#charOptions').addEventListener('click', e => {
-    const b = e.target.closest('[data-key],[data-toggle],[data-gear]'); if (!b || !draft) return;
+    const b = e.target.closest('[data-key],[data-toggle],[data-gear],[data-match]'); if (!b || !draft) return;
     if (b.dataset.key) draft[b.dataset.key] = b.dataset.val;
     if (b.dataset.toggle) draft[b.dataset.toggle] = !draft[b.dataset.toggle];
+    if (b.dataset.match) draft.beardColor = draft.hairColor;
     if (b.dataset.gear) { const id = b.dataset.gear; draft.gear = draft.gear.includes(id) ? draft.gear.filter(x => x !== id) : [...draft.gear, id]; }
-    const y = $('#charOptions').scrollTop; renderBuilder(); $('#charOptions').scrollTop = y;
+    refresh();
   });
+  // Sliders and the colour wheel update the preview live; the option list redraws when you let go.
+  $('#charOptions').addEventListener('input', e => {
+    const el = e.target; if (!draft) return;
+    if (el.dataset.slider) { draft[el.dataset.slider] = +el.value / 100; renderStage(); }
+    if (el.dataset.color) { draft[el.dataset.color] = el.value; renderStage(); el.parentElement.style.setProperty('--sw', el.value); }
+  });
+  $('#charOptions').addEventListener('change', e => { if (e.target.dataset.color || e.target.dataset.slider) refresh(); });
   $('#charShuffle').addEventListener('click', randomise);
   $('#charClose').addEventListener('click', () => {
     if (!firstTime && JSON.stringify(draft) !== JSON.stringify(config()) && !confirm('Discard your changes?')) return;
@@ -159,7 +206,7 @@
   $('#charSave').addEventListener('click', () => {
     if (!draft) return;
     const allowed = new Set(unlockedIds());
-    data.profile.avatar = { ...draft, gear: draft.gear.filter(id => allowed.has(id)) };
+    data.profile.avatar = { ...normalizeAvatar(draft), gear: draft.gear.filter(id => allowed.has(id)) };
     data.profile.gearSeen = [...new Set([...(data.profile.gearSeen || []), ...allowed])];
     closeBuilder(); save();
   });
