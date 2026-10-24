@@ -95,7 +95,30 @@
     return ideas.slice(skip, skip + count);
   }
 
-  const api = { suggest, TEMPLATES };
+  // Products (e.g. ready meals from Open Food Facts) as single-item ideas, portion fitted from half a pack
+  // to two packs. products: [{ name, brand, code, per (per 100 g), packG, servingG }].
+  function rankProducts(remaining, products, count = 3) {
+    const want = Object.fromEntries(KEYS.map(k => [k, Math.max(0, +remaining[k] || 0)]));
+    if (want.kcal < 120) return [];
+    const out = [];
+    for (const p of products) {
+      if (!p?.per || !(p.per.kcal > 0)) continue;
+      const unit = p.packG >= 150 && p.packG <= 900 ? p.packG : p.servingG >= 100 && p.servingG <= 900 ? p.servingG : 0;
+      if (!unit) continue;
+      const two = p.per.kcal * unit * 2 / 100 <= want.kcal * 1.03; // a second pack only if it still fits
+      const parts = [{ food: p, min: unit, max: two ? unit * 2 : unit, step: unit }]; // whole packs
+      const r = fit(parts, want), grams = r.grams[0];
+      const totals = totalsOf([{ food: p, grams }]);
+      out.push({ title: p.name, source: 'off', items: [{ food: p, grams }], packs: grams / unit, unit, loss: r.loss, totals,
+        after: Object.fromEntries(KEYS.map(k => [k, (+remaining[k] || 0) - totals[k]])),
+        proteinCover: want.protein ? Math.min(100, Math.round(totals.protein / want.protein * 100)) : 100 });
+    }
+    out.sort((a, b) => a.loss - b.loss);
+    const seen = new Set();
+    return out.filter(o => { const k = o.title.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, count);
+  }
+
+  const api = { suggest, rankProducts, TEMPLATES };
   if (typeof window !== 'undefined') window.MealSuggest = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

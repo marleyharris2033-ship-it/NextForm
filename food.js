@@ -247,6 +247,7 @@
       unit: 'g',
       per: kcal == null ? null : { kcal, protein: num(n.proteins_100g) || 0, carbs: num(n.carbohydrates_100g) || 0, fat: num(n.fat_100g) || 0 },
       servingG: num(p.serving_quantity) > 0 ? num(p.serving_quantity) : null,
+      packG: num(p.product_quantity) > 0 && !/ml|cl|l$/i.test(String(p.product_quantity_unit || '')) ? num(p.product_quantity) : null,
       servingLabel: p.serving_size || '',
       image: /^https:\/\/images\.openfoodfacts\.org\//.test(p.image_front_small_url || '') ? p.image_front_small_url : ''
     };
@@ -529,12 +530,56 @@
     return { kcal: t.kcal - s.kcal, protein: t.protein - s.protein, carbs: t.carbs - s.carbs, fat: t.fat - s.fat };
   }
   function openSuggest() {
-    suggestSkip = 0; suggestMeal = mealForNow();
+    suggestSkip = 0; suggestMeal = mealForNow(); offShown = [];
     $('#suggestSheet').classList.remove('hidden'); document.body.classList.add('sheetOpen');
-    renderSuggest();
+    renderSuggest(); $('#suggestOff').dataset.meal = suggestMeal; renderOFFMeals(remainingToday());
   }
   function closeSuggest() { $('#suggestSheet').classList.add('hidden'); if (!document.querySelector('.sheet:not(.hidden)')) document.body.classList.remove('sheetOpen'); }
-  let shown = [];
+  let shown = [], offShown = [];
+  // Ready meals sold in the UK from Open Food Facts, filtered towards what you need (more protein, less fat
+  // on a high-fat day). Cached for half an hour so reopening the sheet doesn't search again.
+  const offMealCache = new Map();
+  async function fetchOFFMeals(rem) {
+    const needProtein = rem.protein > 25, lowFat = rem.fat < 10;
+    const key = `${needProtein}|${lowFat}`, hit = offMealCache.get(key);
+    if (hit && Date.now() - hit.at < 30 * 60 * 1000) return hit.list;
+    const base = 'categories:"en:meals" AND countries:"en:united-kingdom"';
+    const queries = [
+      [base, needProtein ? 'nutriments.proteins_100g:[7 TO *]' : '', lowFat ? 'nutriments.fat_100g:[* TO 5]' : ''].filter(Boolean).join(' AND '),
+      base, 'ready meal'
+    ];
+    for (const q of [...new Set(queries)]) {
+      try {
+        const json = await fetchJSON(`${OFF_SEARCH_NEW}?q=${encodeURIComponent(q)}&langs=en&page_size=100&sort_by=-unique_scans_n&fields=${OFF_FIELDS},product_quantity,product_quantity_unit`, 9000);
+        const list = (json?.hits || []).map(fromOFF).filter(p => p.per && p.per.kcal > 40 && (p.packG || p.servingG));
+        if (list.length >= 5) { offMealCache.set(key, { at: Date.now(), list }); return list; }
+      } catch {}
+    }
+    return [];
+  }
+  const packText = s => { const n = s.packs; return n === 1 ? '1 pack' : n === 0.5 ? '½ pack' : `${n === 1.5 ? '1½' : n} packs`; };
+  function ideaCard(s, i, kind) {
+    const r0 = v => Math.round(v);
+    return `<div class="ideaCard">
+      <div class="ideaHead"><b>${esc(s.title)}</b>${s.source === 'saved' ? '<span class="ideaTag">Your saved meal</span>' : s.source === 'off' && s.items[0].food.brand ? `<span class="ideaTag off">${esc(s.items[0].food.brand)}</span>` : ''}</div>
+      <ul class="ideaItems">${s.source === 'off' ? `<li><span>${packText(s)}</span><b>${g1(s.items[0].grams)} g</b></li>` : s.items.map(it => `<li><span>${esc(it.food.name)}</span><b>${it.food.unit === 'portion' ? `${g1(it.grams)} portion${it.grams === 1 ? '' : 's'}` : `${g1(it.grams)} g`}</b></li>`).join('')}</ul>
+      <div class="ideaMacros"><span><b>${fmt(s.totals.kcal)}</b> kcal</span><span><b>${r0(s.totals.protein)}</b> g protein</span><span><b>${r0(s.totals.carbs)}</b> g carbs</span><span><b>${r0(s.totals.fat)}</b> g fat</span></div>
+      <p class="ideaAfter">Covers ${s.proteinCover}% of your remaining protein. Afterwards: ${s.after.kcal >= 0 ? `${fmt(s.after.kcal)} kcal left` : `${fmt(-s.after.kcal)} kcal over`}.</p>
+      <button type="button" class="primary full" data-add-idea="${kind}${i}">Add to ${suggestMeal.toLowerCase()}</button>
+    </div>`;
+  }
+  let offSeq = 0;
+  async function renderOFFMeals(rem) {
+    const box = $('#suggestOff'), seq = ++offSeq;
+    if (!navigator.onLine || rem.kcal < 120) { box.innerHTML = ''; return; }
+    box.innerHTML = `<p class="resultHead">Ready meals from Open Food Facts</p><p class="muted small">Looking for UK ready meals that fit…</p>`;
+    const list = await fetchOFFMeals(rem);
+    if (seq !== offSeq) return;
+    offShown = window.MealSuggest.rankProducts(rem, list, 3);
+    box.innerHTML = `<p class="resultHead">Ready meals from Open Food Facts</p>` + (offShown.length
+      ? offShown.map((s, i) => ideaCard(s, i, 'o')).join('') + `<p class="tiny muted">Nutrition from Open Food Facts, a volunteer database. Check the pack if accuracy matters.</p>`
+      : `<p class="muted small">${list.length ? 'No ready meals fit what you have left right now.' : 'Open Food Facts isn’t responding right now, so only the ideas above are shown.'}</p>`);
+  }
   function renderSuggest() {
     const rem = remainingToday();
     const left = (k, unit) => rem[k] >= 0 ? `${k === 'kcal' ? fmt(rem[k]) : Math.round(rem[k])}${unit}` : null;
@@ -543,24 +588,18 @@
     $('#suggestMealChips').innerHTML = MEALS.map(m => `<button type="button" class="chip${m === suggestMeal ? ' active' : ''}" data-smeal="${m}">${m}</button>`).join('');
     shown = window.MealSuggest.suggest(rem, { foods: window.COMMON_FOODS || [], savedMeals: data.savedMeals || [], count: 3, skip: suggestSkip });
     if (!shown.length && suggestSkip) { suggestSkip = 0; return renderSuggest(); }
-    const r0 = v => Math.round(v);
-    $('#suggestList').innerHTML = shown.length ? shown.map((s, i) => `<div class="ideaCard">
-        <div class="ideaHead"><b>${esc(s.title)}</b>${s.source === 'saved' ? '<span class="ideaTag">Your saved meal</span>' : ''}</div>
-        <ul class="ideaItems">${s.items.map(it => `<li><span>${esc(it.food.name)}</span><b>${it.food.unit === 'portion' ? `${g1(it.grams)} portion${it.grams === 1 ? '' : 's'}` : `${g1(it.grams)} g`}</b></li>`).join('')}</ul>
-        <div class="ideaMacros"><span><b>${fmt(s.totals.kcal)}</b> kcal</span><span><b>${r0(s.totals.protein)}</b> g protein</span><span><b>${r0(s.totals.carbs)}</b> g carbs</span><span><b>${r0(s.totals.fat)}</b> g fat</span></div>
-        <p class="ideaAfter">Covers ${s.proteinCover}% of your remaining protein. Afterwards: ${s.after.kcal >= 0 ? `${fmt(s.after.kcal)} kcal left` : `${fmt(-s.after.kcal)} kcal over`}.</p>
-        <button type="button" class="primary full" data-add-idea="${i}">Add to ${suggestMeal.toLowerCase()}</button>
-      </div>`).join('')
+    $('#suggestList').innerHTML = shown.length ? shown.map((s, i) => ideaCard(s, i, 'i')).join('')
       : `<p class="muted">You’re within ${fmt(Math.max(0, rem.kcal))} kcal of your target, so there’s no need for a full meal. A piece of fruit or a yogurt would round off the day.</p>`;
     $('#suggestMore').classList.toggle('hidden', !shown.length);
+    if (offShown.length && $('#suggestOff').dataset.meal !== suggestMeal) { $('#suggestOff').dataset.meal = suggestMeal; $('#suggestOff').innerHTML = `<p class="resultHead">Ready meals from Open Food Facts</p>` + offShown.map((s, i) => ideaCard(s, i, 'o')).join(''); }
   }
   $('#suggestMeal')?.addEventListener('click', openSuggest);
   $('#suggestClose').addEventListener('click', closeSuggest);
   $('#suggestMore').addEventListener('click', () => { suggestSkip += 3; renderSuggest(); $('#suggestSheet .sheetBody').scrollTop = 0; });
   $('#suggestMealChips').addEventListener('click', e => { const b = e.target.closest('[data-smeal]'); if (b) { suggestMeal = b.dataset.smeal; renderSuggest(); } });
-  $('#suggestList').addEventListener('click', e => {
+  $('#suggestSheet').addEventListener('click', e => {
     const b = e.target.closest('[data-add-idea]'); if (!b) return;
-    const s = shown[+b.dataset.addIdea]; if (!s) return;
+    const id = b.dataset.addIdea, s = (id[0] === 'o' ? offShown : shown)[+id.slice(1)]; if (!s) return;
     const now = Date.now();
     data.foodLog = data.foodLog || [];
     s.items.forEach((it, k) => {
