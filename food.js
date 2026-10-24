@@ -929,6 +929,8 @@
     $('#suggestLeft').innerHTML = `You have <b>${fmt(Math.max(0, rem.kcal))} kcal</b>, <b>${Math.max(0, Math.round(rem.protein))} g protein</b>, <b>${Math.max(0, Math.round(rem.carbs))} g carbs</b> and <b>${Math.max(0, Math.round(rem.fat))} g fat</b> left.${over.length ? ` You’re already over on ${over.join(' and ')}, so these ideas keep that low.` : ''}`;
     $('#suggestMealChips').innerHTML = MEALS.map(m => `<button type="button" class="chip${m === suggestMeal ? ' active' : ''}" data-smeal="${m}">${m}</button>`).join('');
     shown = window.MealSuggest.suggest(rem, { foods: window.COMMON_FOODS || [], savedMeals: data.savedMeals || [], count: 3, skip: suggestSkip });
+    const fit = window.NextFormRecipes?.fits(rem, suggestMeal) || [];
+    $('#suggestRecipes').innerHTML = fit.length ? `<p class="resultHead">Recipes that fit</p>` + fit.map(({ r, p }) => `<button type="button" class="recipeCard" data-open-recipe="${esc(r.id)}" data-meal="${suggestMeal}"><span class="rcBody"><b>${esc(r.name)}</b><small>${r.mins ? `${r.mins} min · ` : ''}1 serving</small></span><span class="rcMacros"><b>${fmt(p.kcal)}</b><small>kcal</small><b>${Math.round(p.protein)} g</b><small>protein</small></span></button>`).join('') : '';
     if (!shown.length && suggestSkip) { suggestSkip = 0; return renderSuggest(); }
     renderSuggestCards();
     return;
@@ -960,6 +962,16 @@
     save(); closeSuggest(); toastFood(`Added ${s.title.toLowerCase()} to ${suggestMeal.toLowerCase()}.`);
   });
 
-  window.NextFormFood = { validBarcode, suggestedTargets }; // handy for checks
+  // Used by recipes.js: log a product, search all food sources, and small helpers.
+  async function searchFoods(q, partial) {
+    const ws = words(q), { common, recent } = localMatches(q);
+    const key = p => p.code || `${p.name}|${p.brand}`, seenK = new Set();
+    const dedupe = list => list.filter(p => p?.per && !seenK.has(key(p)) && seenK.add(key(p)));
+    const local = dedupe([...recent, ...common, ...seenProducts(ws)]);
+    partial?.(local);
+    try { const online = navigator.onLine ? await searchOFF(q) : []; if (online.length) saveSearch(q, online); return [...local, ...dedupe(online)]; }
+    catch { return local; }
+  }
+  window.NextFormFood = { validBarcode, suggestedTargets, searchFoods, addFood: (product, amount, meal) => addEntry(product, amount, meal), mealNow: mealForNow, toast: t => toastFood(t), get day() { return foodDay; } };
   renderFood();
 })();
