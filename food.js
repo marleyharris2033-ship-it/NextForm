@@ -47,11 +47,17 @@
   }
 
   // ---------- targets ----------
+  function formulaBurn() {
+    const p = data.profile || {};
+    const w = weight() || 75, h = +p.height || 175, a = +p.age || 30;
+    const sexAdj = p.sex === 'female' ? -161 : p.sex === 'male' ? 5 : -78;
+    return (10 * w + 6.25 * h - 5 * a + sexAdj) * 1.55;
+  }
   function suggestedTargets() {
     const p = data.profile || {};
     const w = weight() || 75, h = +p.height || 175, a = +p.age || 30;
     const sexAdj = p.sex === 'female' ? -161 : p.sex === 'male' ? 5 : -78;
-    const maintain = (10 * w + 6.25 * h - 5 * a + sexAdj) * 1.55; // moderately active
+    const maintain = formulaBurn(); // moderately active
     const goal = +p.goalWeight || null;
     const adjust = goal && goal < w - 1 ? -400 : goal && goal > w + 1 ? 250 : 0;
     const kcal = Math.round((maintain + adjust) / 10) * 10;
@@ -61,20 +67,71 @@
   }
   function targets() {
     const n = data.nutrition || {};
-    return n.custom ? { kcal: +n.kcal || 0, protein: +n.protein || 0, carbs: +n.carbs || 0, fat: +n.fat || 0 } : suggestedTargets();
+    if (n.custom) return { kcal: +n.kcal || 0, protein: +n.protein || 0, carbs: +n.carbs || 0, fat: +n.fat || 0 };
+    if (n.adaptive?.burn) return { ...window.Adaptive.targetsFrom(n.adaptive.burn, weight(), +data.profile?.goalWeight || null), goal: +data.profile?.goalWeight || null, adaptive: true };
+    return suggestedTargets();
+  }
+  // ---------- adaptive targets: weekly check-in ----------
+  const WEEK = 7 * 864e5;
+  const adaptiveEstimate = () => window.Adaptive.estimate({ foodLog: data.foodLog || [], weights: data.weights || [], today: today(), formulaBurn: formulaBurn() });
+  function renderCheckin() {
+    const box = $('#checkinCard'); if (!box) return;
+    const n = data.nutrition || {}, est = adaptiveEstimate(), now = Date.now();
+    const due = est.ready && !n.adaptive?.burn && !(n.checkinSnooze > now) && foodDay === today();
+    if (!due) { box.classList.add('hidden'); return; }
+    const goal = +data.profile?.goalWeight || null, next = window.Adaptive.targetsFrom(est.burn, weight(), goal), cur = targets();
+    const trend = Math.abs(est.kgPerWeek) < 0.1 ? 'your weight held steady' : `your weight went ${est.kgPerWeek < 0 ? 'down' : 'up'} about ${Math.abs(est.kgPerWeek).toFixed(1)} kg a week`;
+    const diff = next.kcal - cur.kcal;
+    box.classList.remove('hidden');
+    box.innerHTML = `<div class="sectionHead"><div class="secTitle"><span class="secIcon" style="--c:var(--glacier)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/><path d="M12 8v4l3 2"/></svg></span><h2>Weekly check-in</h2></div></div>
+      <p>Over the last 3 weeks you averaged <b>${fmt(est.avgIntake)} kcal</b> a day and ${trend}. So your body burns about <b>${fmt(est.burn)} kcal</b> a day.</p>
+      <div class="checkinRow"><div><span>Now</span><b>${fmt(cur.kcal)}</b><small>kcal a day</small></div><span class="checkinArrow" aria-hidden="true">→</span><div class="new"><span>Suggested</span><b>${fmt(next.kcal)}</b><small>${next.adjust < 0 ? `with a gentle deficit towards ${goal} kg` : next.adjust > 0 ? `with a small surplus towards ${goal} kg` : 'to maintain'}</small></div></div>
+      <p class="muted small">${Math.abs(diff) < 50 ? 'Your current target is already about right.' : diff > 0 && next.adjust < 0 ? `Good news: that's ${fmt(diff)} kcal more than now, and you'd still be heading towards your goal.` : `That's ${fmt(Math.abs(diff))} kcal ${diff > 0 ? 'more' : 'less'} than now.`} Protein ${next.protein} g, carbs ${next.carbs} g, fat ${next.fat} g. Updates each week as you log.</p>
+      <div class="row wrap"><button type="button" class="primary" id="checkinApply">Use ${fmt(next.kcal)} kcal</button><button type="button" class="secondary" id="checkinLater">Not now</button></div>`;
+    $('#checkinApply').onclick = () => { data.nutrition = { custom: false, adaptive: { burn: est.burn, at: Date.now() } }; save(); toastFood(`Target updated to ${fmt(next.kcal)} kcal. Nice work keeping your log going.`); };
+    $('#checkinLater').onclick = () => { data.nutrition = { ...(data.nutrition || {}), checkinSnooze: Date.now() + 3 * 864e5 }; save(); };
+  }
+  // Adaptive targets refresh themselves weekly once switched on (the check-in card only asks the first time).
+  function refreshAdaptive() {
+    const n = data.nutrition || {};
+    if (!n.adaptive?.burn || Date.now() - n.adaptive.at < WEEK) return;
+    const est = adaptiveEstimate();
+    if (est.ready) { n.adaptive = { burn: est.burn, at: Date.now(), prev: n.adaptive.burn }; data.nutrition = n; save(); }
+  }
+
+  // Kinder over-target: calm colour, no warnings, and the bigger picture (this week's average).
+  function weekAverage() {
+    const days = [];
+    for (let i = 0; i < 7; i++) { const d = shiftDay(today(), -i), k = totals(entriesFor(d)).kcal; if (k >= 800 || (i === 0 && k > 0)) days.push(k); }
+    return days.length >= 3 ? Math.round(days.reduce((a, b) => a + b, 0) / days.length) : 0;
+  }
+  function renderKind(t, sum, list, left) {
+    const el = $('#kindNote'); if (!el) return;
+    const enc = window.Encourage?.on(), parts = [];
+    if (left < 0) {
+      const avg = weekAverage();
+      parts.push(avg && avg <= t.kcal * 1.05 ? `Your 7-day average is ${fmt(avg)} kcal, right where you want it.` : 'One day doesn’t undo your progress.');
+      if (enc) parts.push(Encourage.line('foodOver', foodDay));
+    } else if (enc && foodDay === today() && list.length) {
+      parts.push(Math.abs(left) <= t.kcal * 0.05 && sum.protein >= t.protein * 0.9 ? Encourage.line('foodDone', foodDay) : Encourage.line('food', foodDay));
+    }
+    const txt = [...new Set(parts)].join(' ');
+    el.textContent = txt; el.classList.toggle('hidden', !txt);
   }
 
   // ---------- rendering ----------
   function renderFood() {
+    refreshAdaptive();
     const t = targets();
     const list = entriesFor(foodDay), sum = totals(list);
     const left = Math.round(t.kcal - sum.kcal);
 
     $('#foodDayLabel').textContent = dayLabel(foodDay);
     $('#foodNext').disabled = foodDay >= today();
-    $('#kcalRing').innerHTML = ringsSvg([{ value: t.kcal ? sum.kcal / t.kcal : 0, color: left < 0 ? 'var(--amber)' : 'var(--pine)' }]);
+    $('#kcalRing').innerHTML = ringsSvg([{ value: t.kcal ? sum.kcal / t.kcal : 0, color: left < 0 ? 'var(--glacier)' : 'var(--pine)' }]);
     $('#kcalLeft').textContent = fmt(Math.abs(left));
-    $('#kcalLeftLabel').textContent = left < 0 ? 'kcal over' : 'kcal left';
+    $('#kcalLeftLabel').textContent = left < 0 ? 'above target' : 'kcal left';
+    renderKind(t, sum, list, left);
     $('#kcalEaten').textContent = fmt(sum.kcal);
     $('#kcalTarget').textContent = fmt(t.kcal);
     $('#macroBars').innerHTML = MACROS.map(m => macroRow(m, sum[m.key], t[m.key])).join('');
@@ -94,10 +151,18 @@
       </section>`;
     }).join('');
 
-    const custom = data.nutrition?.custom;
+    const custom = data.nutrition?.custom, ad = data.nutrition?.adaptive;
+    if (!custom && ad?.burn) {
+      $('#targetNote').textContent = `${fmt(t.kcal)} kcal, ${t.protein} g protein, ${t.carbs} g carbs, ${t.fat} g fat. Adaptive: from your own logging, your body burns about ${fmt(ad.burn)} kcal a day${t.adjust < 0 ? `, with a gentle deficit towards ${t.goal} kg` : t.adjust > 0 ? `, with a small surplus towards ${t.goal} kg` : ''}. It updates every week${ad.prev ? ` (last week ${fmt(ad.prev)})` : ''}.`;
+      renderCheckin(); renderHomeFuel(); return;
+    }
+    const est = adaptiveEstimate();
+    const progressLine = est.ready ? '' : ` Adaptive targets unlock as you log: ${Math.min(est.loggedDays, est.needDays)} of ${est.needDays} full days of food and ${Math.min(est.weighIns, est.needWeighIns)} of ${est.needWeighIns} weigh-ins so far.`;
     $('#targetNote').textContent = custom
       ? `${fmt(t.kcal)} kcal, ${t.protein} g protein, ${t.carbs} g carbs, ${t.fat} g fat. These are your own targets.`
       : `${fmt(t.kcal)} kcal, ${t.protein} g protein, ${t.carbs} g carbs, ${t.fat} g fat. Suggested from your profile${t.adjust < 0 ? ` with a gentle deficit towards ${t.goal} kg` : t.adjust > 0 ? ` with a small surplus towards ${t.goal} kg` : ''}. These are estimates, so adjust them to suit you.`;
+    $('#targetNote').textContent += progressLine;
+    renderCheckin();
 
     renderHomeFuel();
   }
@@ -159,7 +224,7 @@
   function renderHomeFuel() {
     const card = $('#fuelBars'); if (!card) return;
     const t = targets(), sum = totals(entriesFor(today())), left = Math.round(t.kcal - sum.kcal);
-    $('#fuelLeft').textContent = sum.kcal ? (left >= 0 ? `${fmt(left)} kcal left` : `${fmt(-left)} kcal over`) : 'Nothing logged yet';
+    $('#fuelLeft').textContent = sum.kcal ? (left >= 0 ? `${fmt(left)} kcal left` : `${fmt(-left)} kcal above target`) : 'Nothing logged yet';
     const rows = [{ label: 'Calories', val: sum.kcal, target: t.kcal, unit: 'kcal', color: 'var(--pine)' },
       { label: 'Protein', val: sum.protein, target: t.protein, unit: 'g', color: 'var(--glacier)' }];
     card.innerHTML = rows.map(r => `<div class="macro" style="--c:${r.color}"><div class="macroHead"><span>${r.label}</span><b>${fmt(r.val)}<small> / ${fmt(r.target)} ${r.unit}</small></b></div><div class="tinybar"><i style="width:${r.target ? Math.min(100, r.val / r.target * 100) : 0}%"></i></div></div>`).join('');

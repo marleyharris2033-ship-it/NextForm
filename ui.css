@@ -852,3 +852,36 @@ details.learnCard a{margin:0 16px 16px}
 .ideaAlt{display:flex;justify-content:center;gap:18px;margin-top:6px}
 .ideaAlt .link{font-size:14px}
 .ideaCard.loading{opacity:.65}
+
+/* ---------- encouragement, check-in, kinder food ---------- */
+.dailyQuote{position:relative;margin:0 0 14px;padding:16px 18px 16px 52px;border-radius:var(--r-md);background:linear-gradient(135deg,#e9f1e4,#e3eef1);color:var(--pine-deep)}
+.dailyQuote .quoteMark{position:absolute;left:16px;top:16px;width:24px;height:24px;fill:none;stroke:var(--moss);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.quoteText{margin:0;font:600 16.5px/1.4 var(--display);letter-spacing:-.01em}
+.quoteBy{margin:6px 0 0;font-size:13px;color:var(--stone)}
+.rewardAffirm{margin:4px 0 0;font-size:15px;color:rgba(255,255,255,.85);font-weight:550}
+.reward .rewardAffirm{opacity:0}.reward.play .rewardAffirm{opacity:1;transition:opacity .5s .9s}
+.restCheer{margin:2px 8px 0 0;font-size:12.5px;color:rgba(255,255,255,.9);font-style:italic}
+.restCheer:empty{display:none}
+.kindNote{margin:14px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:#e8f1f4;color:#2b5b6a;font-size:14px}
+.toggleRow{display:flex;gap:12px;align-items:flex-start;margin:8px 0 14px;cursor:pointer}
+.toggleRow input{width:22px;height:22px;min-height:0;margin:2px 0 0;flex-shrink:0;accent-color:var(--pine)}
+.toggleRow span{display:flex;flex-direction:column}.toggleRow small{color:var(--stone);font-size:13px}
+.checkinCard p{margin:8px 0}
+.checkinRow{display:flex;align-items:center;gap:12px;margin:12px 0;padding:12px;border-radius:var(--r-sm);background:var(--mist)}
+.checkinRow>div{flex:1;display:flex;flex-direction:column}.checkinRow span{font-size:12px;color:var(--stone);text-transform:uppercase;letter-spacing:.06em}
+.checkinRow b{font:700 24px var(--display);color:var(--pine-deep)}.checkinRow small{font-size:12px;color:var(--stone)}
+.checkinRow .new b{color:var(--pine)}.checkinArrow{font-size:20px;color:var(--stone)}
+.suggestCard{border:1.5px solid var(--hairline)}
+.sugKicker{display:flex;align-items:center;gap:6px;margin:0 0 4px;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--moss)}
+.sugKicker svg{width:16px;height:16px;fill:var(--lichen);stroke:none}
+.sugList{list-style:none;margin:12px 0 14px;padding:0;display:grid;gap:8px}
+.sugList li{display:flex;justify-content:space-between;gap:12px;font-size:14.5px;padding-bottom:8px;border-bottom:1px solid var(--hairline)}
+.sugList li:last-child{border-bottom:0;padding-bottom:0}
+.sugList span{color:var(--stone);font-size:13px;text-align:right}
+.shareBtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font:650 13.5px var(--text)}
+.shareBtn svg,.rewardShare svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rewardShare{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;margin:18px 0 0;border:1.5px solid rgba(255,255,255,.35);border-radius:16px;background:transparent;color:#fff;font:650 16px var(--text)}
+.shareOpt{display:flex;align-items:center;gap:14px;width:100%;margin-top:12px;padding:14px;border:0;border-radius:var(--r-md);background:var(--mist);text-align:left;font:inherit;color:var(--pine-deep)}
+.shareOpt span:last-child{display:flex;flex-direction:column}.shareOpt small{color:var(--stone);font-size:13px}
+.soIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--c);flex-shrink:0}
+.soIcon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
