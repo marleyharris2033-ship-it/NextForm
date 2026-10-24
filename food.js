@@ -375,25 +375,50 @@
     return { common, recent };
   }
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  async function searchOFF(q) {
-    // 1. The newer search service. Fill in nutrition from the barcode lookup if a result is missing it.
+  // Open Food Facts is a free, volunteer-run service and its search goes down or slows down fairly often.
+  // So: ask both search services at once and use whichever answers first, keep every successful search on
+  // the device for 30 days, show saved results straight away, and quietly retry in the background.
+  const SEARCH_CACHE = 'nextform-searches', SEARCH_TTL = 30 * 864e5;
+  const searchCache = () => { try { return JSON.parse(localStorage.getItem(SEARCH_CACHE) || '{}'); } catch { return {}; } };
+  const cacheKey = q => words(q).join(' ');
+  function cachedSearch(q) { const c = searchCache()[cacheKey(q)]; return c && Date.now() - c.at < SEARCH_TTL ? c : null; }
+  function saveSearch(q, list) {
     try {
-      const json = await fetchJSON(`${OFF_SEARCH_NEW}?q=${encodeURIComponent(q)}&langs=en&page_size=24&fields=${OFF_FIELDS}`, 9000);
-      if (Array.isArray(json?.hits) && json.hits.length) {
-        const list = json.hits.map(fromOFF), missing = list.filter(p => !p.per && p.code).slice(0, 8);
-        await Promise.all(missing.map(async p => { try { const full = await findBarcode(p.code); if (full?.per) Object.assign(p, full); } catch {} }));
-        const good = list.filter(p => p.per);
-        if (good.length) return good;
-      }
+      const c = searchCache(); c[cacheKey(q)] = { at: Date.now(), list: list.slice(0, 24).map(({ image, ...p }) => p) };
+      Object.keys(c).sort((a, b) => c[b].at - c[a].at).slice(80).forEach(k => delete c[k]); // newest 80 searches
+      localStorage.setItem(SEARCH_CACHE, JSON.stringify(c));
     } catch {}
-    // 2. The older search, tried twice: it has been failing intermittently.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const json = await fetchJSON(`${OFF_SEARCH}?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=25&fields=${OFF_FIELDS}`, 12000);
-        return (json.products || []).map(fromOFF).filter(p => p.per);
-      } catch (e) { if (attempt) throw e; await sleep(700); }
-    }
-    return [];
+  }
+  // Products seen before in any search or scan, so a brand you've looked up once is found even when OFF is down.
+  function seenProducts(ws) {
+    const out = new Map();
+    for (const p of Object.values(productCache())) if (p?.per && matches(`${p.name} ${p.brand}`.toLowerCase(), ws)) out.set(p.code || p.name, p);
+    for (const c of Object.values(searchCache())) for (const p of c.list || []) if (p?.per && matches(`${p.name} ${p.brand}`.toLowerCase(), ws)) out.set(p.code || p.name, p);
+    return [...out.values()].slice(0, 12);
+  }
+  async function searchNew(q, ms) {
+    const json = await fetchJSON(`${OFF_SEARCH_NEW}?q=${encodeURIComponent(q)}&langs=en&page_size=24&fields=${OFF_FIELDS}`, ms);
+    if (!Array.isArray(json?.hits)) throw new Error('bad response');
+    const list = json.hits.map(fromOFF), missing = list.filter(p => !p.per && p.code).slice(0, 8);
+    await Promise.all(missing.map(async p => { try { const full = await findBarcode(p.code); if (full?.per) Object.assign(p, full); } catch {} }));
+    return list.filter(p => p.per);
+  }
+  async function searchOld(q, ms) {
+    const json = await fetchJSON(`${OFF_SEARCH}?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=25&fields=${OFF_FIELDS}`, ms);
+    if (!Array.isArray(json?.products)) throw new Error('bad response');
+    return json.products.map(fromOFF).filter(p => p.per);
+  }
+  // First service with results wins; the other gets a moment longer so both sets can be combined.
+  function searchOFF(q, ms = 15000) {
+    return new Promise((resolve, reject) => {
+      let pending = 2, empty = false, got = [], timer = null, finished = false;
+      const finish = () => { if (finished) return; finished = true; clearTimeout(timer);
+        const seen = new Set(); resolve(got.filter(p => { const k = p.code || `${p.name}|${p.brand}`; if (seen.has(k)) return false; seen.add(k); return true; })); };
+      const settle = () => { if (!--pending) got.length || empty ? finish() : (finished = true, reject(new Error('unavailable'))); };
+      const done = list => { if (list.length) { got = got.concat(list); if (!timer && pending > 1) timer = setTimeout(finish, 1200); } else empty = true; settle(); };
+      searchNew(q, ms).then(done, settle);
+      searchOld(q, ms).then(done, settle);
+    });
   }
   let searchSeq = 0;
   $('#foodSearchForm').addEventListener('submit', async e => {
@@ -401,26 +426,42 @@
     const q = $('#foodQuery').value.trim();
     if (q.length < 2) return;
     const out = $('#searchResults'), status = $('#searchStatus'), seq = ++searchSeq;
-    const { common, recent } = localMatches(q);
-    let online = [];
+    const { common, recent } = localMatches(q), ws = words(q);
+    const cached = cachedSearch(q);
+    const seen = seenProducts(ws).filter(p => !recent.some(r => (r.code && r.code === p.code) || r.name === p.name));
+    let online = cached?.list || [], fromCache = !!cached;
     const draw = (note) => {
-      const groups = [['Your recent foods', recent], ['Everyday foods', common], ['From Open Food Facts', online]].filter(g => g[1].length);
+      const keys = new Set([...recent].map(p => p.code || p.name));
+      const onl = online.filter(p => !keys.has(p.code || p.name));
+      const extra = seen.filter(p => !onl.some(o => (o.code || o.name) === (p.code || p.name)));
+      const groups = [['Your recent foods', recent], ['Everyday foods', common], [fromCache ? 'Open Food Facts (saved from an earlier search)' : 'From Open Food Facts', onl], ['Seen before', online.length ? [] : extra]].filter(g => g[1].length);
       const all = groups.flatMap(g => g[1]);
       let i = 0;
       out.innerHTML = groups.map(([title, list]) => `<p class="resultHead">${title}</p>` + list.map(p => resultRow(p, i++)).join('')).join('');
-      out.onclick = ev => { const b = ev.target.closest('[data-i]'); if (b) { const p = all[+b.dataset.i]; showPortion(p, p.lastAmount ? { grams: p.lastAmount } : {}); } };
+      out.onclick = ev => { const b = ev.target.closest('[data-i]'); if (b) { const p = all[+b.dataset.i]; if (p.code && !p.lastAmount) rememberProduct(p); showPortion(p, p.lastAmount ? { grams: p.lastAmount } : {}); } };
       status.textContent = note;
     };
-    draw(common.length || recent.length ? 'Searching Open Food Facts for more…' : 'Searching…');
-    if (!navigator.onLine) return draw(common.length || recent.length ? 'You’re offline, so only everyday and recent foods are shown.' : 'You’re offline. Try Recent or Quick add.');
-    try {
-      online = await searchOFF(q);
-      if (seq !== searchSeq) return;
-      draw(online.length ? '' : common.length || recent.length ? 'No branded matches on Open Food Facts. Try different words, or pick one above.' : 'No matches with nutrition info. Try fewer words, scan the barcode, or use Quick add.');
-    } catch {
-      if (seq !== searchSeq) return;
-      draw(common.length || recent.length ? 'Open Food Facts isn’t responding right now, so only everyday and recent foods are shown.' : 'Open Food Facts search isn’t responding right now. Try again in a minute, scan the barcode, or use Quick add.');
+    const anyLocal = () => common.length || recent.length || seen.length || online.length;
+    draw(anyLocal() ? 'Checking Open Food Facts for more…' : 'Searching Open Food Facts…');
+    if (!navigator.onLine) return draw(anyLocal() ? 'You’re offline, so these are foods saved on your phone.' : 'You’re offline. Try Recent, Scan or Quick add.');
+    // Tell people it's still going rather than leaving them wondering.
+    const slow = setTimeout(() => { if (seq === searchSeq && !online.length) status.textContent = 'Open Food Facts is slow right now. Still trying…'; }, 5000);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const list = await searchOFF(q, attempt ? 20000 : 15000);
+        if (seq !== searchSeq) return;
+        clearTimeout(slow);
+        if (list.length) { online = list; fromCache = false; saveSearch(q, list); }
+        return draw(online.length ? '' : anyLocal() ? 'No branded matches on Open Food Facts. Try different words, or pick one above.' : 'No matches with nutrition info. Try fewer words, scan the barcode, or use Quick add.');
+      } catch {
+        if (seq !== searchSeq) return;
+        if (!attempt) { status.textContent = 'Open Food Facts didn’t answer. Trying once more…'; await sleep(1500); if (seq !== searchSeq) return; }
+      }
     }
+    clearTimeout(slow);
+    draw(online.length ? 'Open Food Facts is down right now, so these are results saved from an earlier search.'
+      : anyLocal() ? 'Open Food Facts is down right now, so only foods saved on your phone are shown. Scanning the barcode often still works.'
+      : 'Open Food Facts is down right now (it’s a free service and has outages). Scanning the barcode often still works, or use Quick add.');
   });
   function resultRow(p, i) {
     return `<button type="button" class="foodResult" data-i="${i}"><span><b>${esc(p.name)}</b><small>${esc([p.brand === 'Common food' ? '' : p.brand, p.unit === 'g' ? `${fmt(p.per.kcal)} kcal per 100 g` : `${fmt(p.per.kcal)} kcal per portion`, p.per.protein >= 1 ? `${g1(p.per.protein)} g protein` : ''].filter(Boolean).join(', '))}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
