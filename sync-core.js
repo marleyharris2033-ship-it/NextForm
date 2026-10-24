@@ -41,8 +41,12 @@ export function mergeData(local, remote, challengeXp = {}) {
 
   const claimedChallenges = [...new Set([...(local.claimedChallenges || []), ...(remote.claimedChallenges || [])])];
   const mergedWorkouts = w.list;
+  // Story quest chapters: union by id (they can't be un-claimed).
+  const story = new Map();
+  for (const s of [...(remote.storyLog || []), ...(local.storyLog || [])]) if (s && s.id && !story.has(s.id)) story.set(s.id, s);
+  const storyLog = [...story.values()].sort((a, b) => String(a.id).localeCompare(String(b.id)));
   const xp = mergedWorkouts.reduce((s, w) => s + (w.result?.xp || 0), 0) +
-    claimedChallenges.reduce((s, id) => s + (challengeXp[id] || 0), 0);
+    claimedChallenges.reduce((s, id) => s + (challengeXp[id] || 0), 0) + storyLog.reduce((s, x) => s + (+x.xp || 0), 0);
 
   return {
     ...older,
@@ -51,6 +55,7 @@ export function mergeData(local, remote, challengeXp = {}) {
     workouts: mergedWorkouts,
     weights: [...weights.values()].sort((a, b) => String(a.date).localeCompare(String(b.date))),
     claimedChallenges,
+    storyLog,
     deletedWorkouts: w.tombs,
     foodLog: food.list,
     deletedFood: food.tombs,

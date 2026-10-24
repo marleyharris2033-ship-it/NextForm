@@ -116,6 +116,9 @@
     $('#heroKicker').textContent = st > 1 ? `${st}-week streak. Keep it going.` : plan ? `Today: ${plan.name}` : 'Every set counts towards your skills';
     $('#todayPlan').innerHTML = plan ? `<div class="card todayCard"><p class="muted small">Today’s plan</p><h2>${esc(plan.name)}</h2><p class="muted small">${plan.exercises.map(e => esc(e.name)).join(', ')}</p><button type="button" class="primary full" data-plan="${plan.id}">Start ${esc(plan.name)}</button></div>` : '';
     renderSuggestion(!!plan);
+    const lastW = [...data.workouts].filter(w => usesSets(w.type) && (w.exercises || []).length).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (+b.updatedAt || 0) - (+a.updatedAt || 0))[0];
+    const lastName = lastW && (allPlans().find(p => p.id === lastW.planId)?.name || lastW.name || typeLabel(lastW.type));
+    $('#repeatLast').innerHTML = lastW ? `<button type="button" class="repeatBtn" data-repeat="${esc(String(lastW.id))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.6M20 4v4.6h-4.6"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 15.4M4 20v-4.6h4.6"/></svg><span><b>Repeat ${esc(lastName)}</b><small>${esc(dayName(lastW.date))}, ${lastW.exercises.length} exercises with your last weights</small></span></button>` : '';
     $('#startEmpty').classList.toggle('secondary', !!plan);
     $('#startEmpty').classList.toggle('primary', !plan);
     $('#startEmpty').textContent = plan ? 'Start a different workout' : 'Start workout';
@@ -136,6 +139,13 @@
       <ul class="sugList">${s.exercises.map(e => { const h = lastSets(e.name); return `<li><b>${esc(e.name)}</b><span>${h ? `Last: ${esc(setsText(h.sets, h.unit === 's'))}` : `${e.sets} × ${esc(e.reps)}`}</span></li>`; }).join('')}</ul>
       <button type="button" class="${hasPlan ? 'secondary' : 'primary'} full" id="startSuggested">Start this session</button></div>`;
   }
+  const dayName = ds => { const n = Math.round((new Date(today() + 'T12:00:00') - new Date(ds + 'T12:00:00')) / 864e5); return n === 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 7 ? new Date(ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long' }) : `${n} days ago`; };
+  document.addEventListener('click', e => {
+    const r = e.target.closest('[data-repeat]'); if (!r) return;
+    const w = data.workouts.find(x => String(x.id) === r.dataset.repeat); if (!w) return;
+    const plan = allPlans().find(p => p.id === w.planId);
+    start({ plan: { id: w.planId || null, name: plan?.name || w.name || typeLabel(w.type), type: w.type, exercises: w.exercises.map(e => ({ name: e.name, sets: setsOf(e).length || 3, reps: e.unit === 's' ? `${e.reps || 30}s` : String(e.reps || 8) })) } });
+  });
   document.addEventListener('click', e => {
     if (!e.target.closest('#startSuggested') || !suggested || suggested.rest) return;
     start({ plan: { id: null, name: suggested.name, type: 'Strength', exercises: suggested.exercises } });
@@ -491,6 +501,9 @@
     $('#rewardRecords').innerHTML = records.length ? `<p class="rewardHead">New records</p>` + records.map(rc => `<div class="rRecord"><span class="trophy" aria-hidden="true">★</span><span><b>${esc(rc.name)}</b><small>${g(rc.kg)} kg × ${rc.reps}, estimated 1-rep max ${fmt(rc.e1rm)} kg</small></span></div>`).join('') : '';
     $('#rewardAffirm').textContent = window.Encourage?.on() ? Encourage.line(records.length ? 'rewardPB' : 'reward', w.id) : '';
     window.NextFormShare?.setWorkout(w, records);
+    const vol = (w.exercises || []).reduce((a, e) => a + (e.unit === 's' ? 0 : setsOf(e).reduce((b, s) => b + (+s.kg || 0) * (+s.reps || 0), 0)), 0);
+    const nSets = (w.exercises || []).reduce((a, e) => a + setsOf(e).length, 0);
+    $('#rewardSummary').textContent = [`${w.duration} min`, nSets ? `${nSets} set${nSets === 1 ? '' : 's'}` : '', vol ? `${fmt(Math.round(vol))} kg lifted` : '', +w.distance ? `${g(+w.distance)} km` : ''].filter(Boolean).join(' · ');
     const quests = readyQuests();
     $('#rewardQuests').textContent = quests > before.readyQuests ? `${quests} quest${quests > 1 ? 's' : ''} ready to claim on the Quests page.` : '';
 

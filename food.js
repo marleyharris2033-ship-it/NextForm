@@ -39,6 +39,14 @@
     return list.reduce((t, e) => ({ kcal: t.kcal + (+e.kcal || 0), protein: t.protein + (+e.protein || 0), carbs: t.carbs + (+e.carbs || 0), fat: t.fat + (+e.fat || 0) }),
       { kcal: 0, protein: 0, carbs: 0, fat: 0 });
   }
+  // Fibre, sugar and salt: only some foods have them, so also count how many entries do.
+  const EXTRAS = [{ key: 'fibre', label: 'Fibre', target: 30, kind: 'aim' }, { key: 'sugar', label: 'Sugar', target: 90, kind: 'limit' }, { key: 'salt', label: 'Salt', target: 6, kind: 'limit' }];
+  function extraTotals(list) {
+    const out = { known: 0, of: list.length };
+    for (const x of EXTRAS) out[x.key] = 0;
+    for (const e of list) { if (e.fibre == null && e.sugar == null && e.salt == null) continue; out.known++; for (const x of EXTRAS) out[x.key] += +e[x.key] || 0; }
+    return out;
+  }
   function validBarcode(code) {
     if (!/^\d{8}$|^\d{12,14}$/.test(code)) return false;
     const digits = code.split('').map(Number), check = digits.pop();
@@ -119,6 +127,15 @@
     el.textContent = txt; el.classList.toggle('hidden', !txt);
   }
 
+  function renderExtras(list) {
+    const box = $('#extraNutrients'); if (!box) return;
+    const x = extraTotals(list);
+    if (!x.known) { box.innerHTML = list.length ? '<p class="muted small">Fibre, sugar and salt show here for foods that include them.</p>' : ''; return; }
+    box.innerHTML = `<div class="extraRow">${EXTRAS.map(n => { const v = x[n.key], pct = Math.min(100, v / n.target * 100);
+      return `<div class="extra ${n.kind}"><span>${n.label}</span><b>${g1(v)}<small> g</small></b><div class="tinybar"><i style="width:${pct}%"></i></div><small>${n.kind === 'aim' ? `aim ${n.target} g` : `guide ${n.target} g`}</small></div>`; }).join('')}</div>
+      ${x.known < x.of ? `<p class="muted tiny">From ${x.known} of ${x.of} foods. The others don’t list these.</p>` : ''}`;
+  }
+
   // ---------- rendering ----------
   function renderFood() {
     refreshAdaptive();
@@ -135,6 +152,7 @@
     $('#kcalEaten').textContent = fmt(sum.kcal);
     $('#kcalTarget').textContent = fmt(t.kcal);
     $('#macroBars').innerHTML = MACROS.map(m => macroRow(m, sum[m.key], t[m.key])).join('');
+    renderExtras(list);
     const btn = $('#suggestMeal');
     if (btn) { btn.classList.toggle('hidden', !(left >= 120 && foodDay === today())); $('#suggestHint').textContent = `${fmt(left)} kcal and ${Math.max(0, Math.round(t.protein - sum.protein))} g protein left today`; }
 
@@ -310,7 +328,9 @@
       name: textOf(p.product_name_en) || textOf(p.product_name) || 'Unnamed product',
       brand: (Array.isArray(p.brands) ? String(p.brands[0] || '') : String(p.brands || '').split(',')[0]).trim(),
       unit: 'g',
-      per: kcal == null ? null : { kcal, protein: num(n.proteins_100g) || 0, carbs: num(n.carbohydrates_100g) || 0, fat: num(n.fat_100g) || 0 },
+      per: kcal == null ? null : { kcal, protein: num(n.proteins_100g) || 0, carbs: num(n.carbohydrates_100g) || 0, fat: num(n.fat_100g) || 0,
+        ...(num(n.fiber_100g) != null ? { fibre: num(n.fiber_100g) } : {}), ...(num(n.sugars_100g) != null ? { sugar: num(n.sugars_100g) } : {}),
+        ...(num(n.salt_100g) != null ? { salt: num(n.salt_100g) } : num(n.sodium_100g) != null ? { salt: num(n.sodium_100g) * 2.5 } : {}) },
       servingG: num(p.serving_quantity) > 0 ? num(p.serving_quantity) : null,
       packG: num(p.product_quantity) > 0 && !/ml|cl|l$/i.test(String(p.product_quantity_unit || '')) ? num(p.product_quantity) : null,
       servingLabel: p.serving_size || '',
@@ -463,13 +483,15 @@
     $('#pMeal').innerHTML = MEALS.map(m => `<button type="button" class="chip${m === sheet.meal ? ' active' : ''}" data-meal="${m}">${m}</button>`).join('');
   }
   function scaled(product, amount) {
-    const f = product.unit === 'portion' ? amount : amount / 100, p = product.per;
-    return { kcal: p.kcal * f, protein: p.protein * f, carbs: p.carbs * f, fat: p.fat * f };
+    const f = product.unit === 'portion' ? amount : amount / 100, p = product.per, out = { kcal: p.kcal * f, protein: p.protein * f, carbs: p.carbs * f, fat: p.fat * f };
+    for (const k of ['fibre', 'sugar', 'salt']) if (p[k] != null) out[k] = p[k] * f;
+    return out;
   }
   function updatePortionTotals() {
     const amt = Math.max(0, num($('#pGrams').value) || 0), v = scaled(sheet.product, amt);
     $('#pTotals').innerHTML = [['Calories', `${fmt(v.kcal)}`, 'kcal'], ['Protein', g1(v.protein), 'g'], ['Carbs', g1(v.carbs), 'g'], ['Fat', g1(v.fat), 'g']]
-      .map(([l, n, u]) => `<div><span>${l}</span><b>${n}<small> ${u}</small></b></div>`).join('');
+      .map(([l, n, u]) => `<div><span>${l}</span><b>${n}<small> ${u}</small></b></div>`).join('')
+      + (v.fibre != null || v.sugar != null || v.salt != null ? `<p class="pExtras">${[['Fibre', v.fibre], ['Sugar', v.sugar], ['Salt', v.salt]].filter(([, n]) => n != null).map(([l, n]) => `${l} ${g1(n)} g`).join(' · ')}</p>` : '');
   }
   $('#pGrams').addEventListener('input', updatePortionTotals);
   $('#pQuick').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (b) { $('#pGrams').value = g1(+b.dataset.g); updatePortionTotals(); } });
@@ -490,7 +512,8 @@
     data.deletedFood = [...(data.deletedFood || []), id].slice(-500);
     save(); closeSheet();
   });
-  const roundVals = v => ({ kcal: Math.round(v.kcal), protein: Math.round(v.protein * 10) / 10, carbs: Math.round(v.carbs * 10) / 10, fat: Math.round(v.fat * 10) / 10 });
+  const roundVals = v => ({ kcal: Math.round(v.kcal), protein: Math.round(v.protein * 10) / 10, carbs: Math.round(v.carbs * 10) / 10, fat: Math.round(v.fat * 10) / 10,
+    ...Object.fromEntries(['fibre', 'sugar', 'salt'].map(k => [k, v[k] != null ? Math.round(v[k] * 100) / 100 : undefined])) });
   function addEntry(product, amount, meal) {
     data.foodLog = data.foodLog || [];
     data.foodLog.push({
@@ -717,7 +740,7 @@
     s.items.forEach((it, k) => {
       const f = it.food, isG = f.unit !== 'portion', mult = isG ? it.grams / 100 : it.grams;
       data.foodLog.push({ id: newId() + k, date: foodDay, meal: suggestMeal, name: f.name, brand: f.brand === 'Common food' ? '' : (f.brand || ''), code: f.code || '',
-        unit: isG ? 'g' : 'portion', grams: it.grams, per: f.per, servingG: f.servingG || null, servingLabel: f.servingLabel || '', ...roundVals({ kcal: f.per.kcal * mult, protein: f.per.protein * mult, carbs: f.per.carbs * mult, fat: f.per.fat * mult }), updatedAt: now });
+        unit: isG ? 'g' : 'portion', grams: it.grams, per: f.per, servingG: f.servingG || null, servingLabel: f.servingLabel || '', ...roundVals(scaled(f, it.grams)), updatedAt: now });
     });
     save(); closeSuggest(); toastFood(`Added ${s.title.toLowerCase()} to ${suggestMeal.toLowerCase()}.`);
   });
