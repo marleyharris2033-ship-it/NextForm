@@ -6,23 +6,23 @@
 // with protein weighted most and going over (especially on fat or calories) penalised more than falling
 // short. The best few ideas are returned.
 (() => {
-  // [title, [[food name, min g, max g, step g], ...]] — food names match COMMON_FOODS.
+  // [title, [[food name, min g, max g, step g, Open Food Facts search, role], ...]] — food names match COMMON_FOODS.
   const TEMPLATES = [
-    ['Chicken, rice and broccoli', [['Chicken breast, cooked', 80, 320, 10], ['White rice, cooked', 0, 400, 10], ['Broccoli, boiled', 0, 160, 40]]],
-    ['Salmon, potatoes and peas', [['Salmon fillet, cooked', 60, 240, 20], ['Potatoes, boiled', 0, 400, 25], ['Peas, boiled', 0, 160, 40]]],
-    ['Cod, potatoes and peas', [['Cod, cooked', 80, 320, 20], ['Potatoes, boiled', 0, 400, 25], ['Peas, boiled', 0, 160, 40]]],
-    ['Steak, jacket potato and salad', [['Sirloin steak, cooked', 80, 300, 10], ['Jacket potato', 0, 400, 20], ['Salad leaves', 0, 80, 40]]],
-    ['Tuna pasta with sweetcorn', [['Tuna in spring water, drained', 56, 224, 56], ['Pasta, cooked', 0, 400, 10], ['Sweetcorn', 0, 120, 40]]],
-    ['Turkey wraps', [['Turkey breast, cooked', 50, 250, 10], ['Tortilla wrap', 62, 186, 62], ['Salad leaves', 0, 80, 40]]],
-    ['Prawn and pea rice', [['Prawns, cooked', 60, 300, 20], ['White rice, cooked', 0, 400, 10], ['Peas, boiled', 0, 160, 40]]],
-    ['Lean beef pasta', [['Beef mince, 5% fat, raw', 75, 250, 25], ['Pasta, cooked', 0, 400, 10], ['Tomatoes', 0, 170, 85]]],
-    ['Chickpea and spinach rice bowl', [['Chickpeas, cooked', 60, 300, 20], ['Brown rice, cooked', 0, 300, 10], ['Spinach, raw', 0, 90, 30]]],
-    ['Greek yogurt, oats and berries', [['Greek yogurt, 0% fat', 100, 500, 50], ['Porridge oats', 0, 100, 10], ['Blueberries', 0, 160, 20]]],
-    ['Eggs on wholemeal toast', [['Egg, whole', 50, 250, 50], ['Egg white', 0, 132, 33], ['Wholemeal bread', 40, 160, 40]]],
-    ['Protein shake and banana', [['Whey protein powder', 30, 60, 30], ['Milk, skimmed', 0, 400, 50], ['Banana', 0, 236, 118]]],
-    ['Cottage cheese, rice cakes and fruit', [['Cottage cheese', 100, 400, 50], ['Rice cakes', 0, 54, 9], ['Apple', 0, 182, 91]]],
-    ['Chicken wraps', [['Chicken breast, cooked', 60, 240, 10], ['Tortilla wrap', 62, 186, 62], ['Salad leaves', 0, 80, 40]]],
-    ['Tofu and rice bowl', [['Tofu, firm', 100, 400, 50], ['White rice, cooked', 0, 400, 10], ['Broccoli, boiled', 0, 160, 40]]]
+    ['Chicken, rice and broccoli', [['Chicken breast, cooked', 80, 320, 10, 'cooked chicken breast', 'protein'], ['White rice, cooked', 0, 400, 10, 'microwave rice', 'carb'], ['Broccoli, boiled', 0, 160, 40, 'broccoli', 'veg']]],
+    ['Salmon, potatoes and peas', [['Salmon fillet, cooked', 60, 240, 20, 'salmon fillets', 'protein'], ['Potatoes, boiled', 0, 400, 25, 'baby potatoes', 'carb'], ['Peas, boiled', 0, 160, 40, 'garden peas', 'veg']]],
+    ['Cod, potatoes and peas', [['Cod, cooked', 80, 320, 20, 'cod fillets', 'protein'], ['Potatoes, boiled', 0, 400, 25, 'baby potatoes', 'carb'], ['Peas, boiled', 0, 160, 40, 'garden peas', 'veg']]],
+    ['Steak, jacket potato and salad', [['Sirloin steak, cooked', 80, 300, 10, 'sirloin steak', 'protein'], ['Jacket potato', 0, 400, 20, 'baking potatoes', 'carb'], ['Salad leaves', 0, 80, 40, 'salad leaves', 'veg']]],
+    ['Tuna pasta with sweetcorn', [['Tuna in spring water, drained', 56, 224, 56, 'tuna chunks spring water', 'protein'], ['Pasta, cooked', 0, 400, 10, 'fusilli pasta', 'carb'], ['Sweetcorn', 0, 120, 40, 'sweetcorn', 'veg']]],
+    ['Turkey wraps', [['Turkey breast, cooked', 50, 250, 10, 'turkey breast slices', 'protein'], ['Tortilla wrap', 62, 186, 62, 'tortilla wraps', 'bread'], ['Salad leaves', 0, 80, 40, 'salad leaves', 'veg']]],
+    ['Prawn and pea rice', [['Prawns, cooked', 60, 300, 20, 'cooked king prawns', 'protein'], ['White rice, cooked', 0, 400, 10, 'microwave rice', 'carb'], ['Peas, boiled', 0, 160, 40, 'garden peas', 'veg']]],
+    ['Lean beef pasta', [['Beef mince, 5% fat, raw', 75, 250, 25, '5% fat beef mince', 'protein'], ['Pasta, cooked', 0, 400, 10, 'fusilli pasta', 'carb'], ['Tomatoes', 0, 170, 85, 'cherry tomatoes', 'veg']]],
+    ['Chickpea and spinach rice bowl', [['Chickpeas, cooked', 60, 300, 20, 'chickpeas', 'pulse'], ['Brown rice, cooked', 0, 300, 10, 'brown rice', 'carb'], ['Spinach, raw', 0, 90, 30, 'baby spinach', 'veg']]],
+    ['Greek yogurt, oats and berries', [['Greek yogurt, 0% fat', 100, 500, 50, '0% fat greek yogurt', 'protein'], ['Porridge oats', 0, 100, 10, 'porridge oats', 'carb'], ['Blueberries', 0, 160, 20, 'blueberries', 'fruit']]],
+    ['Eggs on wholemeal toast', [['Egg, whole', 50, 250, 50, 'free range eggs', 'egg'], ['Egg white', 0, 132, 33, 'liquid egg whites', 'protein'], ['Wholemeal bread', 40, 160, 40, 'wholemeal bread', 'bread']]],
+    ['Protein shake and banana', [['Whey protein powder', 30, 60, 30, 'whey protein powder', 'powder'], ['Milk, skimmed', 0, 400, 50, 'skimmed milk', 'milk'], ['Banana', 0, 236, 118, 'bananas', 'fruit']]],
+    ['Cottage cheese, rice cakes and fruit', [['Cottage cheese', 100, 400, 50, 'cottage cheese', 'protein'], ['Rice cakes', 0, 54, 9, 'rice cakes', 'bread'], ['Apple', 0, 182, 91, 'apples', 'fruit']]],
+    ['Chicken wraps', [['Chicken breast, cooked', 60, 240, 10, 'cooked chicken breast', 'protein'], ['Tortilla wrap', 62, 186, 62, 'tortilla wraps', 'bread'], ['Salad leaves', 0, 80, 40, 'salad leaves', 'veg']]],
+    ['Tofu and rice bowl', [['Tofu, firm', 100, 400, 50, 'firm tofu', 'protein'], ['White rice, cooked', 0, 400, 10, 'microwave rice', 'carb'], ['Broccoli, boiled', 0, 160, 40, 'broccoli', 'veg']]]
   ];
   const KEYS = ['kcal', 'protein', 'carbs', 'fat'];
   const SCALE = { kcal: 120, protein: 12, carbs: 25, fat: 8 };
@@ -74,7 +74,7 @@
       if (parts.length !== spec.length) continue;
       const r = fit(parts, want);
       const items = parts.map((p, i) => ({ food: p.food, grams: r.grams[i] })).filter(it => it.grams > 0);
-      ideas.push({ title, source: 'idea', items, loss: r.loss });
+      ideas.push({ title, source: 'idea', template: title, items, loss: r.loss });
     }
     // Your saved meals, scaled from half to double.
     for (const m of savedMeals) {
@@ -95,7 +95,59 @@
     return ideas.slice(skip, skip + count);
   }
 
-  const api = { suggest, TEMPLATES };
+  // Products (e.g. ready meals from Open Food Facts) as single-item ideas, portion fitted from half a pack
+  // to two packs. products: [{ name, brand, code, per (per 100 g), packG, servingG }].
+  function rankProducts(remaining, products, count = 3) {
+    const want = Object.fromEntries(KEYS.map(k => [k, Math.max(0, +remaining[k] || 0)]));
+    if (want.kcal < 120) return [];
+    const out = [];
+    for (const p of products) {
+      if (!p?.per || !(p.per.kcal > 0)) continue;
+      const unit = p.packG >= 150 && p.packG <= 900 ? p.packG : p.servingG >= 100 && p.servingG <= 900 ? p.servingG : 0;
+      if (!unit) continue;
+      const two = p.per.kcal * unit * 2 / 100 <= want.kcal * 1.03; // a second pack only if it still fits
+      const parts = [{ food: p, min: unit, max: two ? unit * 2 : unit, step: unit }]; // whole packs
+      const r = fit(parts, want), grams = r.grams[0];
+      const totals = totalsOf([{ food: p, grams }]);
+      out.push({ title: p.name, source: 'off', items: [{ food: p, grams }], packs: grams / unit, unit, loss: r.loss, totals,
+        after: Object.fromEntries(KEYS.map(k => [k, (+remaining[k] || 0) - totals[k]])),
+        proteinCover: want.protein ? Math.min(100, Math.round(totals.protein / want.protein * 100)) : 100 });
+    }
+    out.sort((a, b) => a.loss - b.loss);
+    const seen = new Set();
+    return out.filter(o => { const k = o.title.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, count);
+  }
+
+  // Is an Open Food Facts product a sensible stand-in for a template ingredient? (per 100 g)
+  const ROLE_OK = {
+    protein: p => p.protein >= 8, pulse: p => p.protein >= 5, carb: p => p.carbs >= 12, bread: p => p.carbs >= 30,
+    veg: p => p.kcal <= 130, fruit: p => p.kcal <= 130 && p.carbs >= 5, egg: p => p.protein >= 10 && p.protein <= 16,
+    powder: p => p.protein >= 55, milk: p => p.kcal <= 70 && p.protein >= 2.5
+  };
+  const roleFits = (role, per) => !!per && per.kcal > 0 && (ROLE_OK[role] || (() => true))(per);
+  const templateParts = title => (TEMPLATES.find(t => t[0] === title) || [])[1] || [];
+  // A template idea rebuilt with real products: picks[i] replaces ingredient i (null keeps the everyday food).
+  // Portion ranges are scaled by energy density, so e.g. dry pasta gets about half the grams of cooked pasta.
+  function realVersion(title, picks, remaining, foods) {
+    const want = Object.fromEntries(KEYS.map(k => [k, Math.max(0, +remaining[k] || 0)]));
+    const byName = new Map(foods.map(f => [f.name, f]));
+    const parts = templateParts(title).map(([name, min, max, step], i) => {
+      const generic = byName.get(name), real = picks[i];
+      if (!real) return { food: generic, min, max, step };
+      const ratio = generic && real.per.kcal ? generic.per.kcal / real.per.kcal : 1;
+      if (ratio > 0.6 && ratio < 1.6) return { food: real, min, max, step };
+      const st = Math.max(5, Math.round(step * ratio / 5) * 5);
+      return { food: real, min: Math.round(min * ratio / st) * st, max: Math.max(st, Math.round(max * ratio / st) * st), step: st };
+    }).filter(p => p.food);
+    const r = fit(parts, want);
+    const items = parts.map((p, i) => ({ food: p.food, grams: r.grams[i] })).filter(it => it.grams > 0);
+    const totals = totalsOf(items);
+    return { title, source: 'real', template: title, items, loss: r.loss, totals,
+      after: Object.fromEntries(KEYS.map(k => [k, (+remaining[k] || 0) - totals[k]])),
+      proteinCover: want.protein ? Math.min(100, Math.round(totals.protein / want.protein * 100)) : 100 };
+  }
+
+  const api = { suggest, rankProducts, realVersion, templateParts, roleFits, TEMPLATES };
   if (typeof window !== 'undefined') window.MealSuggest = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

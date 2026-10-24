@@ -846,3 +846,9 @@ details.learnCard a{margin:0 16px 16px}
 .ideaMacros b{display:block;font:700 16px var(--display);color:var(--pine-deep)}
 .ideaAfter{font-size:13px;color:var(--stone);margin:0 0 10px}
 .suggestNote{margin-top:10px}
+.suggestOff{margin-top:18px}
+.ideaTag.off{background:var(--mist);color:var(--pine)}
+.ideaItems small{display:block;font-size:12px;color:var(--stone)}
+.ideaAlt{display:flex;justify-content:center;gap:18px;margin-top:6px}
+.ideaAlt .link{font-size:14px}
+.ideaCard.loading{opacity:.65}

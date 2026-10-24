@@ -2,7 +2,7 @@
 // App files: try the network first (so updates show up straight away), but fall back to the
 // saved copy if there's no signal or the network is too slow, as in many gyms.
 // Firebase SDK files are versioned, so they're served from the saved copy once downloaded.
-const CACHE = 'nextform-v21';
+const CACHE = 'nextform-v23';
 const APP_FILES = [
   './', 'index.html', 'ui.css', 'welcome.css', 'fonts/bricolage-grotesque.woff', 'app.js', 'welcome.js',
   'workout-types.js', 'rpg.js', 'common-foods.js', 'meal-suggest.js', 'food.js', 'coach.js', 'train.js', 'plans.js', 'log-edit.js', 'insights.js', 'privacy.html', 'terms.html', 'legal.css', 'auth.js', 'sync-core.js', 'firebase-config.js', 'welcome-art.webp', 'train-hero.webp', 'logo-mark.png', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/favicon-32.png', 'manifest.json'
