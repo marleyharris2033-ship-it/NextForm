@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=2">
-<link rel="stylesheet" href="ui.css?v=search1">
+<link rel="stylesheet" href="ui.css?v=suggest1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -178,6 +178,7 @@
     <dl class="kcalFacts"><div><dt>Eaten</dt><dd id="kcalEaten">0</dd></div><div><dt>Target</dt><dd id="kcalTarget">0</dd></div></dl>
   </div>
   <div class="macros" id="macroBars"></div>
+  <button type="button" class="suggestBtn hidden" id="suggestMeal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>Suggest a meal</b><small id="suggestHint">Fill what’s left of today’s macros</small></span></button>
 </div>
 <div class="addRow">
   <button type="button" class="primary" id="openScan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/></svg>Scan barcode</button>
@@ -311,6 +312,17 @@
   <div class="sheetBody" id="logEditBody"></div>
   <div class="pFoot"><button type="button" class="primary full" id="logEditSave">Save changes</button></div>
 </div>
+<div id="suggestSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
+  <div class="sheetHead"><span></span><h2 id="suggestTitle">Meal ideas</h2><button type="button" class="iconBtn" id="suggestClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheetBody">
+    <p class="suggestLeft" id="suggestLeft"></p>
+    <p class="fieldLabel">Add to</p>
+    <div class="chips" id="suggestMealChips"></div>
+    <div id="suggestList"></div>
+    <button type="button" class="secondary full" id="suggestMore">Show other ideas</button>
+    <p class="tiny muted suggestNote">Portions are worked out to fit what you have left, using typical nutrition values. Adjust any item after adding it.</p>
+  </div>
+</div>
 <div id="planSheet" class="sheet planSheet hidden" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle">
   <div class="sheetHead"><span></span><h2 id="planSheetTitle">New plan</h2><button type="button" class="iconBtn" id="planClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody">
@@ -363,4 +375,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=search1"></script><script src="rpg.js?v=search1"></script><script src="app.js?v=search1"></script><script src="common-foods.js?v=search1"></script><script src="food.js?v=search1"></script><script src="coach.js?v=search1"></script><script src="train.js?v=search1"></script><script src="plans.js?v=search1"></script><script src="log-edit.js?v=search1"></script><script src="insights.js?v=search1"></script><script src="welcome.js?v=search1"></script><script type="module" src="auth.js?v=search1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=suggest1"></script><script src="rpg.js?v=suggest1"></script><script src="app.js?v=suggest1"></script><script src="common-foods.js?v=suggest1"></script><script src="meal-suggest.js?v=suggest1"></script><script src="food.js?v=suggest1"></script><script src="coach.js?v=suggest1"></script><script src="train.js?v=suggest1"></script><script src="plans.js?v=suggest1"></script><script src="log-edit.js?v=suggest1"></script><script src="insights.js?v=suggest1"></script><script src="welcome.js?v=suggest1"></script><script type="module" src="auth.js?v=suggest1"></script></body></html>

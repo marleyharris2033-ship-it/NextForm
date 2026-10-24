@@ -78,6 +78,8 @@
     $('#kcalEaten').textContent = fmt(sum.kcal);
     $('#kcalTarget').textContent = fmt(t.kcal);
     $('#macroBars').innerHTML = MACROS.map(m => macroRow(m, sum[m.key], t[m.key])).join('');
+    const btn = $('#suggestMeal');
+    if (btn) { btn.classList.toggle('hidden', !(left >= 120 && foodDay === today())); $('#suggestHint').textContent = `${fmt(left)} kcal and ${Math.max(0, Math.round(t.protein - sum.protein))} g protein left today`; }
 
     const yday = shiftDay(foodDay, -1), yList = entriesFor(yday);
     const dayAction = foodDay === today()
@@ -520,6 +522,55 @@
 
   window.renderFood = renderFood;
   window.foodTargets = targets;
+  // ---------- meal suggestions ----------
+  let suggestSkip = 0, suggestMeal = 'Dinner';
+  function remainingToday() {
+    const t = targets(), s = totals(entriesFor(foodDay));
+    return { kcal: t.kcal - s.kcal, protein: t.protein - s.protein, carbs: t.carbs - s.carbs, fat: t.fat - s.fat };
+  }
+  function openSuggest() {
+    suggestSkip = 0; suggestMeal = mealForNow();
+    $('#suggestSheet').classList.remove('hidden'); document.body.classList.add('sheetOpen');
+    renderSuggest();
+  }
+  function closeSuggest() { $('#suggestSheet').classList.add('hidden'); if (!document.querySelector('.sheet:not(.hidden)')) document.body.classList.remove('sheetOpen'); }
+  let shown = [];
+  function renderSuggest() {
+    const rem = remainingToday();
+    const left = (k, unit) => rem[k] >= 0 ? `${k === 'kcal' ? fmt(rem[k]) : Math.round(rem[k])}${unit}` : null;
+    const over = ['protein', 'carbs', 'fat'].filter(k => rem[k] < -0.5).map(k => `${k} by ${Math.round(-rem[k])} g`);
+    $('#suggestLeft').innerHTML = `You have <b>${fmt(Math.max(0, rem.kcal))} kcal</b>, <b>${Math.max(0, Math.round(rem.protein))} g protein</b>, <b>${Math.max(0, Math.round(rem.carbs))} g carbs</b> and <b>${Math.max(0, Math.round(rem.fat))} g fat</b> left.${over.length ? ` You’re already over on ${over.join(' and ')}, so these ideas keep that low.` : ''}`;
+    $('#suggestMealChips').innerHTML = MEALS.map(m => `<button type="button" class="chip${m === suggestMeal ? ' active' : ''}" data-smeal="${m}">${m}</button>`).join('');
+    shown = window.MealSuggest.suggest(rem, { foods: window.COMMON_FOODS || [], savedMeals: data.savedMeals || [], count: 3, skip: suggestSkip });
+    if (!shown.length && suggestSkip) { suggestSkip = 0; return renderSuggest(); }
+    const r0 = v => Math.round(v);
+    $('#suggestList').innerHTML = shown.length ? shown.map((s, i) => `<div class="ideaCard">
+        <div class="ideaHead"><b>${esc(s.title)}</b>${s.source === 'saved' ? '<span class="ideaTag">Your saved meal</span>' : ''}</div>
+        <ul class="ideaItems">${s.items.map(it => `<li><span>${esc(it.food.name)}</span><b>${it.food.unit === 'portion' ? `${g1(it.grams)} portion${it.grams === 1 ? '' : 's'}` : `${g1(it.grams)} g`}</b></li>`).join('')}</ul>
+        <div class="ideaMacros"><span><b>${fmt(s.totals.kcal)}</b> kcal</span><span><b>${r0(s.totals.protein)}</b> g protein</span><span><b>${r0(s.totals.carbs)}</b> g carbs</span><span><b>${r0(s.totals.fat)}</b> g fat</span></div>
+        <p class="ideaAfter">Covers ${s.proteinCover}% of your remaining protein. Afterwards: ${s.after.kcal >= 0 ? `${fmt(s.after.kcal)} kcal left` : `${fmt(-s.after.kcal)} kcal over`}.</p>
+        <button type="button" class="primary full" data-add-idea="${i}">Add to ${suggestMeal.toLowerCase()}</button>
+      </div>`).join('')
+      : `<p class="muted">You’re within ${fmt(Math.max(0, rem.kcal))} kcal of your target, so there’s no need for a full meal. A piece of fruit or a yogurt would round off the day.</p>`;
+    $('#suggestMore').classList.toggle('hidden', !shown.length);
+  }
+  $('#suggestMeal')?.addEventListener('click', openSuggest);
+  $('#suggestClose').addEventListener('click', closeSuggest);
+  $('#suggestMore').addEventListener('click', () => { suggestSkip += 3; renderSuggest(); $('#suggestSheet .sheetBody').scrollTop = 0; });
+  $('#suggestMealChips').addEventListener('click', e => { const b = e.target.closest('[data-smeal]'); if (b) { suggestMeal = b.dataset.smeal; renderSuggest(); } });
+  $('#suggestList').addEventListener('click', e => {
+    const b = e.target.closest('[data-add-idea]'); if (!b) return;
+    const s = shown[+b.dataset.addIdea]; if (!s) return;
+    const now = Date.now();
+    data.foodLog = data.foodLog || [];
+    s.items.forEach((it, k) => {
+      const f = it.food, isG = f.unit !== 'portion', mult = isG ? it.grams / 100 : it.grams;
+      data.foodLog.push({ id: newId() + k, date: foodDay, meal: suggestMeal, name: f.name, brand: f.brand === 'Common food' ? '' : (f.brand || ''), code: f.code || '',
+        unit: isG ? 'g' : 'portion', grams: it.grams, per: f.per, servingG: f.servingG || null, servingLabel: f.servingLabel || '', ...roundVals({ kcal: f.per.kcal * mult, protein: f.per.protein * mult, carbs: f.per.carbs * mult, fat: f.per.fat * mult }), updatedAt: now });
+    });
+    save(); closeSuggest(); toastFood(`Added ${s.title.toLowerCase()} to ${suggestMeal.toLowerCase()}.`);
+  });
+
   window.NextFormFood = { validBarcode, suggestedTargets }; // handy for checks
   renderFood();
 })();
