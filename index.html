@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=2">
-<link rel="stylesheet" href="ui.css?v=more1">
+<link rel="stylesheet" href="ui.css?v=photo1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -255,6 +255,7 @@
   <div class="sheetTabs chips" role="tablist">
     <button type="button" class="chip" data-tab="search" role="tab">Search</button>
     <button type="button" class="chip" data-tab="scan" role="tab">Scan</button>
+    <button type="button" class="chip" data-tab="photo" role="tab">Photo</button>
     <button type="button" class="chip" data-tab="recent" role="tab">Recent</button>
     <button type="button" class="chip" data-tab="saved" role="tab">Saved meals</button>
     <button type="button" class="chip" data-tab="manual" role="tab">Quick add</button>
@@ -268,7 +269,34 @@
     <div data-pane="scan">
       <div class="scanner"><video id="scanVideo" playsinline muted></video><div class="scanFrame" aria-hidden="true"></div></div>
       <p id="scanStatus" class="muted small" role="status" aria-live="polite">Point your camera at the barcode.</p>
+      <button type="button" class="secondary full hidden" id="scanLabelBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Photograph the nutrition label instead</button>
       <form id="barcodeForm" class="searchRow"><input id="barcodeInput" inputmode="numeric" pattern="[0-9]*" placeholder="Or type the barcode number" autocomplete="off"><button class="secondary" type="submit">Look up</button></form>
+    </div>
+    <div data-pane="photo">
+      <p class="muted small">Take a photo and NextForm reads it on your phone. The photo isn’t uploaded anywhere.</p>
+      <label class="photoBtn"><input type="file" accept="image/*" capture="environment" id="photoFront" hidden><span class="pbIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span><b>Front of the pack</b><small>Reads the name and finds the product</small></span></label>
+      <label class="photoBtn"><input type="file" accept="image/*" capture="environment" id="photoLabel" hidden><span class="pbIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span><span><b>Nutrition label</b><small>Reads calories and macros, for foods that aren’t in the database</small></span></label>
+      <div class="photoProgress hidden" id="photoProgress"><i></i></div>
+      <p id="photoStatus" class="muted small" role="status" aria-live="polite"></p>
+      <p class="tiny muted">Tips: fill the frame with the label, hold it flat, and tilt it so the light doesn’t shine off it. The first time, the reader downloads once (about 4 MB).</p>
+    </div>
+    <div data-pane="label">
+      <div class="labelTop"><img id="labelPreview" alt="Your photo of the label"><p class="small" id="labelNote"></p></div>
+      <label>Name<input id="lName" placeholder="e.g. Ready salted crisps" maxlength="80"></label>
+      <p class="fieldLabel topgap">Per 100 g</p>
+      <div class="labelGrid">
+        <label>Calories (kcal)<input id="lKcal" data-l="kcal" type="number" min="0" max="950" step="1" inputmode="decimal"></label>
+        <label>Protein (g)<input id="lProtein" data-l="protein" type="number" min="0" max="100" step=".1" inputmode="decimal"></label>
+        <label>Carbs (g)<input id="lCarbs" data-l="carbs" type="number" min="0" max="100" step=".1" inputmode="decimal"></label>
+        <label>Fat (g)<input id="lFat" data-l="fat" type="number" min="0" max="100" step=".1" inputmode="decimal"></label>
+        <label>Fibre (g)<input id="lFibre" data-l="fibre" type="number" min="0" max="100" step=".1" inputmode="decimal"></label>
+        <label>Sugar (g)<input id="lSugar" data-l="sugar" type="number" min="0" max="100" step=".1" inputmode="decimal"></label>
+        <label>Salt (g)<input id="lSalt" data-l="salt" type="number" min="0" max="100" step=".01" inputmode="decimal"></label>
+        <label>Serving size (g)<input id="lServing" type="number" min="1" max="2000" step=".5" inputmode="decimal" placeholder="optional"></label>
+      </div>
+      <p class="tiny muted" id="lCheck"></p>
+      <button class="primary full" type="button" id="labelSave">Save and choose amount</button>
+      <button class="link full" type="button" id="labelRetake">Retake photo</button>
     </div>
     <div data-pane="recent"><div id="recentFoods" class="foodResults"></div></div>
     <div data-pane="saved"><div id="savedMeals"></div></div>
@@ -398,4 +426,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="app.js?v=more1"></script><script src="common-foods.js?v=more1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=more1"></script><script src="food.js?v=search2"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="train.js?v=more1"></script><script src="plans.js?v=more1"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=more1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=more1"></script><script src="social.js?v=more1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=more1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="app.js?v=more1"></script><script src="common-foods.js?v=more1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=more1"></script><script src="label-reader.js?v=photo1"></script><script src="food.js?v=photo1"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="train.js?v=more1"></script><script src="plans.js?v=more1"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=more1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=more1"></script><script src="social.js?v=more1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=more1"></script></body></html>
