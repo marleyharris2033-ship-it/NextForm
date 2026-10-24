@@ -1097,3 +1097,8 @@ body.guidedOpen{overflow:hidden}
 .buildList li>span{flex:1}
 .stickySave{position:sticky;bottom:0;margin-top:14px;box-shadow:0 -8px 16px var(--snow)}
 .learnCard .figPair{justify-content:flex-start}
+/* "Sign in with Google" buttons, following Google's branding rules (light theme: white, grey outline, standard G) */
+.gsiBtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:10px 12px 10px 12px;border-radius:999px;background:#fff!important;border:1px solid #747775!important;color:#1f1f1f!important;font:500 15px/20px var(--text);white-space:nowrap}
+.gsiBtn .gLogo{width:20px;height:20px;flex-shrink:0}
+.gsiBtn:active{background:#f2f2f2!important}
+.offCredit{margin:12px 0 0;font-size:12px;color:var(--stone)}.offCredit a,#pSource a{color:inherit}

@@ -1,0 +1,10 @@
+Copyright (c) 2026 Marley Harris. All rights reserved.
+
+This repository is public so the NextForm app can be hosted, but the code, text,
+recipes, artwork and logo are not licensed for reuse. Please don't copy or
+redistribute them without permission. Contact: Nextformstudio@outlook.com
+
+Third-party components keep their own licences:
+- fonts/bricolage-grotesque.woff: SIL Open Font License 1.1 (see fonts/OFL.txt)
+- Libraries loaded at runtime (Firebase SDK, Tesseract.js, barcode-detector) and
+  Open Food Facts data: see credits.html
