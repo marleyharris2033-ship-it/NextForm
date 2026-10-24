@@ -1035,3 +1035,65 @@ body.simple .tabbar{grid-template-columns:repeat(6,1fr)}
 .rbTotals span{width:100%;font-size:12px;color:var(--stone);text-transform:uppercase;letter-spacing:.06em}
 .suggestRecipes .recipeCard{margin-bottom:8px}
 .rbAmt{flex-direction:row!important;font-weight:400}
+/* exercise pictures */
+.figPair{display:flex;gap:10px;justify-content:center;margin:8px 0}
+.figPair figure{margin:0;display:flex;flex-direction:column;align-items:center;background:#f4f7f1;border-radius:14px;padding:6px 6px 4px}
+.figPair figcaption{font-size:11.5px;color:var(--stone);font-weight:650;letter-spacing:.04em;text-transform:uppercase}
+.fig{display:block;max-width:100%;height:auto}
+/* guided mode */
+.guidedBtn{display:inline-flex;align-items:center;gap:6px}.guidedBtn svg{width:14px;height:14px;fill:currentColor}
+.guided{position:fixed;inset:0;z-index:1500;display:flex;flex-direction:column;background:#f6f8f4;color:var(--pine-deep);padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));overflow:auto}
+body.guidedOpen{overflow:hidden}
+.gTop{display:flex;align-items:center;gap:10px}
+.gTitle{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center}.gTitle b{font:700 16px var(--display)}.gTitle small{color:var(--stone);font-size:12.5px}
+.gIcon{width:44px;height:44px;border:0;border-radius:50%;background:var(--mist);display:grid;place-items:center}
+.gIcon svg{width:22px;height:22px;fill:none;stroke:var(--pine);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gProg{height:6px;border-radius:9px;background:var(--mist);margin:12px 0 4px;overflow:hidden}.gProg i{display:block;height:100%;background:var(--lichen);border-radius:9px;transition:width .4s}
+.gBody{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:520px;width:100%;margin:0 auto}
+.gName{font-size:clamp(24px,7vw,32px);text-align:center;margin:10px 0 0}.gSide{font:600 14px var(--text);color:var(--moss);text-transform:uppercase;letter-spacing:.06em;margin-left:6px}
+.gFig .figPair figure{background:#fff}
+.gFig.single{background:#fff;border-radius:20px;padding:6px}.gFig.mirror .fig{transform:scaleX(-1)}
+.gSet{width:100%;text-align:center}.gSet>span{font-weight:650;color:var(--moss)}
+.gTarget{display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.gStep{display:flex;align-items:center;gap:6px;background:#fff;border-radius:18px;padding:6px}
+.gStep button{width:44px;height:44px;border:0;border-radius:50%;background:var(--mist);font-size:22px;color:var(--pine)}
+.gStep b{font:800 30px var(--display);min-width:52px;text-align:center}.gStep small{color:var(--stone);margin-right:6px}
+.gTip{margin:8px 0 0;font-size:13.5px;color:var(--moss)}
+.gCues{width:100%;margin:6px 0 0;padding:12px 14px 12px 30px;border-radius:16px;background:#fff;font-size:14.5px;display:grid;gap:4px}
+.gCues.light{background:var(--mist)}
+.gNext{color:var(--stone);font-size:14px;margin:4px 0 0}
+.gActions{display:flex;align-items:center;gap:12px;max-width:520px;width:100%;margin:14px auto 0}
+.gActions.col{flex-direction:column}
+.gGo{flex:1;min-height:60px;border:0;border-radius:20px;background:var(--pine);color:#fff;font:700 19px var(--display)}
+.gNav{width:56px;height:56px;border:0;border-radius:50%;background:var(--mist)}.gNav:disabled{opacity:.35}
+.gNav svg{width:24px;height:24px;fill:none;stroke:var(--pine);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.gSmall{min-height:44px;padding:8px 14px;border:0;border-radius:14px;background:rgba(255,255,255,.18);color:inherit;font:650 14px var(--text)}
+.gActions .gSmall{background:var(--mist);color:var(--pine)}
+.gRest{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(170deg,#25563f,var(--pine) 55%,#122b23);color:#fff;text-align:center;padding:24px}
+.gRest p{margin:0;font:700 18px var(--display);opacity:.8;letter-spacing:.08em;text-transform:uppercase}.gRest>b{font:800 88px/1 var(--display);font-variant-numeric:tabular-nums}
+.gRest small{font-size:16px;opacity:.85;max-width:300px}.gRest .row{gap:10px;margin-top:18px}
+.gCenter{justify-content:center;text-align:center}.gBig{font-size:64px}
+.gClock{position:relative;width:150px;height:150px}.gClock svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gTrack{fill:none;stroke:var(--mist);stroke-width:10}.gArc{fill:none;stroke:var(--lichen);stroke-width:10;stroke-linecap:round;transition:stroke-dasharray .25s linear}
+.gClock b{position:absolute;inset:0;display:grid;place-items:center;font:800 44px var(--display);margin-top:-12px}.gClock small{position:absolute;left:0;right:0;bottom:38px;text-align:center;color:var(--stone);font-weight:650}
+/* stretch & yoga */
+.stretchPicks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stretchPick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:0;border-radius:14px;background:var(--mist);font:inherit;color:var(--pine-deep);text-align:center}
+.stretchPick b{font-size:12.5px;line-height:1.2}.stretchPick small{font-size:11.5px;color:var(--stone)}
+.spFig{display:block;border-radius:10px;background:#fff;flex-shrink:0}
+.segTabs{margin-bottom:6px}
+.routineList{display:grid;gap:8px}
+.routineCard{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:0;border-left:4px solid var(--c);border-radius:var(--r-md);background:var(--mist);text-align:left;font:inherit;color:var(--pine-deep)}
+.rAbout{display:block;margin-top:2px}
+.poseGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.poseGrid.small{grid-template-columns:repeat(4,1fr)}
+.poseTile{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:0;border-radius:14px;background:var(--mist);font:inherit;color:var(--pine-deep);text-align:center}
+.poseTile .fig{background:#fff;border-radius:10px}.poseTile b{font-size:12px;line-height:1.2}.poseTile small{font-size:11px;color:var(--stone)}
+.rdTitle{font-size:24px;margin:4px 0}
+.startFlow{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0}
+.flowList{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.flowRow{display:flex;align-items:center;gap:12px;width:100%;padding:6px;border:0;border-radius:14px;background:var(--mist);text-align:left;font:inherit;color:var(--pine-deep)}
+.flowRow span:last-child{display:flex;flex-direction:column}.flowRow small{color:var(--stone)}
+.poseHero{display:flex;justify-content:center;background:var(--mist);border-radius:20px;padding:6px}
+.buildList li>span{flex:1}
+.stickySave{position:sticky;bottom:0;margin-top:14px;box-shadow:0 -8px 16px var(--snow)}
+.learnCard .figPair{justify-content:flex-start}

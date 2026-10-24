@@ -224,8 +224,47 @@ const CHALLENGES=[
 ["level5","Bronze Bound","Reach level 5",5,300,d=>levelInfo(d.xp).level],
 ["level10","Double Digit Level","Reach level 10",10,700,d=>levelInfo(d.xp).level],
 ["long75","Long Haul","Complete a 75+ minute workout",1,150,d=>d.workouts.filter(w=>w.duration>=75).length],
-["earlyvar","Variety Pack","Complete 4 different workout types",4,400,d=>new Set(d.workouts.map(w=>w.type)).size]
+["earlyvar","Variety Pack","Complete 4 different workout types",4,400,d=>new Set(d.workouts.map(w=>w.type)).size],
+// ----- every activity (category is the 7th item) -----
+["ride1","First Ride","Log a bike ride",1,100,d=>qType(d,"Cycling").length,"Activities"],
+["ride100","Century Wheels","Cycle 100 km in total",100,400,d=>Math.floor(qSum(qType(d,"Cycling"),"distance")),"Activities"],
+["ride50m","Monthly Miles","Cycle 50 km in one calendar month",50,350,d=>Math.floor(qMaxPer(qType(d,"Cycling"),w=>String(w.date).slice(0,7),w=>+w.distance||0)),"Activities"],
+["swim1","Making Waves","Log a swim",1,100,d=>qType(d,"Swimming").length,"Activities"],
+["swim5k","Five K Swimmer","Swim 5,000 m in total",5000,400,d=>qSum(qType(d,"Swimming"),"metres"),"Activities"],
+["swim10","Lane Regular","Complete 10 swims",10,350,d=>qType(d,"Swimming").length,"Activities"],
+["walk10","Out and About","Log 10 walks or hikes",10,200,d=>qType(d,"Walking").length,"Activities"],
+["walk50","Fifty K Walker","Walk or hike 50 km in total",50,350,d=>Math.floor(qSum(qType(d,"Walking"),"distance")),"Activities"],
+["walkweek","Step Week","Log 7 walks in one week",7,300,d=>qMaxPer(qType(d,"Walking"),w=>weekKey(w.date),()=>1),"Activities"],
+["hiit1","Heart Starter","Complete a HIIT session",1,100,d=>qType(d,"HIIT").length,"Activities"],
+["hiit10","Interval Engine","Complete 10 HIIT sessions",10,350,d=>qType(d,"HIIT").length,"Activities"],
+["hiit300","300 Hot Minutes","Do 300 minutes of HIIT",300,400,d=>qSum(qType(d,"HIIT"),"duration"),"Activities"],
+["sport5","Team Player","Play 5 sports sessions",5,250,d=>qType(d,"Sports").length,"Activities"],
+["sport3","All-Sport","Play 3 different sports",3,300,d=>new Set(qType(d,"Sports").map(w=>w.activity).filter(Boolean)).size,"Activities"],
+["pullup1","First Pull-Up","Log a pull-up or chin-up",1,250,d=>d.workouts.some(w=>(w.exercises||[]).some(e=>/pull-up|chin-up|muscle-up/i.test(e.name)&&setsOf(e).some(s=>+s.reps>0)))?1:0,"Activities"],
+["push100","Push-Up Century","Do 100 push-ups in one week",100,300,d=>qMaxPer(d.workouts,w=>weekKey(w.date),w=>(w.exercises||[]).filter(e=>/push-up/i.test(e.name)).reduce((a,e)=>a+setsOf(e).reduce((b,s)=>b+(+s.reps||0),0),0)),"Activities"],
+["cali20","Bodyweight Boss","Complete 20 calisthenics sessions",20,450,d=>qType(d,"Calisthenics").length,"Activities"],
+["mob1","Bend, Don't Break","Complete a stretch or yoga session",1,100,d=>qType(d,"Mobility").length,"Activities"],
+["mob7","Flexible Week","Stretch or do yoga 7 days in a row",7,400,d=>qRun(qType(d,"Mobility").map(w=>w.date)),"Activities"],
+["mob30","Supple","Complete 30 stretch or yoga sessions",30,600,d=>qType(d,"Mobility").length,"Activities"],
+["types5m","Decathlete","Do 5 different activity types in one month",5,450,d=>{const m={};for(const w of d.workouts){const k=String(w.date).slice(0,7);(m[k]=m[k]||new Set).add(w.type||"Strength")}return Math.max(0,...Object.values(m).map(x=>x.size))},"Activities"],
+["daily7","Every Single Day","Train 7 days in a row",7,500,d=>qRun(d.workouts.map(w=>w.date)),"Activities"],
+// ----- food, friends and stories -----
+["food7","Food Diary","Log food 7 days in a row",7,250,d=>qRun((d.foodLog||[]).map(e=>e.date)),"Food & friends"],
+["protein5","Protein Pro","Hit your protein target on 5 days",5,300,d=>{const t=window.foodTargets?.()?.protein||0;if(!t)return 0;const by={};for(const e of d.foodLog||[])by[e.date]=(by[e.date]||0)+(+e.protein||0);return Object.values(by).filter(p=>p>=t).length},"Food & friends"],
+["cook5","Home Cook","Log 5 NextForm or your own recipes",5,250,d=>(d.foodLog||[]).filter(e=>/recipe/i.test(e.brand||"")).length,"Food & friends"],
+["myrecipe","Signature Dish","Create your own recipe",1,150,d=>(d.recipes||[]).length,"Food & friends"],
+["scan20","Label Reader","Log 20 different packaged foods",20,250,d=>new Set((d.foodLog||[]).map(e=>e.code).filter(Boolean)).size,"Food & friends"],
+["friend1","Squad Up","Add a friend in NextForm",1,150,d=>+d.profile?.social?.friendsMax||0,"Food & friends"],
+["kudos10","Cheerleader","Give 10 kudos to friends",10,200,d=>+d.profile?.social?.kudosGiven||0,"Food & friends"],
+["party3","Party Animal","Complete 3 weekly party quests",3,400,d=>(d.storyLog||[]).filter(x=>String(x.id).startsWith("party-")).length,"Food & friends"],
+["story1","Storyteller","Finish a monthly story quest",1,300,d=>(d.storyLog||[]).filter(x=>/-c4$/.test(x.id)).length,"Food & friends"],
+["story3","Saga","Finish 3 monthly story quests",3,700,d=>(d.storyLog||[]).filter(x=>/-c4$/.test(x.id)).length,"Food & friends"]
 ];
+// Quest helpers
+function qType(d,t){return (d.workouts||[]).filter(w=>w.type===t)}
+function qSum(list,k){return list.reduce((s,w)=>s+(+w[k]||0),0)}
+function qMaxPer(list,key,val){const m={};for(const w of list){const k=key(w);m[k]=(m[k]||0)+val(w)}return Math.max(0,...Object.values(m))}
+function qRun(dates){const days=[...new Set(dates.filter(Boolean))].map(x=>Math.round(new Date(x+"T12:00:00")/864e5)).sort((a,b)=>a-b);let best=0,run=0,prev=null;for(const x of days){run=prev!==null&&x===prev+1?run+1:1;best=Math.max(best,run);prev=x}return best}
 
 const Y=q=>"https://www.youtube.com/results?search_query="+encodeURIComponent(q);
 const defaults={profile:{name:"",age:32,height:185,sex:"male",goalWeight:null,photo:"",setupComplete:false},weights:[],workouts:[],xp:0,theme:"dark",plans:[],schedule:{},claimedChallenges:[],deletedWorkouts:[],foodLog:[],deletedFood:[],nutrition:{},lastExport:null,updatedAt:0,version:3};
@@ -708,7 +747,7 @@ function drawWeight(){
 $("#trendMode").onchange=drawWeight;
 let activeCat="All";function renderLearn(){let cats=["All","Calisthenics",...new Set(EXERCISES.map(e=>e.cat))];$("#categoryChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeCat?"active":""}" data-cat="${c}">${c}</button>`).join("");$$("#categoryChips .chip").forEach(b=>b.onclick=()=>{activeCat=b.dataset.cat;renderLearn()});let q=$("#learnSearch").value.toLowerCase(),list=EXERCISES.filter(e=>(activeCat==="All"||e.cat===activeCat||(activeCat==="Calisthenics"&&e.cali))&&e.name.toLowerCase().includes(q));
   // Compact list: tap an exercise to see its tips and the form video.
-  $("#exerciseLibrary").innerHTML=`<p class="libCount muted small">${list.length} exercise${list.length===1?"":"s"}</p>`+list.map(e=>`<details class="learnCard"><summary><span><b>${esc(e.name)}</b><small>${esc(e.cat)}${e.timed?", timed hold":""}${e.cali?", bodyweight":""}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><ul>${e.cues.map(c=>`<li>${esc(c)}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></details>`).join("")||`<p class="muted">No exercises match “${esc(q)}”.</p>`}$("#learnSearch").oninput=renderLearn;
+  $("#exerciseLibrary").innerHTML=`<p class="libCount muted small">${list.length} exercise${list.length===1?"":"s"}</p>`+list.map(e=>`<details class="learnCard"><summary><span><b>${esc(e.name)}</b><small>${esc(e.cat)}${e.timed?", timed hold":""}${e.cali?", bodyweight":""}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>${window.Figures?.pictures(e.name,120)||""}<ul>${e.cues.map(c=>`<li>${esc(c)}</li>`).join("")}</ul><a href="${Y(e.q)}" target="_blank" rel="noopener">▶ Watch form guide</a></details>`).join("")||`<p class="muted">No exercises match “${esc(q)}”.</p>`}$("#learnSearch").oninput=renderLearn;
 function renderProfile(){setAvatar($("#profilePhotoPreview"),data.profile.photo,data.profile.name);$("#name").value=data.profile.name||"";$("#age").value=data.profile.age||32;$("#height").value=data.profile.height||185;$("#sex").value=data.profile.sex||"male";$("#weekGoal").value=String(weekGoal());$("#encourageOn").checked=data.profile.encourage!==false;$("#simpleMode").checked=!!data.profile.simple}$("#saveProfile").onclick=()=>{data.profile.weekGoal=+$("#weekGoal").value||3;data.profile.encourage=$("#encourageOn").checked;data.profile.simple=$("#simpleMode").checked;data.profile.name=$("#name").value.trim();data.profile.age=+$("#age").value||32;data.profile.height=+$("#height").value||185;data.profile.sex=$("#sex").value;data.profile.setupComplete=true;save();alert("Profile saved.")};$("#themeBtn").onclick=()=>{data.theme=data.theme==="light"?"dark":"light";save()};$("#exportBtn").onclick=()=>{let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=`nextform-backup-${today()}.json`;a.click();URL.revokeObjectURL(u);data.lastExport=Date.now();save()};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=="object"||!Array.isArray(o.workouts))throw 0;if(!confirm(`Replace this device's data with the backup (${o.workouts.length} workouts)?`))return;data=normalize(o);save();alert("Backup imported.")}catch{alert("That file isn't a NextForm backup.")}finally{e.target.value=""}};r.readAsText(f)};$("#deleteAccount")?.addEventListener("click",async()=>{
   if(!confirm("Delete your NextForm account? This permanently deletes your backup (workouts, food, weights, plans and profile) and signs you out on every device. This can't be undone."))return;
   if((prompt('Type DELETE to confirm')||"").trim().toUpperCase()!=="DELETE")return alert("Account not deleted.");
@@ -755,8 +794,8 @@ let activeChallengeCat="All";
 function challengeStatus(c){let cur=Math.max(0,c[5](data)),target=c[3];return{cur:Math.min(cur,target),target,done:cur>=target,pct:Math.min(100,cur/target*100)}}
 function claimChallenge(id){let c=CHALLENGES.find(x=>x[0]===id),s=c&&challengeStatus(c);if(!c||!s.done||data.claimedChallenges.includes(id))return;data.claimedChallenges.push(id);data.claimTimes={...(data.claimTimes||{}),[id]:Date.now()};data.xp+=c[4];save()}
 function renderChallenges(){
- let cats=["All","Workout","Progress","Special"];$("#challengeChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeChallengeCat?"active":""}" onclick="setChallengeCat('${c}')">${c}</button>`).join("");
- let list=CHALLENGES.filter((c,i)=>activeChallengeCat==="All"||(activeChallengeCat==="Workout"&&i<10)||(activeChallengeCat==="Progress"&&i>=10&&i<24)||(activeChallengeCat==="Special"&&i>=24));
+ let cats=["All","Workout","Progress","Special","Activities","Food & friends"];$("#challengeChips").innerHTML=cats.map(c=>`<button class="chip ${c===activeChallengeCat?"active":""}" data-qcat="${c}">${c}</button>`).join("");$$("#challengeChips [data-qcat]").forEach(b=>b.onclick=()=>setChallengeCat(b.dataset.qcat));
+ const catOf=(c,i)=>c[6]||(i<10?"Workout":i<24?"Progress":"Special");let list=CHALLENGES.filter((c,i)=>activeChallengeCat==="All"||catOf(c,i)===activeChallengeCat);
  $("#challengeList").innerHTML=list.map(c=>{let s=challengeStatus(c),claimed=data.claimedChallenges.includes(c[0]);return `<div class="challengeCard ${s.done?"done":""}"><div class="challengeTop"><div><b>${c[1]}</b><p>${c[2]}</p></div><span class="challengeXP">+${c[4]} XP</span></div><div class="challengeProgress"><i style="width:${s.pct}%"></i></div><div class="challengeFoot"><span>${s.cur.toLocaleString()} / ${s.target.toLocaleString()}</span>${s.done&&!claimed?`<button class="primary" onclick="claimChallenge('${c[0]}')">Claim</button>`:claimed?"✓ Claimed":""}</div></div>`}).join("");
  let ready=CHALLENGES.filter(c=>challengeStatus(c).done&&!data.claimedChallenges.includes(c[0])).slice(0,3);
  $("#challengePreview").innerHTML=ready.length?ready.map(c=>`<div class="challengeCard done"><div class="challengeTop"><b>${c[1]}</b><span class="challengeXP">+${c[4]} XP</span></div><p>Ready to claim</p><button class="primary" onclick="claimChallenge('${c[0]}')">Claim reward</button></div>`).join(""):`<p class="muted">Keep training — your next challenges are in the Quest Hub.</p>`;
