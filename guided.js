@@ -85,6 +85,7 @@
       <div class="gBody">
         <h2 class="gName">${esc(ex.name)}</h2>
         <div class="gFig">${window.Figures?.pictures(ex.name, 150) || ''}</div>
+        ${window.FormVideos ? `<div class="gWatch">${FormVideos.button(ex.name)}</div>` : ''}
         <div class="gSet"><span>Set ${w.si + 1} of ${ex.sets.length}${st.done ? ' · done' : ''}</span>
           <div class="gTarget">${timed ? `<div class="gStep"><button type="button" data-g="reps" data-d="-5" aria-label="5 seconds less">−</button><b id="gReps">${st.reps || 30}</b><small>sec</small><button type="button" data-g="reps" data-d="5" aria-label="5 seconds more">+</button></div>`
             : `<div class="gStep"><button type="button" data-g="kg" data-d="-2.5" aria-label="Less weight">−</button><b id="gKg">${+st.kg ? g1(st.kg) : 0}</b><small>kg</small><button type="button" data-g="kg" data-d="2.5" aria-label="More weight">+</button></div>
