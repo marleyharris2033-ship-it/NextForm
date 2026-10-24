@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { planSignIn, mergeData, readCloud, mergeIntoCloud } from './sync-core.js?v=launch1';
+import { planSignIn, mergeData, readCloud, mergeIntoCloud } from './sync-core.js?v=more1';
 
 const SDK = 'https://www.gstatic.com/firebasejs/13.1.0/';
 const panel = document.getElementById('accountCard');
@@ -15,6 +15,8 @@ let user = null, unsubscribe = null, pushTimer = null, retryTimer = null, pushin
 // Exposed to app.js (backup reminder, reset).
 window.NextFormCloud = {
   get signedIn() { return !!user && ready; },
+  // For the friends feature (social.js): only once signed in and synced.
+  get firestore() { return user && ready && fs && db ? { fs, db, uid: user.uid, displayName: user.displayName || '' } : null; },
   async deleteCloud() {
     if (!user) return;
     const snap = await fs.getDoc(userDoc());
@@ -28,6 +30,7 @@ window.NextFormCloud = {
   async deleteAccount() {
     const account = auth?.currentUser || user;
     if (!account) throw new Error('not signed in');
+    try { await window.NextFormSocial?.removeEverything(); } catch {}
     stopSyncTimers();
     await window.NextFormCloud.deleteCloud();
     try { await sdk.deleteUser(account); }
@@ -164,6 +167,7 @@ async function runStartSync(u) {
     if (plan.action !== 'upload') NF.replace(plan.data);
     localStorage.setItem(NF.OWNER_KEY, u.uid);
     ready = true;
+    window.dispatchEvent(new Event('nextform-cloud-ready'));
     if (plan.action === 'download' || (plan.action === 'replace-foreign' && plan.data)) {
       localStorage.removeItem(NF.DIRTY_KEY);
       syncState('ok', `Restored from your Google account · ${timeLabel()}`);

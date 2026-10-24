@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=2">
-<link rel="stylesheet" href="ui.css?v=engage1">
+<link rel="stylesheet" href="ui.css?v=more1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -61,7 +61,7 @@
 <section id="home" class="page active">
 <div id="resumeBanner"></div>
 <div id="backupNudge" class="card backupNudge hidden"><h2>Back up your training</h2><p id="nudgeText" class="muted"></p><div class="row wrap"><button id="nudgeSignIn" class="primary" type="button">Sign in with Google</button><button id="nudgeExport" class="secondary" type="button">Export backup</button></div></div>
-<div class="ascent" aria-label="Level progress">
+<div class="ascent game" aria-label="Level progress">
   <svg class="contours" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <path d="M-20 170 C60 150 90 120 150 128 S260 165 380 120"/><path d="M-20 145 C50 125 95 92 155 100 S255 140 380 92"/>
     <path d="M-20 118 C45 100 100 64 160 72 S250 110 380 62"/><path d="M-20 92 C40 76 104 38 166 46 S246 82 380 34"/>
@@ -88,6 +88,7 @@
   <p id="weekInsight" class="insight">Log a workout to start your weekly report.</p>
 </div>
 <div class="card weekReview hidden" id="weekReview"></div>
+<div class="card friendsCard hidden" id="friendsCard"></div>
 
 <button type="button" class="card fuelCard" data-go="food" aria-label="Open food log">
   <div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1.2-1.6-4-2-5.6-.4C4.6 8.4 5 12.6 7 16c1.3 2.2 3 4 5 3 2 1 3.7-.8 5-3 2-3.4 2.4-7.6.6-9.4C16 5 13.2 5.4 12 7z"/><path d="M12 7c0-1.8.8-3 2.2-3.6"/></svg></span><h2>Food today</h2></div><span class="muted" id="fuelLeft"></span></div>
@@ -102,9 +103,9 @@
 </div>
 
 <div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M10 20V4M15 20v-7M20 20v-11"/></svg></span><h2>Activity</h2></div><span class="muted">Minutes, last 14 days</span></div><div id="activityBars" class="bars"></div><ul class="typeKey" id="typeKey"></ul></div>
-<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 8v8M9 11l3-3 3 3"/></svg></span><h2>Skills</h2></div><span class="muted" id="totalLevel"></span></div><p class="muted small skillIntro">Every set levels the muscles it trains. New records give bonus XP.</p><div class="skillList" id="skillList"></div></div>
-<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="5"/><path d="M9 4l3 5 3-5M12 12v4"/></svg></span><h2>Achievements</h2></div><button class="link" data-go="progress">See all</button></div><div id="achievementPreview"></div></div>
-<div class="card"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg></span><h2>Quests</h2></div><button class="link" data-go="challenges">See all</button></div><div id="challengePreview"></div></div>
+<div class="card game"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 8v8M9 11l3-3 3 3"/></svg></span><h2>Skills</h2></div><span class="muted" id="totalLevel"></span></div><p class="muted small skillIntro">Every set levels the muscles it trains. New records give bonus XP.</p><div class="skillList" id="skillList"></div></div>
+<div class="card game"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="5"/><path d="M9 4l3 5 3-5M12 12v4"/></svg></span><h2>Achievements</h2></div><button class="link" data-go="progress">See all</button></div><div id="achievementPreview"></div></div>
+<div class="card game"><div class="sectionHead"><div class="secTitle"><span class="secIcon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg></span><h2>Quests</h2></div><button class="link" data-go="challenges">See all</button></div><div id="storyPreview"></div><div id="challengePreview"></div></div>
 </section>
 
 
@@ -113,6 +114,7 @@
   <div class="trainHero"><img src="train-hero.webp" alt="" width="900" height="474"><div class="heroShade"></div><span class="logo heroLogo" aria-hidden="true"></span><div class="heroText"><p id="heroKicker">Ready when you are</p><h2 id="heroTitle">Let’s train</h2></div></div>
   <div id="todayPlan"></div>
   <div id="todaySuggest"></div>
+  <div id="repeatLast"></div>
   <button type="button" class="primary full startBig" id="startEmpty">Start workout</button>
   <p class="quickHead">Or pick a type</p>
   <div class="quickTypes" id="quickTypes" aria-label="Start a different kind of session"></div>
@@ -155,6 +157,7 @@
 
 <section id="progress" class="page">
 <div class="card"><div class="row between"><h2>Body weight</h2><button class="secondary" id="showWeight">+ Add</button></div><div id="weightEntry" class="form3 hidden"><input id="weightValue" type="number" step=".1" placeholder="kg"><input id="weightDate" type="date"><button id="saveWeight" class="primary">Save</button></div><canvas id="weightChart" height="230"></canvas><div class="form2 topgap"><label>Goal weight<input id="goalWeight" type="number" step=".1" placeholder="kg"></label><label>Weight trend<select id="trendMode"><option value="raw">Raw weights</option><option value="avg">Smoothed average</option></select></label></div><button class="secondary full" id="saveGoal">Save goal</button></div>
+<div class="card goalCard" id="goalCard"></div>
 <div class="card"><h2>Personal bests</h2><div id="pbs"></div></div><div class="card"><h2>Exercise history</h2><select id="historyExercise"></select><div id="exerciseChartBox" class="exChartBox hidden"><div class="exStat" id="exerciseStat"></div><canvas id="exerciseChart" height="190" aria-label="Progress chart for the chosen exercise"></canvas></div><div id="exerciseHistory"></div></div><div class="card"><h2>Achievements</h2><div id="achievements" class="achievementGrid"></div></div>
 <div class="card">
   <div class="row between">
@@ -182,6 +185,7 @@
     <dl class="kcalFacts"><div><dt>Eaten</dt><dd id="kcalEaten">0</dd></div><div><dt>Target</dt><dd id="kcalTarget">0</dd></div></dl>
   </div>
   <div class="macros" id="macroBars"></div>
+  <div class="extraNutrients" id="extraNutrients"></div>
   <p class="kindNote hidden" id="kindNote"></p>
   <button type="button" class="suggestBtn hidden" id="suggestMeal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>Suggest a meal</b><small id="suggestHint">Fill what’s left of today’s macros</small></span></button>
 </div>
@@ -207,6 +211,7 @@
 </section>
 
 <section id="challenges" class="page">
+<div class="card storyCard game" id="storyCard"></div>
 <div class="card"><p class="muted">Finish quests for bonus XP. Progress updates from your workout history.</p>
 <div class="chips" id="challengeChips"></div></div>
 <div id="challengeList"></div>
@@ -231,7 +236,7 @@
     <span>Change photo</span>
   </label>
   <div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
-</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><label class="toggleRow"><input type="checkbox" id="encourageOn"><span><b>Quotes and encouragement</b><small>A daily quote on Home and kind words after workouts, during rest and on the food page.</small></span></label><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card helpCard"><h2>Help &amp; legal</h2>
+</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><label class="toggleRow"><input type="checkbox" id="simpleMode"><span><b>Simple mode</b><small>Hide levels, XP, skills and quests. Just log your training and food.</small></span></label><label class="toggleRow"><input type="checkbox" id="encourageOn"><span><b>Quotes and encouragement</b><small>A daily quote on Home and kind words after workouts, during rest and on the food page.</small></span></label><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card socialCard" id="socialCard"></div><div class="card helpCard"><h2>Help &amp; legal</h2>
   <a class="helpRow" href="mailto:Nextformstudio@outlook.com?subject=NextForm%20feedback"><span><b>Contact us</b><small>Questions, bugs or ideas: Nextformstudio@outlook.com</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
   <a class="helpRow" href="privacy.html"><span><b>Privacy policy</b><small>What NextForm stores and your rights</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
   <a class="helpRow" href="terms.html"><span><b>Terms of use</b><small>Including: NextForm isn't medical advice</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
@@ -322,7 +327,7 @@
   <div class="sheetHead"><span></span><h2 id="shareTitle">Share your progress</h2><button type="button" class="iconBtn" id="shareClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody">
     <p class="muted small">Makes an image sized for Instagram Stories. Share it straight to an app, or save it to your photos.</p>
-    <button type="button" class="shareOpt" data-share="level"><span class="soIcon" style="--c:var(--lichen)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8"/></svg></span><span><b>My level</b><small>Your level, rank and XP ring</small></span></button>
+    <button type="button" class="shareOpt game" data-share="level"><span class="soIcon" style="--c:var(--lichen)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8"/></svg></span><span><b>My level</b><small>Your level, rank and XP ring</small></span></button>
     <button type="button" class="shareOpt" data-share="month"><span class="soIcon" style="--c:var(--glacier)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span><b>My month</b><small>Workouts, time, weight lifted and PBs</small></span></button>
   </div>
 </div>
@@ -380,6 +385,7 @@
     <div class="rewardMedal"><svg viewBox="0 0 120 120" id="rewardRing" aria-hidden="true"></svg><span id="rewardGrade">A</span></div>
     <p class="rewardXp">+<b id="rewardXp">0</b> XP</p>
     <p class="rewardAffirm" id="rewardAffirm"></p>
+    <p id="rewardSummary" class="rewardSummary"></p>
     <div class="rewardLevel">
       <div class="rewardLevelHead"><span id="rewardLevelName">Level 9</span><span id="rewardLevelNext"></span></div>
       <div class="rewardBar"><i id="rewardBar"></i></div>
@@ -392,4 +398,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=engage1"></script><script src="rpg.js?v=engage1"></script><script src="app.js?v=engage1"></script><script src="common-foods.js?v=engage1"></script><script src="meal-suggest.js?v=engage1"></script><script src="adaptive.js?v=engage1"></script><script src="encourage.js?v=engage1"></script><script src="food.js?v=engage1"></script><script src="coach.js?v=engage1"></script><script src="today-session.js?v=engage1"></script><script src="train.js?v=engage1"></script><script src="plans.js?v=engage1"></script><script src="log-edit.js?v=engage1"></script><script src="insights.js?v=engage1"></script><script src="share.js?v=engage1"></script><script src="welcome.js?v=engage1"></script><script type="module" src="auth.js?v=engage1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="app.js?v=more1"></script><script src="common-foods.js?v=more1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=more1"></script><script src="food.js?v=more1"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="train.js?v=more1"></script><script src="plans.js?v=more1"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=more1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=more1"></script><script src="social.js?v=more1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=more1"></script></body></html>

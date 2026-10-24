@@ -128,7 +128,8 @@ function levelBreakdown(d, challenges) {
   const at = ds => new Date(String(ds) + 'T12:00:00').getTime() || 0;
   const events = [
     ...(d.workouts || []).map(w => ({ t: at(w.date), id: String(w.id), xp: +w.result?.xp || 0, w })),
-    ...(d.claimedChallenges || []).map(id => ({ t: +(d.claimTimes || {})[id] || 0, id, xp: +(challenges.find(c => c[0] === id)?.[4]) || 0, quest: true }))
+    ...(d.claimedChallenges || []).map(id => ({ t: +(d.claimTimes || {})[id] || 0, id, xp: +(challenges.find(c => c[0] === id)?.[4]) || 0, quest: true })),
+    ...(d.storyLog || []).map(s => ({ t: +s.t || 0, id: String(s.id), xp: +s.xp || 0, quest: true }))
   ].filter(e => e.xp > 0).sort((a, b) => b.t - a.t || (b.id > a.id ? 1 : -1));
   let left = l.into;
   for (const e of events) {

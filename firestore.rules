@@ -20,6 +20,55 @@ service cloud.firestore {
         && request.resource.data.payload.size() < 900000
         && request.resource.data.updatedAt is int;
     }
+    // ---------- Friends (optional; off until the user turns it on) ----------
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function isFriendOf(owner) { return exists(/databases/$(database)/documents/friends/$(owner)/list/$(me())); }
+    function shortName(n) { return n is string && n.size() > 0 && n.size() <= 40; }
+
+    // Friend codes: look one up by its exact code (no listing), create your own, delete your own.
+    match /codes/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && code.matches('^[A-Z2-9]{6}$')
+        && request.resource.data.keys().hasOnly(['uid']) && request.resource.data.uid == me();
+      allow delete: if signedIn() && resource.data.uid == me();
+    }
+    // Public card: readable by you and your friends only.
+    match /profiles/{uid} {
+      allow get: if signedIn() && (me() == uid || isFriendOf(uid));
+      allow create, update: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['name', 'level', 'rank', 'weekCount', 'weekGoal', 'streak', 'recent', 'code', 'week', 'updatedAt'])
+        && shortName(request.resource.data.name)
+        && request.resource.data.recent is list && request.resource.data.recent.size() <= 5
+        && request.resource.data.level is int && request.resource.data.weekCount is int;
+      allow delete: if signedIn() && me() == uid;
+    }
+    // Friend requests: {to}/in/{from}. Only the sender can create; only the receiver can list.
+    match /requests/{to}/in/{from} {
+      allow create: if signedIn() && me() == from && from != to
+        && request.resource.data.keys().hasOnly(['name', 'at']) && shortName(request.resource.data.name) && request.resource.data.at is int;
+      allow read: if signedIn() && me() == to;
+      allow delete: if signedIn() && (me() == to || me() == from);
+    }
+    // Friendships, stored on both sides. A side can only be added by someone who received a request
+    // from the other person, so nobody can add themselves to a stranger's list.
+    match /friends/{owner}/list/{other} {
+      allow read: if signedIn() && me() == owner;
+      allow create: if signedIn() && owner != other
+        && request.resource.data.keys().hasOnly(['since']) && request.resource.data.since is int
+        && ((me() == owner && exists(/databases/$(database)/documents/requests/$(owner)/in/$(other)))
+          || (me() == other && exists(/databases/$(database)/documents/requests/$(other)/in/$(owner))));
+      allow delete: if signedIn() && (me() == owner || me() == other);
+    }
+    // Kudos: friends can leave one per workout; only you can read and clear yours.
+    match /kudos/{to}/in/{id} {
+      allow create: if signedIn() && isFriendOf(to) && id.split('_')[0] == me()
+        && request.resource.data.keys().hasOnly(['from', 'name', 'workout', 'at'])
+        && request.resource.data.from == me() && shortName(request.resource.data.name)
+        && request.resource.data.workout is string && request.resource.data.workout.size() <= 40 && request.resource.data.at is int;
+      allow read, delete: if signedIn() && me() == to;
+    }
+
     // Everything else is closed.
     match /{document=**} {
       allow read, write: if false;
