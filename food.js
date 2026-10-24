@@ -405,7 +405,7 @@
   async function searchNew(q, ms) {
     const json = await fetchJSON(`${OFF_SEARCH_NEW}?q=${encodeURIComponent(q)}&langs=en&page_size=24&fields=${OFF_FIELDS}`, ms);
     if (!Array.isArray(json?.hits)) throw new Error('bad response');
-    const list = json.hits.map(fromOFF), missing = list.filter(p => !p.per && p.code).slice(0, 8);
+    const list = json.hits.map(fromOFF), missing = list.filter(p => !p.per && p.code).slice(0, 3); // Open Food Facts allows 15 product reads a minute
     await Promise.all(missing.map(async p => { try { const full = await findBarcode(p.code); if (full?.per) Object.assign(p, full); } catch {} }));
     return list.filter(p => p.per);
   }
@@ -422,8 +422,11 @@
         const seen = new Set(); resolve(got.filter(p => { const k = p.code || `${p.name}|${p.brand}`; if (seen.has(k)) return false; seen.add(k); return true; })); };
       const settle = () => { if (!--pending) got.length || empty ? finish() : (finished = true, reject(new Error('unavailable'))); };
       const done = list => { if (list.length) { got = got.concat(list); if (!timer && pending > 1) timer = setTimeout(finish, 1200); } else empty = true; settle(); };
-      searchNew(q, ms).then(done, settle);
-      searchOld(q, ms).then(done, settle);
+      // The older search is limited to 10 a minute per person, so only use it if the newer one is slow or fails.
+      let oldStarted = false;
+      const startOld = () => { if (oldStarted || finished) return; oldStarted = true; searchOld(q, ms).then(done, settle); };
+      const oldTimer = setTimeout(startOld, 2500);
+      searchNew(q, ms).then(list => { if (!list.length) startOld(); else if (!oldStarted) { clearTimeout(oldTimer); pending--; } done(list); }, () => { startOld(); settle(); });
     });
   }
   let searchSeq = 0;
@@ -444,7 +447,8 @@
       const groups = [['Your recent foods', recent], ['Everyday foods', common], [fromCache ? 'Open Food Facts (saved from an earlier search)' : 'From Open Food Facts', onl], ['Seen before', online.length ? [] : extra]].filter(g => g[1].length);
       const all = groups.flatMap(g => g[1]);
       let i = 0;
-      out.innerHTML = groups.map(([title, list]) => `<p class="resultHead">${title}</p>` + list.map(p => resultRow(p, i++)).join('')).join('');
+      out.innerHTML = groups.map(([title, list]) => `<p class="resultHead">${title}</p>` + list.map(p => resultRow(p, i++)).join('')).join('')
+        + (onl.length || extra.length ? OFF_CREDIT : '');
       out.onclick = ev => { const b = ev.target.closest('[data-i]'); if (b) { const p = all[+b.dataset.i]; if (p.code && !p.lastAmount) rememberProduct(p); showPortion(p, p.lastAmount ? { grams: p.lastAmount } : {}); } };
       status.textContent = note;
     };
@@ -472,6 +476,7 @@
       : 'Open Food Facts is down right now (it’s a free service and has outages). Scanning the barcode often still works, or take a photo of the label (Photo tab).');
     return -1; // service down
   }
+  const OFF_CREDIT = '<p class="offCredit">Product data © <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a> contributors, <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL</a>.</p>';
   function resultRow(p, i) {
     return `<button type="button" class="foodResult" data-i="${i}"><span><b>${esc(p.name)}</b><small>${esc([p.brand === 'Common food' ? '' : p.brand, p.unit === 'g' ? `${fmt(p.per.kcal)} kcal per 100 g` : `${fmt(p.per.kcal)} kcal per portion`, p.per.protein >= 1 ? `${g1(p.per.protein)} g protein` : ''].filter(Boolean).join(', '))}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
   }
@@ -522,7 +527,9 @@
       ? [product.servingG && { g: product.servingG, label: `1 serving (${g1(product.servingG)} g)` }, product.servingG && { g: product.servingG * 2, label: '2 servings' }, { g: 100, label: '100 g' }].filter(Boolean)
       : [{ g: 0.5, label: 'Half' }, { g: 1, label: '1 portion' }, { g: 2, label: '2 portions' }];
     $('#pQuick').innerHTML = quick.map(q => `<button type="button" class="chip" data-g="${q.g}">${esc(q.label)}</button>`).join('');
-    $('#pSource').textContent = product.fromLabel ? 'From your photo of the label.' : product.code ? `Nutrition from Open Food Facts${product.servingLabel ? `. Serving on pack: ${product.servingLabel}` : ''}.` : product.brand === 'Common food' ? 'Typical values for this food. Check the pack for a specific brand.' : '';
+    $('#pSource').innerHTML = product.fromLabel ? 'From your photo of the label.'
+      : product.code ? `Nutrition from <a href="https://world.openfoodfacts.org/product/${encodeURIComponent(product.code)}" target="_blank" rel="noopener">Open Food Facts</a> (ODbL)${product.servingLabel ? `. Serving on pack: ${esc(product.servingLabel)}` : ''}.${product.image ? ' Photo: Open Food Facts contributors, CC BY-SA.' : ''}`
+      : product.brand === 'Common food' ? 'Typical values for this food. Check the pack for a specific brand.' : '';
     $('#pSave').textContent = entry ? 'Save changes' : 'Add food';
     $('#pDelete').classList.toggle('hidden', !entry);
     renderMealChips();
@@ -676,7 +683,7 @@
     if (ws.length > 2) tries.push(ws.slice(0, 3).join(' '), ws.slice(0, 2).join(' '));
     for (let i = 1; i < Math.min(ws.length, 5); i++) tries.push(`${ws[0]} ${ws[i]}`);
     if (ws.length > 1) tries.push(ws[0]);
-    const uniq = [...new Set(tries.map(t => t.trim()).filter(t => t.length > 2))].slice(0, 5);
+    const uniq = [...new Set(tries.map(t => t.trim()).filter(t => t.length > 2))].slice(0, 3); // stay well inside Open Food Facts' search limits
     showReadChips(words.length ? words : ws, query);
     for (const t of uniq) { if ((await runSearch(t)) !== 0) break; } // stop when found, or when Open Food Facts is down
     const st = $('#searchStatus'); if (st && !st.textContent) st.textContent = 'From your photo. Tap the words above to change the search.';
@@ -919,7 +926,7 @@
     if (seq !== offSeq) return;
     offShown = window.MealSuggest.rankProducts(rem, list, 3);
     box.innerHTML = `<p class="resultHead">Ready meals from Open Food Facts</p>` + (offShown.length
-      ? offShown.map((s, i) => ideaCard(s, i, 'o')).join('') + `<p class="tiny muted">Nutrition from Open Food Facts, a volunteer database. Check the pack if accuracy matters.</p>`
+      ? offShown.map((s, i) => ideaCard(s, i, 'o')).join('') + `<p class="tiny muted">Nutrition from Open Food Facts, a volunteer database (ODbL). Check the pack if accuracy matters.</p>`
       : `<p class="muted small">${list.length ? 'No ready meals fit what you have left right now.' : 'Open Food Facts isn’t responding right now, so only the ideas above are shown.'}</p>`);
   }
   function renderSuggest() {

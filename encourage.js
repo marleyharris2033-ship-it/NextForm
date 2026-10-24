@@ -1,12 +1,13 @@
 // NextForm encouragement: a daily quote on Home and short, kind lines through the app (reward screen,
 // rest timer, food page). Turn off in Profile ("Quotes and encouragement").
-// Most lines are our own. The quotes are old, public-domain sayings with well-established sources.
+// Most lines are our own. The others are proverbs, or quotes from public-domain translations (George Long 1890,
+// Richard Gummere 1917), worded exactly as in those translations.
 (() => {
   const QUOTES = [
-    ['The journey of a thousand miles begins with a single step.', 'Lao Tzu, Tao Te Ching'],
-    ['First say to yourself what you would be; and then do what you have to do.', 'Epictetus, Discourses'],
-    ['Waste no more time arguing what a good man should be. Be one.', 'Marcus Aurelius, Meditations'],
-    ['We suffer more often in imagination than in reality.', 'Seneca, Letters to Lucilius'],
+    ['A journey of a thousand miles begins with a single step.', 'Chinese proverb, from the Tao Te Ching'],
+    ['First say to yourself what you would be; and then do what you have to do.', 'Epictetus, Discourses (tr. George Long)'],
+    ['No longer talk at all about the kind of man that a good man ought to be, but be such.', 'Marcus Aurelius, Meditations (tr. George Long)'],
+    ['We suffer more from imagination than from reality.', 'Seneca, Letters to Lucilius (tr. Richard Gummere)'],
     ['Fall seven times, stand up eight.', 'Japanese proverb'],
     ['Little by little, one travels far.', 'Spanish proverb'],
     ['Well begun is half done.', 'Aristotle'],
