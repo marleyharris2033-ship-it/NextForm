@@ -824,3 +824,25 @@ details.learnCard a{margin:0 16px 16px}
 .xpCentre small+small{margin-top:0}
 .resultHead{margin:0;padding:12px 0 2px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--stone)}
 .resultHead+.foodResult{border-top:0!important}
+
+/* ===== Meal suggestions ===== */
+.suggestBtn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:0;border-radius:16px;margin-top:16px;padding:12px 14px;font:inherit;color:#fff;background:linear-gradient(120deg,var(--pine),#2f6b52)}
+.suggestBtn svg{width:26px;height:26px;fill:#f6d76b;flex-shrink:0}
+.suggestBtn b{display:block;font:700 16px var(--display)}
+.suggestBtn small{display:block;font-size:13px;color:rgba(255,255,255,.8)}
+.suggestLeft{margin:4px 0 14px;line-height:1.5;color:var(--pine-deep)}
+.suggestLeft b{font-weight:700}
+#suggestMealChips .chip.active{background:var(--pine);color:#fff}
+.ideaCard{background:#fff;border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 1px 2px rgba(21,48,42,.05),0 8px 20px -14px rgba(21,48,42,.25)}
+.ideaHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.ideaHead b{font:700 17px var(--display);color:var(--pine-deep)}
+.ideaTag{font-size:11.5px;font-weight:650;background:#fbefd5;color:#8a5a0b;border-radius:999px;padding:3px 9px;flex-shrink:0}
+.ideaItems{list-style:none;margin:0 0 10px;padding:0}
+.ideaItems li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--hairline);font-size:14.5px}
+.ideaItems li:last-child{border-bottom:0}
+.ideaItems b{font-variant-numeric:tabular-nums;color:var(--pine-deep)}
+.ideaMacros{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.ideaMacros span{background:var(--mist);border-radius:10px;padding:6px 4px;text-align:center;font-size:11.5px;color:var(--stone);line-height:1.2}
+.ideaMacros b{display:block;font:700 16px var(--display);color:var(--pine-deep)}
+.ideaAfter{font-size:13px;color:var(--stone);margin:0 0 10px}
+.suggestNote{margin-top:10px}
