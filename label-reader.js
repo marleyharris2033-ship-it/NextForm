@@ -189,13 +189,21 @@
 
   // Front of pack: the largest text is usually the brand and product name.
   function frontQuery(lines) {
-    const STOP = /^(the|and|with|new|now|only|per|serving|pack|bag|grab|share|sharing|great|taste|tasty|deliciously|crunchy|less|more|than|for|our|from|made|real|natural|naturally|no|free|suitable|vegetarians?|vegans?|kcal|energy|of|in|a|an|recipe|best|ever|flavour|flavor|size|value|limited|edition)$/i;
+    const STOP = /^(the|and|with|new|now|only|per|serving|pack|bag|grab|share|sharing|great|taste|tasty|deliciously|crunchy|less|more|than|for|our|from|made|real|natural|naturally|no|free|suitable|vegetarians?|vegans?|kcal|energy|of|in|a|an|recipe|best|ever|flavour|flavor|size|value|limited|edition|actual|multipack|multi|sold|separately|contains|serving|servings|bags?|grab|not|this|ingredients|allergy|advice|typical|values|reference|intake|per|energy|fat|salt|sugars?|saturates|kcal|kj|approx|net|weight|packaged|protective|atmosphere|store|cool|dry|place|recycle|www|com|co|uk|tm|registered|trademark)$/i;
     const ws = [];
     let use = lines.filter(l => l.text && l.h > 0);
     if (use.some(l => (l.conf ?? 100) >= 70)) use = use.filter(l => (l.conf ?? 100) >= 70); // skip garbled readings
     for (const l of use.sort((a, b) => b.h - a.h).slice(0, 4))
       for (const w of l.text.split(/\s+/)) { const c = w.replace(/[^A-Za-z&'-]/g, ''); if (c.length >= 3 && !STOP.test(c) && !ws.some(x => x.toLowerCase() === c.toLowerCase())) ws.push(c); }
     return ws.slice(0, 5).join(' ');
+  }
+  // All readable words from the front, biggest first, for tappable suggestions.
+  function frontWords(lines) {
+    const STOPW = /^(actual|size|not|multipack|bag|sold|separately|contains|this|pack|the|and|with|for|of|per|kcal|energy|fat|salt|sugars|saturates)$/i;
+    const out = [];
+    for (const l of [...lines].filter(l => l.text && (l.conf ?? 100) >= 60).sort((a, b) => b.h - a.h))
+      for (const w of l.text.split(/\s+/)) { const c = w.replace(/[^A-Za-z&'-]/g, ''); if (c.length >= 4 && !STOPW.test(c) && /[aeiouy]/i.test(c) && !out.some(x => x.toLowerCase() === c.toLowerCase())) out.push(c); }
+    return out.slice(0, 10);
   }
 
   // ---------- browser side: image clean-up and Tesseract ----------
@@ -245,8 +253,17 @@
     if (withLines) for (const b of data.blocks || []) for (const p of b.paragraphs || []) for (const l of p.lines || []) lines.push({ text: l.text.trim(), h: (l.bbox?.y1 || 0) - (l.bbox?.y0 || 0), conf: l.confidence ?? 100 });
     return { text: data.text || '', lines };
   }
+  // Accepts a photo file, or a canvas from the guided camera (already cropped to the box).
+  async function toCanvas(input, max) {
+    if (!(input instanceof HTMLCanvasElement)) return fileToCanvas(input, max);
+    const w = input.width, h = input.height, big = Math.max(w, h);
+    const s = big > max ? max / big : big < 1200 ? 1600 / big : 1; // small crops are enlarged: Tesseract likes taller text
+    if (s === 1) return input;
+    const c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
+    const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(input, 0, 0, c.width, c.height); return c;
+  }
   async function readLabel(file, progress) {
-    const c = await fileToCanvas(file), flat = flatten(c);
+    const c = await toCanvas(file, 1600), flat = flatten(c);
     const a = await recognize(flat, 6, p => progress?.(p < 0 ? p : p * 0.5));
     let res = parseLabel([a.text]);
     const allSure = ['kcal', 'protein', 'carbs', 'fat'].every(k => res.sure[k]);
@@ -258,14 +275,24 @@
     return res;
   }
   async function readFront(file, progress) {
-    const c = await fileToCanvas(file, 1400);
+    const c = await toCanvas(file, 1600);
     // Two looks (as taken, and with glare flattened): logos and coloured text read better in one or the other.
     const a = await recognize(c, 11, p => progress?.(p < 0 ? p : p * 0.5), true);
     const b = await recognize(flatten(c), 11, p => progress?.(p < 0 ? p : 0.5 + p * 0.5), true);
     const seen = new Set(), lines = [...a.lines, ...b.lines].filter(l => { const k = l.text.toLowerCase().replace(/\W+/g, ''); if (!k || seen.has(k)) return false; seen.add(k); return true; });
-    return { query: frontQuery(lines), text: a.text + '\n' + b.text };
+    return { query: frontQuery(lines), words: frontWords(lines), text: a.text + '\n' + b.text };
   }
-  const api = { parseLabel, frontQuery, readLabel, readFront, tokens };
+  function quality(src, sx = 0, sy = 0, sw = src.videoWidth || src.width, sh = src.videoHeight || src.height) {
+    const W = 320, H = Math.max(1, Math.round(W * sh / sw)), c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(src, sx, sy, sw, sh, 0, 0, W, H);
+    const d = x.getImageData(0, 0, W, H).data, g = new Float32Array(W * H);
+    let sum = 0;
+    for (let i = 0; i < W * H; i++) { g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; sum += g[i]; }
+    let m = 0, m2 = 0, n = 0;
+    for (let y = 1; y < H - 1; y++) for (let i = y * W + 1; i < y * W + W - 1; i++) { const l = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - W] - g[i + W]; m += l; m2 += l * l; n++; }
+    return { bright: sum / (W * H), sharp: n ? m2 / n - (m / n) ** 2 : 0 };
+  }
+  const api = { parseLabel, frontQuery, frontWords, readLabel, readFront, tokens, quality };
   if (typeof window !== 'undefined') window.LabelReader = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

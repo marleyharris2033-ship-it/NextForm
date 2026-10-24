@@ -980,3 +980,18 @@ body.simple .tabbar{grid-template-columns:repeat(6,1fr)}
 .labelGrid input.unsure{border-color:var(--amber);background:#fff8ea}
 #lCheck{min-height:1em;color:#8a5a00}
 .photoBtn{flex-direction:row!important;text-align:left;font-weight:400}.photoBtn input{display:none}
+/* guided camera */
+.labelCam{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#0f1d18;aspect-ratio:3/4;max-height:58vh;margin:4px auto 0}
+.labelCam video{width:100%;height:100%;object-fit:cover;display:block}
+.camBox{position:absolute;left:7%;right:7%;top:8%;bottom:8%;border-radius:14px;border:3px solid rgba(255,255,255,.92);box-shadow:0 0 0 2000px rgba(15,29,24,.45);display:flex;align-items:flex-start;justify-content:center}
+.labelCam[data-mode="front"] .camBox{top:14%;bottom:34%}
+.camBox span{margin-top:-30px;padding:3px 10px;border-radius:99px;background:rgba(15,29,24,.7);color:#fff;font-size:12.5px;font-weight:650}
+.camTorch{position:absolute;right:12px;bottom:12px;width:46px;height:46px;border-radius:50%;border:0;background:rgba(15,29,24,.65);display:grid;place-items:center}
+.camTorch svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linejoin:round}
+.camTorch.on{background:#ffd76b}.camTorch.on svg{stroke:#15302a;fill:#15302a}
+.camHint{margin:12px 0;min-height:2.6em;font-size:14.5px;font-weight:600;color:var(--pine-deep);text-align:center}
+.camHint[data-state="dark"],.camHint[data-state="blur"]{color:#8a5a00}
+.camHint[data-state="ok"]{color:var(--moss)}
+.camSnap{display:flex;align-items:center;justify-content:center;gap:10px}
+.snapDot{width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+.readChips{margin:8px 0 4px}.readChips .chips{flex-wrap:wrap}.readChips p{margin:0 0 6px}

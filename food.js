@@ -281,18 +281,21 @@
     setTab(tab);
   }
   function closeSheet() {
-    stopScan();
+    stopScan(); stopCam();
     sheetEl.classList.add('hidden');
     document.body.classList.remove('sheetOpen');
   }
   function setTab(tab) {
-    if (tab !== 'portion' && tab !== 'label') sheet.prevTab = tab;
+    if (tab !== 'portion' && tab !== 'label' && tab !== 'cam') sheet.prevTab = tab;
     sheet.tab = tab;
     $$('#foodSheet [data-pane]').forEach(p => p.hidden = p.dataset.pane !== tab);
     $$('#foodSheet [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
-    $('#foodSheet .sheetTabs').hidden = tab === 'portion' || tab === 'label';
-    $('#sheetBack').hidden = !(tab === 'portion' || tab === 'label') || !!sheet.editing;
-    $('#sheetTitle').textContent = tab === 'portion' ? (sheet.editing ? 'Edit food' : 'Add food') : tab === 'label' ? 'Check the label' : `Add to ${sheet.meal.toLowerCase()}`;
+    const sub = tab === 'portion' || tab === 'label' || tab === 'cam';
+    $('#foodSheet .sheetTabs').hidden = sub;
+    $('#sheetBack').hidden = !sub || !!sheet.editing;
+    $('#sheetTitle').textContent = tab === 'portion' ? (sheet.editing ? 'Edit food' : 'Add food') : tab === 'label' ? 'Check the label' : tab === 'cam' ? (camMode === 'label' ? 'Photo of the label' : 'Photo of the front') : `Add to ${sheet.meal.toLowerCase()}`;
+    if (tab !== 'cam') stopCam();
+    if (tab !== 'search') $('#readChips')?.remove();
     if (tab !== 'scan') $('#scanLabelBtn')?.classList.add('hidden');
     if (tab === 'scan') startScan(); else stopScan();
     if (tab === 'recent') renderRecent();
@@ -424,10 +427,11 @@
     });
   }
   let searchSeq = 0;
-  $('#foodSearchForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const q = $('#foodQuery').value.trim();
-    if (q.length < 2) return;
+  $('#foodSearchForm').addEventListener('submit', e => { e.preventDefault(); $('#readChips')?.remove(); runSearch($('#foodQuery').value.trim()); });
+  // Runs a search and resolves with how many Open Food Facts results it found (for the photo search's fallbacks).
+  async function runSearch(q) {
+    $('#foodQuery').value = q;
+    if (q.length < 2) return 0;
     const out = $('#searchResults'), status = $('#searchStatus'), seq = ++searchSeq;
     const { common, recent } = localMatches(q), ws = words(q);
     const cached = cachedSearch(q);
@@ -446,26 +450,28 @@
     };
     const anyLocal = () => common.length || recent.length || seen.length || online.length;
     draw(anyLocal() ? 'Checking Open Food Facts for more…' : 'Searching Open Food Facts…');
-    if (!navigator.onLine) return draw(anyLocal() ? 'You’re offline, so these are foods saved on your phone.' : 'You’re offline. Try Recent, Scan or Quick add.');
+    if (!navigator.onLine) return void draw(anyLocal() ? 'You’re offline, so these are foods saved on your phone.' : 'You’re offline. Try Recent, Scan or Quick add.');
     // Tell people it's still going rather than leaving them wondering.
     const slow = setTimeout(() => { if (seq === searchSeq && !online.length) status.textContent = 'Open Food Facts is slow right now. Still trying…'; }, 5000);
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const list = await searchOFF(q, attempt ? 20000 : 15000);
-        if (seq !== searchSeq) return;
+        if (seq !== searchSeq) return 0;
         clearTimeout(slow);
         if (list.length) { online = list; fromCache = false; saveSearch(q, list); }
-        return draw(online.length ? '' : anyLocal() ? 'No branded matches on Open Food Facts. Try different words, or pick one above.' : 'No matches with nutrition info. Try fewer words, scan the barcode, or use Quick add.');
+        draw(online.length ? '' : anyLocal() ? 'No branded matches on Open Food Facts. Try different words, or pick one above.' : 'No matches with nutrition info. Try fewer words, scan the barcode, or use Quick add.');
+        return fromCache ? 0 : online.length;
       } catch {
-        if (seq !== searchSeq) return;
-        if (!attempt) { status.textContent = 'Open Food Facts didn’t answer. Trying once more…'; await sleep(1500); if (seq !== searchSeq) return; }
+        if (seq !== searchSeq) return 0;
+        if (!attempt) { status.textContent = 'Open Food Facts didn’t answer. Trying once more…'; await sleep(1500); if (seq !== searchSeq) return 0; }
       }
     }
     clearTimeout(slow);
     draw(online.length ? 'Open Food Facts is down right now, so these are results saved from an earlier search.'
       : anyLocal() ? 'Open Food Facts is down right now, so only foods saved on your phone are shown. Scanning the barcode often still works.'
       : 'Open Food Facts is down right now (it’s a free service and has outages). Scanning the barcode often still works, or take a photo of the label (Photo tab).');
-  });
+    return -1; // service down
+  }
   function resultRow(p, i) {
     return `<button type="button" class="foodResult" data-i="${i}"><span><b>${esc(p.name)}</b><small>${esc([p.brand === 'Common food' ? '' : p.brand, p.unit === 'g' ? `${fmt(p.per.kcal)} kcal per 100 g` : `${fmt(p.per.kcal)} kcal per portion`, p.per.protein >= 1 ? `${g1(p.per.protein)} g protein` : ''].filter(Boolean).join(', '))}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
   }
@@ -584,17 +590,111 @@
     if (p == null) return;
     bar.classList.toggle('busy', p < 0); bar.firstElementChild.style.width = p < 0 ? '35%' : `${Math.round(p * 100)}%`;
   }
-  const READ_FAIL = 'Couldn’t read that photo. Try again closer up, flat and without glare, or type it in.';
-  async function onFront(file) {
-    photoStatus('Reading the pack… (the first time takes a little longer)'); photoProgress(-1);
+  const READ_FAIL = 'Couldn’t read that photo. Try again closer up, flat and in good light, or type it in.';
+  const offline = e => /download/.test(e?.message || '');
+  const NEED_NET = 'The photo reader needs internet the first time. Try again when you’re online.';
+  // ---- guided camera: a box to fit the label (or name) in, full-resolution crop, live "too dark / hold still" hints
+  let camMode = 'label', camStream = null, camTimer = null, camTrack = null, torchOn = false, photoNote = '';
+  function stopCam() {
+    clearInterval(camTimer); camTimer = null;
+    if (camStream) camStream.getTracks().forEach(t => t.stop());
+    camStream = null; camTrack = null; torchOn = false;
+    const v = $('#camVideo'); if (v) v.srcObject = null;
+  }
+  async function openCam(mode) {
+    camMode = mode; setTab('cam');
+    $('#labelCam').dataset.mode = mode;
+    $('#camBoxText').textContent = mode === 'label' ? 'Nutrition table here' : 'Product name here';
+    $('#camHint').textContent = 'Starting camera…'; $('#camHint').dataset.state = ''; $('#camSnap').disabled = true; $('#camTorch').classList.add('hidden');
+    if (!navigator.mediaDevices?.getUserMedia) { $('#camHint').textContent = 'This browser can’t open the camera here. Choose a photo instead.'; return; }
     try {
-      const { query } = await window.LabelReader.readFront(file, photoProgress);
-      photoProgress(null);
-      if (!query) return photoStatus('Couldn’t make out a name. Try a closer photo of the brand and product name, or use Search.');
-      setTab('search'); $('#foodQuery').value = query; photoStatus('');
-      $('#foodSearchForm').requestSubmit();
-      setTimeout(() => { const st = $('#searchStatus'); if (st && !st.textContent) st.textContent = `Read “${query}” from your photo. Edit the words if it’s not right.`; }, 50);
-    } catch (e) { photoProgress(null); photoStatus(/download/.test(e?.message) ? 'The photo reader needs internet the first time. Try again when you’re online.' : READ_FAIL); }
+      const st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } }, audio: false });
+      if (sheet.tab !== 'cam') { st.getTracks().forEach(t => t.stop()); return; }
+      camStream = st; camTrack = st.getVideoTracks()[0];
+      const v = $('#camVideo'); v.srcObject = st; await v.play();
+      try { camTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch {}
+      if (camTrack.getCapabilities?.().torch) $('#camTorch').classList.remove('hidden');
+      $('#camSnap').disabled = false;
+      camTimer = setInterval(camHint, 450); camHint();
+    } catch (e) {
+      stopCam();
+      $('#camHint').textContent = e?.name === 'NotAllowedError' ? 'Camera access is blocked. Allow it in your browser settings, or choose a photo instead.' : 'Couldn’t start the camera. Choose a photo instead.';
+    }
+  }
+  // Where the on-screen box sits in the camera's own pixels (the preview is cropped to fill its frame).
+  function boxInVideo() {
+    const v = $('#camVideo'), box = $('#camBox').getBoundingClientRect(), fr = v.getBoundingClientRect();
+    const vw = v.videoWidth, vh = v.videoHeight, sc = Math.max(fr.width / vw, fr.height / vh);
+    const ox = (fr.width - vw * sc) / 2, oy = (fr.height - vh * sc) / 2;
+    const x = Math.max(0, (box.left - fr.left - ox) / sc), y = Math.max(0, (box.top - fr.top - oy) / sc);
+    return { x, y, w: Math.min(vw - x, box.width / sc), h: Math.min(vh - y, box.height / sc) };
+  }
+  function camHint() {
+    const v = $('#camVideo'); if (!v.videoWidth) return;
+    const b = boxInVideo(), q = window.LabelReader.quality(v, b.x, b.y, b.w, b.h), el = $('#camHint');
+    const state = q.bright < 60 ? 'dark' : q.sharp < 500 ? 'blur' : 'ok';
+    el.dataset.state = state;
+    el.textContent = state === 'dark' ? (camTrack?.getCapabilities?.().torch ? 'Too dark. Tap the light, or move somewhere brighter.' : 'Too dark. Move somewhere brighter.')
+      : state === 'blur' ? 'Hold still, and keep the packet flat…'
+      : camMode === 'label' ? 'Looks good. Make the table fill the box, then take the photo.' : 'Looks good. Fit the name in the box, then take the photo.';
+  }
+  function snap() {
+    const v = $('#camVideo'); if (!v.videoWidth) return null;
+    const b = boxInVideo(), c = document.createElement('canvas'); c.width = Math.round(b.w); c.height = Math.round(b.h);
+    c.getContext('2d').drawImage(v, b.x, b.y, b.w, b.h, 0, 0, c.width, c.height);
+    return c;
+  }
+  $('#camSnap').addEventListener('click', () => {
+    const c = snap(); if (!c) return;
+    const q = window.LabelReader.quality(c);
+    stopCam();
+    if (q.sharp < 350) photoNote = 'That photo looks a bit blurry, so check the numbers carefully.';
+    camMode === 'label' ? onLabel(c) : onFront(c);
+  });
+  $('#camTorch').addEventListener('click', async () => {
+    torchOn = !torchOn;
+    try { await camTrack.applyConstraints({ advanced: [{ torch: torchOn }] }); $('#camTorch').classList.toggle('on', torchOn); } catch {}
+  });
+  $('#camPick').addEventListener('click', () => $('#photoFile').click());
+  $('#photoFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; stopCam(); camMode === 'label' ? onLabel(f) : onFront(f); });
+
+  // ---- front of pack: read the big words, search, and fall back to shorter searches
+  async function onFront(input) {
+    setTab('photo'); photoStatus('Reading the pack… (the first time takes a little longer)'); photoProgress(-1);
+    try {
+      const { query, words = [] } = await window.LabelReader.readFront(input, photoProgress);
+      photoProgress(null); photoStatus('');
+      if (!query && !words.length) return photoStatus('Couldn’t make out a name. Try closer, with the name filling the box, or use Search.');
+      setTab('search');
+      await frontSearch(query || words.slice(0, 3).join(' '), words);
+    } catch (e) { photoProgress(null); photoStatus(offline(e) ? NEED_NET : READ_FAIL); }
+  }
+  // Try the words read from the pack; if nothing matches, try smaller combinations (brand + one word, then the brand).
+  async function frontSearch(query, words) {
+    const ws = query.split(/\s+/).filter(Boolean);
+    const tries = [query];
+    if (ws.length > 2) tries.push(ws.slice(0, 3).join(' '), ws.slice(0, 2).join(' '));
+    for (let i = 1; i < Math.min(ws.length, 5); i++) tries.push(`${ws[0]} ${ws[i]}`);
+    if (ws.length > 1) tries.push(ws[0]);
+    const uniq = [...new Set(tries.map(t => t.trim()).filter(t => t.length > 2))].slice(0, 5);
+    showReadChips(words.length ? words : ws, query);
+    for (const t of uniq) { if ((await runSearch(t)) !== 0) break; } // stop when found, or when Open Food Facts is down
+    const st = $('#searchStatus'); if (st && !st.textContent) st.textContent = 'From your photo. Tap the words above to change the search.';
+  }
+  // Read words as chips: tap to add or remove a word, and it searches again.
+  function showReadChips(words, query) {
+    $('#readChips')?.remove();
+    if (!words.length) return;
+    const on = new Set(query.toLowerCase().split(/\s+/));
+    const box = document.createElement('div'); box.id = 'readChips'; box.className = 'readChips';
+    box.innerHTML = `<p class="tiny muted">Words read from your photo:</p><div class="chips">${words.map(w => `<button type="button" class="chip${on.has(w.toLowerCase()) ? ' active' : ''}" data-word="${esc(w)}">${esc(w)}</button>`).join('')}</div>`;
+    $('#foodSearchForm').after(box);
+    box.addEventListener('click', e => {
+      const b = e.target.closest('[data-word]'); if (!b) return;
+      b.classList.toggle('active');
+      const q = [...box.querySelectorAll('.chip.active')].map(x => x.dataset.word).join(' ');
+      if (q) runSearch(q);
+    });
   }
   const LFIELDS = [['kcal', '#lKcal'], ['protein', '#lProtein'], ['carbs', '#lCarbs'], ['fat', '#lFat'], ['fibre', '#lFibre'], ['sugar', '#lSugar'], ['salt', '#lSalt']];
   async function onLabel(file) {
@@ -602,16 +702,20 @@
     try {
       const r = await window.LabelReader.readLabel(file, photoProgress);
       photoProgress(null); photoStatus('');
-      if (!r.ok && !Object.keys(r.per).length) return photoStatus(READ_FAIL);
+      const none = ['kcal', 'protein', 'carbs', 'fat'].every(k => r.per[k] == null);
       $('#labelPreview').src = r.preview;
       $('#lName').value = sheet.labelName || r.name || '';
       for (const [k, sel] of LFIELDS) { const el = $(sel); el.value = r.per[k] ?? ''; el.classList.toggle('unsure', r.per[k] == null || r.sure[k] === false); }
       $('#lServing').value = r.servingG || '';
       const unsure = LFIELDS.filter(([k]) => r.per[k] == null || r.sure[k] === false).length;
-      $('#labelNote').textContent = unsure ? `Read it. Check the ${unsure === 1 ? 'highlighted number' : `${unsure} highlighted numbers`} against your photo.` : 'Read it. All the numbers agree with each other, but give them a quick check.';
+      const missing = LFIELDS.filter(([k]) => r.per[k] == null).length;
+      $('#labelNote').textContent = (none ? 'Couldn’t read the numbers from this photo. Retake it closer, or type them in from the packet.'
+        : missing >= 3 ? 'Read part of it. Fill in the highlighted boxes from the packet, or retake it closer.'
+        : unsure ? `Read it. Check the ${unsure === 1 ? 'highlighted number' : `${unsure} highlighted numbers`} against your photo.` : 'Read it. All the numbers agree with each other, but give them a quick check.') + (photoNote ? ' ' + photoNote : '');
+      photoNote = '';
       checkLabel(); setTab('label');
       if (!$('#lName').value) setTimeout(() => $('#lName').focus(), 60);
-    } catch (e) { photoProgress(null); photoStatus(/download/.test(e?.message) ? 'The photo reader needs internet the first time. Try again when you’re online.' : READ_FAIL); }
+    } catch (e) { photoProgress(null); photoStatus(offline(e) ? NEED_NET : READ_FAIL); }
   }
   // Sense check: calories should roughly match 4 kcal/g carbs and protein, 9 kcal/g fat.
   function checkLabel() {
@@ -635,10 +739,9 @@
     sheet.labelCode = ''; sheet.labelName = '';
     showPortion(product, servingG ? { grams: servingG } : {});
   });
-  $('#labelRetake').addEventListener('click', () => $('#photoLabel').click());
-  $('#photoFront').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) onFront(f); });
-  $('#photoLabel').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) onLabel(f); });
-  $('#scanLabelBtn').addEventListener('click', () => { stopScan(); $('#photoLabel').click(); });
+  $('#labelRetake').addEventListener('click', () => openCam('label'));
+  $$('#foodSheet [data-cam]').forEach(b => b.addEventListener('click', () => openCam(b.dataset.cam)));
+  $('#scanLabelBtn').addEventListener('click', () => { stopScan(); openCam('label'); });
   // Opening the Photo tab directly means a fresh product (not tied to a barcode that missed).
   $$('#foodSheet [data-tab="photo"]').forEach(b => b.addEventListener('click', () => { sheet.labelCode = ''; sheet.labelName = ''; }));
 
