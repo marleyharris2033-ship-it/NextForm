@@ -4,8 +4,11 @@
 //  - Stretch & yoga: plays a routine pose by pose (both sides where needed), then logs it as a Mobility session.
 // The voice uses the phone's built-in speech, so it's free and works offline. It can be muted.
 (() => {
-  const VOICE_KEY = 'nextform-voice';
-  let voiceOn = (() => { try { return localStorage.getItem(VOICE_KEY) !== 'off'; } catch { return true; } })();
+  // The coach is off unless you turn it on (Profile, Guided mode coach). Voices differ per device, so the
+  // choice is kept on this device.
+  const VOICE_KEY = 'nextform-voice-on', VOICE_NAME = 'nextform-voice-name';
+  const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch {} return null; };
+  let voiceOn = ls(VOICE_KEY) === 'on';
   let mode = null, tick = null, lastSpoken = '', wakeLock = null;
   const T = () => window.NextFormTrain;
   const mmss = s => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -13,9 +16,16 @@
 
   // ---------- voice ----------
   let voice = null;
+  // English voices, best first: downloaded Premium/Enhanced voices, then UK, then the rest.
+  function voices() {
+    const vs = (window.speechSynthesis?.getVoices?.() || []).filter(v => /^en/i.test(v.lang));
+    const score = v => (/premium/i.test(v.name) ? 0 : /enhanced|neural|natural/i.test(v.name) ? 1 : 3) + (/en-GB/i.test(v.lang) ? 0 : 1) + (v.localService === false ? 0.5 : 0);
+    return vs.sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
+  }
   function pickVoice() {
-    const vs = window.speechSynthesis?.getVoices?.() || [];
-    voice = vs.find(v => /en-GB/i.test(v.lang) && /female|serena|kate|martha|libby|sonia/i.test(v.name)) || vs.find(v => /en-GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+    const vs = voices(), chosen = ls(VOICE_NAME);
+    voice = vs.find(v => v.name === chosen) || vs[0] || null;
+    window.dispatchEvent(new Event('nextform-voices'));
   }
   if (window.speechSynthesis) { pickVoice(); window.speechSynthesis.onvoiceschanged = pickVoice; }
   function say(text, { force = false } = {}) {
@@ -212,7 +222,7 @@
     const b = e.target.closest('#guided [data-g]'); if (!b) return;
     const a = b.dataset.g, s = sess();
     if (a === 'close') { if (mode === 'flow' && f && !f.done && f.i > 0 && !confirm('Stop this routine?')) return; return close(); }
-    if (a === 'voice') { voiceOn = !voiceOn; try { localStorage.setItem(VOICE_KEY, voiceOn ? 'on' : 'off'); } catch {} if (!voiceOn) window.speechSynthesis?.cancel(); b.outerHTML = top('', '').match(/<button type="button" class="gIcon" data-g="voice"[\s\S]*?<\/button>/)[0]; return; }
+    if (a === 'voice') { voiceOn = !voiceOn; ls(VOICE_KEY, voiceOn ? 'on' : 'off'); if (!voiceOn) window.speechSynthesis?.cancel(); b.outerHTML = top('', '').match(/<button type="button" class="gIcon" data-g="voice"[\s\S]*?<\/button>/)[0]; return; }
     if (mode === 'workout' && s) {
       const ex = s.exercises[w.ei], st = ex?.sets[w.si];
       if (a === 'kg' && st) { st.kg = Math.max(0, g1((+st.kg || 0) + +b.dataset.d)); T().persist(); $('#gKg').textContent = g1(st.kg); }
@@ -234,5 +244,27 @@
     }
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && mode) keepAwake(true); });
-  window.NextFormGuided = { startWorkout, startFlow, close, routineSeconds, expand, get mode() { return mode; } };
+  // ---------- Profile: Guided mode coach ----------
+  function renderCoachCard() {
+    const box = $('#coachCard'); if (!box) return;
+    if (!window.speechSynthesis) { box.innerHTML = '<h2>Guided mode coach</h2><p class="muted small">This browser can’t speak, so guided mode uses beeps and on-screen text.</p>'; return; }
+    const vs = voices(), ios = /iPhone|iPad|Mac/i.test(navigator.userAgent);
+    box.innerHTML = `<h2>Guided mode coach</h2>
+      <label class="toggleRow"><input type="checkbox" id="coachOn" ${voiceOn ? 'checked' : ''}><span><b>Spoken coach</b><small>Talks you through sets, rests and stretches. Off: beeps and on-screen text only.</small></span></label>
+      <div class="coachVoice${voiceOn ? '' : ' dim'}"><label>Voice<select id="coachVoice" ${vs.length ? '' : 'disabled'}>${vs.length ? vs.map(v => `<option value="${esc(v.name)}"${v.name === voice?.name ? ' selected' : ''}>${esc(v.name.replace(/\s*\(.*?\)\s*$/, ''))}${/premium/i.test(v.name) ? ' (Premium)' : /enhanced/i.test(v.name) ? ' (Enhanced)' : ''} · ${esc(v.lang)}</option>`).join('') : '<option>Loading voices…</option>'}</select></label>
+        <button type="button" class="secondary" id="coachPreview">Preview</button></div>
+      <p class="tiny muted">${ios ? 'Nicer voices are free to download: Settings → Accessibility → Spoken Content → Voices → English, then pick one marked Premium or Enhanced (Serena, Jamie and Stephanie are good). Then choose it here.' : 'For a nicer voice, download one in your phone’s text-to-speech settings (Settings → Accessibility → Text-to-speech), then choose it here.'} If your phone is on silent, you may not hear it.</p>`;
+  }
+  document.addEventListener('change', e => {
+    if (e.target.id === 'coachOn') { window.NextFormGuided.setVoiceOn(e.target.checked); $('#coachCard .coachVoice')?.classList.toggle('dim', !e.target.checked); }
+    if (e.target.id === 'coachVoice') { window.NextFormGuided.setVoice(e.target.value); window.NextFormGuided.preview(); }
+  });
+  document.addEventListener('click', e => { if (e.target.closest('#coachPreview')) window.NextFormGuided.preview(); });
+  window.addEventListener('nextform-voices', renderCoachCard);
+  window.NextFormGuided = { startWorkout, startFlow, close, routineSeconds, expand, get mode() { return mode; },
+    voices, get voiceOn() { return voiceOn; }, get voiceName() { return voice?.name || ''; },
+    setVoiceOn(on) { voiceOn = !!on; ls(VOICE_KEY, voiceOn ? 'on' : 'off'); if (!voiceOn) window.speechSynthesis?.cancel(); },
+    setVoice(name) { ls(VOICE_NAME, name); pickVoice(); },
+    preview() { const was = voiceOn; voiceOn = true; lastSpoken = ''; say('Set two of three. Ten reps at sixty kilos. Nice work, keep going.', { force: true }); voiceOn = was; } };
+  renderCoachCard();
 })();
