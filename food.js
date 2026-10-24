@@ -286,13 +286,14 @@
     document.body.classList.remove('sheetOpen');
   }
   function setTab(tab) {
-    if (tab !== 'portion') sheet.prevTab = tab;
+    if (tab !== 'portion' && tab !== 'label') sheet.prevTab = tab;
     sheet.tab = tab;
     $$('#foodSheet [data-pane]').forEach(p => p.hidden = p.dataset.pane !== tab);
     $$('#foodSheet [data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
-    $('#foodSheet .sheetTabs').hidden = tab === 'portion';
-    $('#sheetBack').hidden = tab !== 'portion' || !!sheet.editing;
-    $('#sheetTitle').textContent = tab === 'portion' ? (sheet.editing ? 'Edit food' : 'Add food') : `Add to ${sheet.meal.toLowerCase()}`;
+    $('#foodSheet .sheetTabs').hidden = tab === 'portion' || tab === 'label';
+    $('#sheetBack').hidden = !(tab === 'portion' || tab === 'label') || !!sheet.editing;
+    $('#sheetTitle').textContent = tab === 'portion' ? (sheet.editing ? 'Edit food' : 'Add food') : tab === 'label' ? 'Check the label' : `Add to ${sheet.meal.toLowerCase()}`;
+    if (tab !== 'scan') $('#scanLabelBtn')?.classList.add('hidden');
     if (tab === 'scan') startScan(); else stopScan();
     if (tab === 'recent') renderRecent();
     if (tab === 'saved') renderSaved();
@@ -357,6 +358,8 @@
   async function findBarcode(code) {
     const cached = productCache()[code];
     if (cached) return cached;
+    const logged = [...(data.foodLog || [])].reverse().find(e => e.code === code && e.per);
+    if (logged && logged.labelPhoto) return { code, name: logged.name, brand: logged.brand || '', unit: logged.unit || 'g', per: logged.per, servingG: logged.servingG || null, servingLabel: logged.servingLabel || '', image: '', fromLabel: true };
     const json = await fetchJSON(`${OFF_PRODUCT}${encodeURIComponent(code)}.json?fields=${OFF_FIELDS}`);
     if (json?.status !== 1 || !json.product) return null;
     const p = fromOFF({ code, ...json.product });
@@ -461,7 +464,7 @@
     clearTimeout(slow);
     draw(online.length ? 'Open Food Facts is down right now, so these are results saved from an earlier search.'
       : anyLocal() ? 'Open Food Facts is down right now, so only foods saved on your phone are shown. Scanning the barcode often still works.'
-      : 'Open Food Facts is down right now (it’s a free service and has outages). Scanning the barcode often still works, or use Quick add.');
+      : 'Open Food Facts is down right now (it’s a free service and has outages). Scanning the barcode often still works, or take a photo of the label (Photo tab).');
   });
   function resultRow(p, i) {
     return `<button type="button" class="foodResult" data-i="${i}"><span><b>${esc(p.name)}</b><small>${esc([p.brand === 'Common food' ? '' : p.brand, p.unit === 'g' ? `${fmt(p.per.kcal)} kcal per 100 g` : `${fmt(p.per.kcal)} kcal per portion`, p.per.protein >= 1 ? `${g1(p.per.protein)} g protein` : ''].filter(Boolean).join(', '))}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`;
@@ -507,13 +510,13 @@
     $('#pBrand').textContent = product.brand || '';
     const img = $('#pImage'); img.hidden = !product.image; if (product.image) img.src = product.image;
     $('#pGrams').previousSibling.textContent = isG ? 'Amount (g or ml)' : 'Portions';
-    $('#pGrams').step = isG ? '1' : '0.5';
-    $('#pGrams').value = g1(grams || (isG ? (product.servingG || 100) : 1));
+    $('#pGrams').step = isG ? 'any' : '0.5';
+    $('#pGrams').value = String(Math.round((grams || (isG ? (product.servingG || 100) : 1)) * 10) / 10);
     const quick = isG
       ? [product.servingG && { g: product.servingG, label: `1 serving (${g1(product.servingG)} g)` }, product.servingG && { g: product.servingG * 2, label: '2 servings' }, { g: 100, label: '100 g' }].filter(Boolean)
       : [{ g: 0.5, label: 'Half' }, { g: 1, label: '1 portion' }, { g: 2, label: '2 portions' }];
     $('#pQuick').innerHTML = quick.map(q => `<button type="button" class="chip" data-g="${q.g}">${esc(q.label)}</button>`).join('');
-    $('#pSource').textContent = product.code ? `Nutrition from Open Food Facts${product.servingLabel ? `. Serving on pack: ${product.servingLabel}` : ''}.` : product.brand === 'Common food' ? 'Typical values for this food. Check the pack for a specific brand.' : '';
+    $('#pSource').textContent = product.fromLabel ? 'From your photo of the label.' : product.code ? `Nutrition from Open Food Facts${product.servingLabel ? `. Serving on pack: ${product.servingLabel}` : ''}.` : product.brand === 'Common food' ? 'Typical values for this food. Check the pack for a specific brand.' : '';
     $('#pSave').textContent = entry ? 'Save changes' : 'Add food';
     $('#pDelete').classList.toggle('hidden', !entry);
     renderMealChips();
@@ -561,6 +564,7 @@
       id: newId(), date: foodDay, meal, name: product.name, brand: product.brand || '', code: product.code || '',
       unit: product.unit === 'portion' ? 'portion' : 'g', grams: amount,
       per: product.per, servingG: product.servingG || null, servingLabel: product.servingLabel || '',
+      ...(product.fromLabel ? { labelPhoto: true } : {}),
       ...roundVals(scaled(product, amount)), updatedAt: Date.now()
     });
     save();
@@ -572,6 +576,71 @@
       : { code: '', name: e.name, brand: e.brand, unit: 'portion', per: { kcal: e.kcal, protein: e.protein || 0, carbs: e.carbs || 0, fat: e.fat || 0 } };
     showPortion(product, { grams: e.per ? e.grams : 1, entry: e });
   }
+
+  // ---------- photos: front of pack (find it) and nutrition label (read it) ----------
+  const photoStatus = t => { $('#photoStatus').textContent = t; };
+  function photoProgress(p) {
+    const bar = $('#photoProgress'); bar.classList.toggle('hidden', p == null);
+    if (p == null) return;
+    bar.classList.toggle('busy', p < 0); bar.firstElementChild.style.width = p < 0 ? '35%' : `${Math.round(p * 100)}%`;
+  }
+  const READ_FAIL = 'Couldn’t read that photo. Try again closer up, flat and without glare, or type it in.';
+  async function onFront(file) {
+    photoStatus('Reading the pack… (the first time takes a little longer)'); photoProgress(-1);
+    try {
+      const { query } = await window.LabelReader.readFront(file, photoProgress);
+      photoProgress(null);
+      if (!query) return photoStatus('Couldn’t make out a name. Try a closer photo of the brand and product name, or use Search.');
+      setTab('search'); $('#foodQuery').value = query; photoStatus('');
+      $('#foodSearchForm').requestSubmit();
+      setTimeout(() => { const st = $('#searchStatus'); if (st && !st.textContent) st.textContent = `Read “${query}” from your photo. Edit the words if it’s not right.`; }, 50);
+    } catch (e) { photoProgress(null); photoStatus(/download/.test(e?.message) ? 'The photo reader needs internet the first time. Try again when you’re online.' : READ_FAIL); }
+  }
+  const LFIELDS = [['kcal', '#lKcal'], ['protein', '#lProtein'], ['carbs', '#lCarbs'], ['fat', '#lFat'], ['fibre', '#lFibre'], ['sugar', '#lSugar'], ['salt', '#lSalt']];
+  async function onLabel(file) {
+    setTab('photo'); photoStatus('Reading the label… (the first time takes a little longer)'); photoProgress(-1);
+    try {
+      const r = await window.LabelReader.readLabel(file, photoProgress);
+      photoProgress(null); photoStatus('');
+      if (!r.ok && !Object.keys(r.per).length) return photoStatus(READ_FAIL);
+      $('#labelPreview').src = r.preview;
+      $('#lName').value = sheet.labelName || r.name || '';
+      for (const [k, sel] of LFIELDS) { const el = $(sel); el.value = r.per[k] ?? ''; el.classList.toggle('unsure', r.per[k] == null || r.sure[k] === false); }
+      $('#lServing').value = r.servingG || '';
+      const unsure = LFIELDS.filter(([k]) => r.per[k] == null || r.sure[k] === false).length;
+      $('#labelNote').textContent = unsure ? `Read it. Check the ${unsure === 1 ? 'highlighted number' : `${unsure} highlighted numbers`} against your photo.` : 'Read it. All the numbers agree with each other, but give them a quick check.';
+      checkLabel(); setTab('label');
+      if (!$('#lName').value) setTimeout(() => $('#lName').focus(), 60);
+    } catch (e) { photoProgress(null); photoStatus(/download/.test(e?.message) ? 'The photo reader needs internet the first time. Try again when you’re online.' : READ_FAIL); }
+  }
+  // Sense check: calories should roughly match 4 kcal/g carbs and protein, 9 kcal/g fat.
+  function checkLabel() {
+    const v = k => num($(LFIELDS.find(f => f[0] === k)[1]).value);
+    const kcal = v('kcal'), c = v('carbs'), p = v('protein'), f = v('fat');
+    const msg = $('#lCheck');
+    if ([kcal, c, p, f].some(x => x == null)) { msg.textContent = 'Calories, protein, carbs and fat are needed.'; return false; }
+    const est = 4 * c + 4 * p + 9 * f + 2 * (v('fibre') || 0);
+    msg.textContent = est && Math.abs(est - kcal) > Math.max(25, est * 0.15) ? `Heads up: those macros add up to about ${fmt(est)} kcal, not ${fmt(kcal)}. Worth a second look.` : '';
+    return true;
+  }
+  $('#foodSheet').addEventListener('input', e => { if (e.target.closest('[data-pane="label"]')) { e.target.classList.remove('unsure'); checkLabel(); } });
+  $('#labelSave').addEventListener('click', () => {
+    if (!checkLabel()) return;
+    const per = {};
+    for (const [k, sel] of LFIELDS) { const x = num($(sel).value); if (x != null) per[k] = x; }
+    const servingG = num($('#lServing').value) || null;
+    const product = { code: sheet.labelCode || '', name: $('#lName').value.trim() || 'Food from label photo', brand: '', unit: 'g', per,
+      servingG, servingLabel: servingG ? `1 serving (${g1(servingG)} g)` : '', image: '', fromLabel: true };
+    if (product.code) rememberProduct(product);
+    sheet.labelCode = ''; sheet.labelName = '';
+    showPortion(product, servingG ? { grams: servingG } : {});
+  });
+  $('#labelRetake').addEventListener('click', () => $('#photoLabel').click());
+  $('#photoFront').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) onFront(f); });
+  $('#photoLabel').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) onLabel(f); });
+  $('#scanLabelBtn').addEventListener('click', () => { stopScan(); $('#photoLabel').click(); });
+  // Opening the Photo tab directly means a fresh product (not tied to a barcode that missed).
+  $$('#foodSheet [data-tab="photo"]').forEach(b => b.addEventListener('click', () => { sheet.labelCode = ''; sheet.labelName = ''; }));
 
   // ---------- barcode scanning ----------
   const video = $('#scanVideo');
@@ -634,8 +703,10 @@
       const p = await findBarcode(code);
       if (p && p.per) { stopScan(); return showPortion(p); }
       lastMiss = code;
-      scanStatus(p ? `${p.name} has no nutrition info yet. Enter it manually instead.` : `Barcode ${code} isn’t in Open Food Facts yet. Try Search, or enter it manually.`);
+      scanStatus(p ? `${p.name} has no nutrition info yet. Take a photo of the nutrition label and NextForm will read it.` : `Barcode ${code} isn’t in Open Food Facts yet. Take a photo of the nutrition label and NextForm will read it, and remember it for next time.`);
       if (p) $('#mName').value = p.name;
+      sheet.labelCode = code; sheet.labelName = p?.name || '';
+      $('#scanLabelBtn').classList.remove('hidden');
     } catch {
       scanStatus(navigator.onLine ? 'The lookup didn’t respond. Try again in a moment.' : 'You’re offline, so the barcode can’t be looked up. Use Recent or enter it manually.');
     }

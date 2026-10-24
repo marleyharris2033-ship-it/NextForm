@@ -961,3 +961,22 @@ body.simple .tabbar{grid-template-columns:repeat(6,1fr)}
 .fieldLabel+.friendList{margin-top:2px}
 .socialCard .sectionHead{margin-bottom:0}
 .addFriend input::placeholder{text-transform:none;letter-spacing:0}
+/* photo reading */
+.photoBtn{display:flex;align-items:center;gap:14px;margin-top:12px;padding:16px;border-radius:var(--r-md);background:var(--mist);cursor:pointer;color:var(--pine-deep)}
+.photoBtn>span:last-child{display:flex;flex-direction:column}.photoBtn small{color:var(--stone);font-size:13px}
+.pbIcon{display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;border-radius:14px;background:var(--pine)}
+.pbIcon svg,#scanLabelBtn svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#scanLabelBtn{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0}
+#scanLabelBtn svg{stroke:var(--pine)}
+.photoProgress{height:8px;margin:16px 0 4px;border-radius:9px;background:var(--mist);overflow:hidden}
+.photoProgress i{display:block;height:100%;width:0;border-radius:9px;background:var(--moss);transition:width .3s}
+.photoProgress.busy i{animation:pbusy 1.2s ease-in-out infinite alternate}
+@keyframes pbusy{from{transform:translateX(-60%)}to{transform:translateX(240%)}}
+.labelTop{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.labelTop img{width:88px;height:88px;object-fit:cover;border-radius:12px;flex-shrink:0;background:var(--mist)}
+.labelTop img[src=""]{display:none}.labelTop p{margin:0}
+.labelGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.labelGrid label{font-size:13px}
+.labelGrid input.unsure{border-color:var(--amber);background:#fff8ea}
+#lCheck{min-height:1em;color:#8a5a00}
+.photoBtn{flex-direction:row!important;text-align:left;font-weight:400}.photoBtn input{display:none}
