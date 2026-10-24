@@ -689,7 +689,9 @@ function drawWeight(){
   // gridlines + labels
   x.strokeStyle=line;x.lineWidth=1;x.textAlign="right";x.textBaseline="middle";
   // whole-number ticks on an even step
-  const step=Math.max(1,Math.ceil((max-min)/3));min=Math.floor(min/step)*step;max=min+step*3;
+  // Pick a tidy step (1, 2, 5, 10, 20…) whose 3 bands cover every weight and the goal.
+  {const lo=min,hi=max,steps=[1,2,5,10,20,25,50,100];let step=steps.find(st=>Math.floor(lo/st)*st+st*3>=hi)||Math.ceil((hi-lo)/3);min=Math.floor(lo/step)*step;max=min+step*3}
+  const step=(max-min)/3;
   for(let i=0;i<=3;i++){const v=min+step*i,y=py(v);x.beginPath();x.moveTo(L,y);x.lineTo(w-R,y);x.stroke();x.fillText(v.toFixed(0),L-8,y)}
   x.textBaseline="alphabetic";x.textAlign="left";const dl=d=>new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
   x.fillText(dl(vals[0].date),L,h-6);x.textAlign="right";x.fillText(dl(vals.at(-1).date),w-R,h-6);
