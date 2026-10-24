@@ -75,6 +75,7 @@
         requests = (await c.fs.getDocs(c.fs.collection(c.db, 'requests', c.uid, 'in'))).docs.map(d => ({ uid: d.id, ...d.data() })).filter(r => !ids.includes(r.uid));
         kudos = (await c.fs.getDocs(c.fs.collection(c.db, 'kudos', c.uid, 'in'))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0));
         loaded = Date.now();
+        if (friends.length > (+prefs().friendsMax || 0)) { prefs().friendsMax = friends.length; save(); } // for the Squad Up quest
       } catch (e) { console.warn('friends', e); }
       finally { loading = null; render(); }
     })();
@@ -117,6 +118,7 @@
     try { await c.fs.setDoc(ref(c, 'kudos', to, 'in', `${c.uid}_${String(workoutId).slice(0, 60)}`), { from: c.uid, name: myName(), workout: String(label || '').slice(0, 40), at: Date.now() }); }
     catch (e) { if (!/permission/i.test(errText(e))) throw e; }
     g.add(key); try { localStorage.setItem(givenKey, JSON.stringify([...g].slice(-300))); } catch {}
+    prefs().kudosGiven = (+prefs().kudosGiven || 0) + 1; save();
     render();
   }
   async function clearKudos() { const c = cloud(); for (const k of kudos) try { await c.fs.deleteDoc(ref(c, 'kudos', c.uid, 'in', k.id)); } catch {} kudos = []; render(); }

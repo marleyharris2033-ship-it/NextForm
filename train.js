@@ -89,6 +89,7 @@
     $('#sessionTypes').querySelector('.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
     renderCardio();
     const sets = usesSets(session.type);
+    $('#guidedBtn').classList.toggle('hidden', session.past || !sets || !session.exercises.length);
     $('#sessionExercises').classList.toggle('hidden', !sets);
     $('#addExerciseBtn').classList.toggle('hidden', !sets);
     if (sets) $('#sessionExercises').innerHTML = session.exercises.map(exerciseCard).join('') ||
@@ -254,6 +255,7 @@
     $('#restCheer').textContent = window.Encourage?.on() ? Encourage.line('rest', session.restEnd) : '';
   }
   if (session?.restEnd) restTimer = setInterval(renderRest, 250);
+  $('#guidedBtn').addEventListener('click', () => window.NextFormGuided?.startWorkout());
   $('#startTimer').addEventListener('click', () => {
     if (!session || started()) return;
     session.startedAt = Date.now(); persist(); render();
@@ -541,5 +543,25 @@
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { if (session) { $('#sessionClock').textContent = session.past ? $('#sessionClock').textContent : mmss(elapsed()); renderRest(); } renderResume(); } });
   window.renderTrain = render;
+  // Hooks for guided mode and the stretch player (guided.js, stretch.js).
+  window.NextFormTrain = {
+    get session() { return session; }, persist, render, restFor, suggestionFor, beep: () => { unlockAudio(); beep(); }, unlockAudio,
+    ensureStarted() { if (session && !session.past && !session.startedAt) { session.startedAt = Date.now(); persist(); render(); } },
+    setDone(ei, si, kg, reps) {
+      const ex = session?.exercises[ei], st = ex?.sets[si]; if (!st) return;
+      if (kg !== undefined) st.kg = kg; if (reps !== undefined) st.reps = reps;
+      st.done = true; persist(); unlockAudio(); startRest(restFor(ex.name)); render();
+    },
+    skipRest() { if (session) { session.restEnd = null; persist(); renderRest(); } },
+    addRest(sec) { if (session?.restEnd) { session.restEnd += sec * 1000; session.restLen = (session.restLen || DEFAULT_REST) + sec; persist(); } },
+    finish: () => openFinish(),
+    // Start a stretch routine as a Mobility session (already timed), ready for the normal finish screen.
+    startMobility({ name, activity, minutes, startedAt }) {
+      if (session && sessionHasWork() && !confirm('Replace the workout you have in progress?')) return false;
+      session = null; start({ type: 'Mobility' });
+      Object.assign(session, { name, startedAt, moveMinutes: minutes, activities: [activity] }); persist(); render();
+      return true;
+    }
+  };
   render();
 })();

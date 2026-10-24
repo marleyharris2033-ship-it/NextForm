@@ -9,16 +9,16 @@
 <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png?v=2">
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="welcome.css?v=2">
-<link rel="stylesheet" href="ui.css?v=recipes1">
+<link rel="stylesheet" href="welcome.css?v=lic1">
+<link rel="stylesheet" href="ui.css?v=guided2">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
-  <div class="welcome-brand"><svg viewBox="330 75 370 90" role="img" aria-label="NextForm"><image href="welcome-art.webp" width="1024" height="1536"/></svg></div>
+  <div class="welcome-brand"><svg viewBox="330 75 370 90" role="img" aria-label="NextForm"><image href="welcome-art.webp?v=lic1" width="1024" height="1536"/></svg></div>
   <div class="welcome-copy"><h1>Level up.</h1><p>Ascend past your limits.<br>Find your NextForm.</p></div>
-  <svg class="welcome-scene" viewBox="0 480 1024 690" role="img" aria-label="Two people looking towards a mountain summit, ready to begin their ascent"><image href="welcome-art.webp" width="1024" height="1536"/></svg>
+  <svg class="welcome-scene" viewBox="0 480 1024 690" role="img" aria-label="Two people looking towards a mountain summit, ready to begin their ascent"><image href="welcome-art.webp?v=lic1" width="1024" height="1536"/></svg>
   <div class="welcome-actions">
-    <button id="welcomeGoogle" disabled><svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.5H24v8.1h11.3c-1 5.2-5.4 8-11.3 8a12.6 12.6 0 1 1 0-25.2c3 0 5.7 1.1 7.8 3.1l6-6A21 21 0 1 0 24 45c12.1 0 20-8.5 20-20.5 0-1.4-.1-2.7-.4-4Z"/><path fill="#34A853" d="m6.3 36.3 6.8-5.3c2.2 3.5 6.2 5.6 10.9 5.6 3.6 0 6.6-1 8.6-3l6.5 5C35.5 42.8 30.3 45 24 45c-7.5 0-14-3.5-17.7-8.7Z"/><path fill="#FBBC05" d="M3 24c0-4.4 1.3-8.5 3.6-11.8l6.7 5.2a12.6 12.6 0 0 0-.2 13.6l-6.8 5.3A20.8 20.8 0 0 1 3 24Z"/><path fill="#EA4335" d="M6.6 12.2A21 21 0 0 1 24 3c5.8 0 10.7 2.1 14.8 5.5l-6 6A11.2 11.2 0 0 0 24 11.4c-4.5 0-8.4 2.3-10.7 6l-6.7-5.2Z"/></svg><span>Continue with Google</span></button>
+    <button id="welcomeGoogle" class="gsiBtn" disabled><svg class="gLogo" aria-hidden="true" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Continue with Google</span></button>
     <button id="welcomeGuest">Continue as guest</button>
     <p id="welcomeStatus" role="status" aria-live="polite">Connecting to Google sign-in…</p>
     <p class="welcome-note">Sign in to back up your workouts to your Google account. Guest workouts stay on this device only.</p>
@@ -27,7 +27,7 @@
 </section>
 <div id="onboarding" class="onboarding hidden">
   <div class="onboardCard">
-    <div class="onboardLogo"><svg viewBox="340 80 100 85" role="img" aria-label="NextForm"><image href="welcome-art.webp" width="1024" height="1536"/></svg></div>
+    <div class="onboardLogo"><svg viewBox="340 80 100 85" role="img" aria-label="NextForm"><image href="welcome-art.webp?v=lic1" width="1024" height="1536"/></svg></div>
         <h2>Build your profile</h2>
     <p class="muted">This helps personalise your grades and food targets.</p>
 
@@ -60,7 +60,7 @@
 <main>
 <section id="home" class="page active">
 <div id="resumeBanner"></div>
-<div id="backupNudge" class="card backupNudge hidden"><h2>Back up your training</h2><p id="nudgeText" class="muted"></p><div class="row wrap"><button id="nudgeSignIn" class="primary" type="button">Sign in with Google</button><button id="nudgeExport" class="secondary" type="button">Export backup</button></div></div>
+<div id="backupNudge" class="card backupNudge hidden"><h2>Back up your training</h2><p id="nudgeText" class="muted"></p><div class="row wrap"><button id="nudgeSignIn" class="gsiBtn" type="button"><svg class="gLogo" aria-hidden="true" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><button id="nudgeExport" class="secondary" type="button">Export backup</button></div></div>
 <div class="ascent game" aria-label="Level progress">
   <svg class="contours" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <path d="M-20 170 C60 150 90 120 150 128 S260 165 380 120"/><path d="M-20 145 C50 125 95 92 155 100 S255 140 380 92"/>
@@ -111,7 +111,7 @@
 
 <section id="train" class="page">
 <div id="trainStart">
-  <div class="trainHero"><img src="train-hero.webp" alt="" width="900" height="474"><div class="heroShade"></div><span class="logo heroLogo" aria-hidden="true"></span><div class="heroText"><p id="heroKicker">Ready when you are</p><h2 id="heroTitle">Let’s train</h2></div></div>
+  <div class="trainHero"><img src="train-hero.webp?v=lic1" alt="" width="900" height="474"><div class="heroShade"></div><span class="logo heroLogo" aria-hidden="true"></span><div class="heroText"><p id="heroKicker">Ready when you are</p><h2 id="heroTitle">Let’s train</h2></div></div>
   <div id="todayPlan"></div>
   <div id="todaySuggest"></div>
   <div id="repeatLast"></div>
@@ -119,12 +119,13 @@
   <p class="quickHead">Or pick a type</p>
   <div class="quickTypes" id="quickTypes" aria-label="Start a different kind of session"></div>
   <div class="card"><div class="sectionHead"><h2>Start from a plan</h2><button class="link" type="button" data-go="planner">All plans</button></div><div id="planPicks" class="planPicks"></div></div>
+  <div class="card stretchCard" id="stretchCard"></div>
   <div class="trainLinks"><button class="link" type="button" id="logPast">Log a past workout</button><button class="link" type="button" data-go="learn">Exercise library</button></div>
 </div>
 <div id="trainSession" class="hidden">
   <div class="sessionBar">
     <div class="sessionInfo"><p id="sessionName">Workout</p><p class="sessionClock" id="sessionClock">0:00</p></div>
-    <div class="sessionActions"><button type="button" class="primary startTimer" id="startTimer">Start</button><button type="button" class="primary" id="finishBtn">Finish</button></div>
+    <div class="sessionActions"><button type="button" class="secondary guidedBtn hidden" id="guidedBtn" aria-label="Guided mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Guided</button><button type="button" class="primary startTimer" id="startTimer">Start</button><button type="button" class="primary" id="finishBtn">Finish</button></div>
   </div>
   <div id="pastFields" class="card form2 hidden">
     <label>Date<input id="pastDate" type="date"></label>
@@ -223,7 +224,7 @@
   <p id="accountIdentity" class="accountIdentity">Guest</p>
   <p id="accountStatus" class="muted" role="status" aria-live="polite"></p>
   <p id="syncStatus" class="syncStatus" role="status" aria-live="polite"></p>
-  <button id="googleSignIn" class="googleSignIn" type="button">Sign in with Google</button>
+  <button id="googleSignIn" class="googleSignIn gsiBtn" type="button"><svg class="gLogo" aria-hidden="true" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button>
   <button id="googleSignOut" class="secondary" type="button" hidden>Sign out</button>
   <p id="accountHelp" class="tiny muted">Sign in to back up your workouts, weights and profile to your Google account and restore them on any device. As a guest, everything stays only in this browser.</p>
   <button id="backToWelcome" class="link" type="button">Show welcome screen</button>
@@ -241,6 +242,7 @@
   <a class="helpRow" href="mailto:Nextformstudio@outlook.com?subject=NextForm%20feedback"><span><b>Contact us</b><small>Questions, bugs or ideas: Nextformstudio@outlook.com</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
   <a class="helpRow" href="privacy.html"><span><b>Privacy policy</b><small>What NextForm stores and your rights</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
   <a class="helpRow" href="terms.html"><span><b>Terms of use</b><small>Including: NextForm isn't medical advice</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+  <a class="helpRow" href="credits.html"><span><b>Credits and licences</b><small>Open Food Facts, open-source software and fonts</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
 </div>
 <div class="card"><h2>Data</h2><div class="row wrap"><button id="exportBtn" class="secondary">Export backup</button><label class="secondary fileLabel">Import backup<input id="importFile" type="file" accept=".json"></label><button id="resetBtn" class="danger">Reset</button></div><p class="tiny muted">Export a backup before clearing Safari data or moving devices.</p></div></section>
 </main>
@@ -381,6 +383,11 @@
     <p class="tiny muted suggestNote">Portions are worked out to fit what you have left, using typical nutrition values. Adjust any item after adding it.</p>
   </div>
 </div>
+<div id="guided" class="guided hidden" role="dialog" aria-modal="true" aria-label="Guided mode"></div>
+<div id="stretchSheet" class="sheet stretchSheet hidden" role="dialog" aria-modal="true" aria-labelledby="stretchTitle">
+  <div class="sheetHead"><button type="button" class="iconBtn" id="stretchBack" aria-label="Back" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2 id="stretchTitle">Stretch &amp; yoga</h2><button type="button" class="iconBtn" id="stretchClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheetBody" id="stretchBody"></div>
+</div>
 <div id="recipeSheet" class="sheet recipeSheet hidden" role="dialog" aria-modal="true" aria-labelledby="recipeTitle">
   <div class="sheetHead"><button type="button" class="iconBtn" id="recipeBack" aria-label="Back" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2 id="recipeTitle">Recipes</h2><button type="button" class="iconBtn" id="recipeClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody" id="recipeBody"></div>
@@ -440,4 +447,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="app.js?v=weight1"></script><script src="common-foods.js?v=recipes1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=more1"></script><script src="label-reader.js?v=photo2"></script><script src="food.js?v=recipes1"></script><script src="recipe-data.js?v=recipes1"></script><script src="recipes.js?v=recipes1"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="train.js?v=more1"></script><script src="plans.js?v=more1"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=more1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=more1"></script><script src="social.js?v=more1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=recipes1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="app.js?v=guided1"></script><script src="common-foods.js?v=recipes1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=lic1"></script><script src="label-reader.js?v=photo2"></script><script src="food.js?v=lic1"></script><script src="recipe-data.js?v=recipes1"></script><script src="recipes.js?v=recipes1"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="figures.js?v=guided1"></script><script src="stretch-data.js?v=guided1"></script><script src="train.js?v=guided1"></script><script src="guided.js?v=guided1"></script><script src="stretch.js?v=guided1"></script><script src="plans.js?v=more1"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=more1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=more1"></script><script src="social.js?v=more1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=guided1"></script></body></html>

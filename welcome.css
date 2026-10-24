@@ -11,8 +11,8 @@ body.welcome-open #app,body.welcome-open #onboarding,body.welcome-open .bg-orb{d
 .welcome-scene{display:block;width:100%;height:auto;max-width:780px;margin:12px auto 0}
 .welcome-actions{max-width:660px;margin:0 auto;padding:0 24px;text-align:center}
 .welcome-actions button{width:100%;min-height:58px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:14px;padding:13px 18px;font-size:clamp(17px,3.5vw,22px);font-weight:650;cursor:pointer}
-#welcomeGoogle{background:#1b4436;color:#fff;border:2px solid #1b4436}
-#welcomeGoogle svg{width:28px;height:28px;flex-shrink:0}
+#welcomeGoogle{background:#fff;color:#1f1f1f;border:1px solid #747775;font-weight:500}
+#welcomeGoogle svg{width:24px;height:24px;flex-shrink:0}
 #welcomeGoogle:disabled{opacity:.65;cursor:wait}
 #welcomeGuest{margin-top:12px;background:transparent;border:2px solid #1b4436;color:#1b4436}
 .welcome-actions button:focus-visible{outline:3px solid #b37731;outline-offset:4px}
