@@ -115,6 +115,7 @@
     $('#heroTitle').textContent = first ? `Ready to climb, ${first}?` : 'Ready to climb?';
     $('#heroKicker').textContent = st > 1 ? `${st}-week streak. Keep it going.` : plan ? `Today: ${plan.name}` : 'Every set counts towards your skills';
     $('#todayPlan').innerHTML = plan ? `<div class="card todayCard"><p class="muted small">Today’s plan</p><h2>${esc(plan.name)}</h2><p class="muted small">${plan.exercises.map(e => esc(e.name)).join(', ')}</p><button type="button" class="primary full" data-plan="${plan.id}">Start ${esc(plan.name)}</button></div>` : '';
+    renderSuggestion(!!plan);
     $('#startEmpty').classList.toggle('secondary', !!plan);
     $('#startEmpty').classList.toggle('primary', !plan);
     $('#startEmpty').textContent = plan ? 'Start a different workout' : 'Start workout';
@@ -124,6 +125,21 @@
     const CAT_COLOR = { 'Full Body': 'var(--pine)', 'Push / Pull': 'var(--glacier)', 'Upper / Lower': 'var(--amber)', 'Bro Split': 'var(--moss)' };
     $('#planPicks').innerHTML = picks.map(p => `<button type="button" class="planPick" data-plan="${p.id}" style="--c:${CAT_COLOR[p.category] || 'var(--pine)'}"><span class="pickIcon">${icon('dumbbell')}</span><span class="pickText"><b>${esc(p.name)}</b><small>${p.exercises.length} exercises, ${esc(p.custom ? 'My plan' : p.category)}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>`).join('');
   }
+  // Today's suggestion: the muscle groups you've rested longest, with your own exercises.
+  let suggested = null;
+  function renderSuggestion(hasPlan) {
+    const box = $('#todaySuggest'); if (!box || !window.TodaySession) return;
+    const s = suggested = TodaySession.build({ workouts: data.workouts, exercises: EXERCISES, today: today() });
+    if (s.rest) { box.innerHTML = `<div class="card suggestCard rest"><p class="sugKicker">Today’s suggestion</p><h2>Recovery day</h2><p class="muted small">${esc(s.reason)}</p></div>`; return; }
+    box.innerHTML = `<div class="card suggestCard${hasPlan ? ' compact' : ''}"><p class="sugKicker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/></svg>Today’s suggestion</p><h2>${esc(s.name)}</h2>
+      <p class="muted small">${esc(s.reason)}</p>
+      <ul class="sugList">${s.exercises.map(e => { const h = lastSets(e.name); return `<li><b>${esc(e.name)}</b><span>${h ? `Last: ${esc(setsText(h.sets, h.unit === 's'))}` : `${e.sets} × ${esc(e.reps)}`}</span></li>`; }).join('')}</ul>
+      <button type="button" class="${hasPlan ? 'secondary' : 'primary'} full" id="startSuggested">Start this session</button></div>`;
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#startSuggested') || !suggested || suggested.rest) return;
+    start({ plan: { id: null, name: suggested.name, type: 'Strength', exercises: suggested.exercises } });
+  });
   function renderResume() {
     const box = $('#resumeBanner'); if (!box) return;
     box.innerHTML = session && !session.past ? `<button type="button" class="resumeBanner" id="resumeBtn"><span class="pulse${started() ? '' : ' still'}" aria-hidden="true"></span><span><b>${started() ? 'Workout in progress' : 'Workout ready to start'}</b><small>${esc(session.name)}${started() ? `, ${mmss(elapsed())}` : ''}</small></span><span class="resumeGo">Resume</span></button>` : '';
@@ -225,6 +241,7 @@
     $('#restTime').textContent = mmss(Math.ceil(left));
     $('#restBar').style.width = `${Math.max(0, Math.min(100, 100 - left / (session.restLen || DEFAULT_REST) * 100))}%`;
     $('#restNext').textContent = nextSetText();
+    $('#restCheer').textContent = window.Encourage?.on() ? Encourage.line('rest', session.restEnd) : '';
   }
   if (session?.restEnd) restTimer = setInterval(renderRest, 250);
   $('#startTimer').addEventListener('click', () => {
@@ -428,7 +445,8 @@
       id: newId(), updatedAt: Date.now(), date: session.past ? (session.date || today()) : localDate(new Date(session.startedAt || session.createdAt || Date.now())),
       type: session.type, duration, effort: +$('#finishEffort').value, notes: $('#finishNotes').value.trim(), exercises,
       distance: 0, runMinutes: 0, rounds: 0, roundLength: 0,
-      planId: session.planId || null
+      planId: session.planId || null,
+      ...(!session.planId && session.name && !['Workout', typeLabel(session.type)].includes(session.name) ? { name: session.name } : {})
     };
     if (!usesSets(session.type)) {
       for (const f of WT.fields(t, session)) w[f.k] = +session[f.k] || 0;
@@ -471,6 +489,8 @@
         <span class="hex">${x.b.level}</span><div class="skillInfo"><div class="skillHead"><span>${x.s.name}</span><small>+${fmt(x.gain)} XP</small></div>
         <div class="tinybar"><i style="width:${x.s.level > x.b.level ? 0 : x.b.into / x.b.need * 100}%"></i></div></div></div>`).join('') : '';
     $('#rewardRecords').innerHTML = records.length ? `<p class="rewardHead">New records</p>` + records.map(rc => `<div class="rRecord"><span class="trophy" aria-hidden="true">★</span><span><b>${esc(rc.name)}</b><small>${g(rc.kg)} kg × ${rc.reps}, estimated 1-rep max ${fmt(rc.e1rm)} kg</small></span></div>`).join('') : '';
+    $('#rewardAffirm').textContent = window.Encourage?.on() ? Encourage.line(records.length ? 'rewardPB' : 'reward', w.id) : '';
+    window.NextFormShare?.setWorkout(w, records);
     const quests = readyQuests();
     $('#rewardQuests').textContent = quests > before.readyQuests ? `${quests} quest${quests > 1 ? 's' : ''} ready to claim on the Quests page.` : '';
 

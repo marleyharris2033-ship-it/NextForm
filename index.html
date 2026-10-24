@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=2">
-<link rel="stylesheet" href="ui.css?v=offmeals2">
+<link rel="stylesheet" href="ui.css?v=engage1">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -69,6 +69,7 @@
   </svg>
   <div class="ascentHead">
     <div><p class="ascentRank" id="rank">Novice</p><p class="ascentLevel">Level <b id="level">1</b> <span id="ascentClass">Recruit</span></p></div>
+    <button type="button" class="shareBtn" id="shareProgress" aria-label="Share your progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span>Share</span></button>
   </div>
   <div class="xpBody">
     <div class="xpRing" id="xpRing" role="img"></div>
@@ -76,6 +77,8 @@
   </div>
 
 </div>
+
+<div class="dailyQuote hidden" id="dailyQuote" aria-label="Quote of the day"></div>
 
 <div class="weekStrip" id="weekStrip" aria-label="This week"></div>
 
@@ -109,6 +112,7 @@
 <div id="trainStart">
   <div class="trainHero"><img src="train-hero.webp" alt="" width="900" height="474"><div class="heroShade"></div><span class="logo heroLogo" aria-hidden="true"></span><div class="heroText"><p id="heroKicker">Ready when you are</p><h2 id="heroTitle">Let’s train</h2></div></div>
   <div id="todayPlan"></div>
+  <div id="todaySuggest"></div>
   <button type="button" class="primary full startBig" id="startEmpty">Start workout</button>
   <p class="quickHead">Or pick a type</p>
   <div class="quickTypes" id="quickTypes" aria-label="Start a different kind of session"></div>
@@ -178,8 +182,10 @@
     <dl class="kcalFacts"><div><dt>Eaten</dt><dd id="kcalEaten">0</dd></div><div><dt>Target</dt><dd id="kcalTarget">0</dd></div></dl>
   </div>
   <div class="macros" id="macroBars"></div>
+  <p class="kindNote hidden" id="kindNote"></p>
   <button type="button" class="suggestBtn hidden" id="suggestMeal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>Suggest a meal</b><small id="suggestHint">Fill what’s left of today’s macros</small></span></button>
 </div>
+<div class="card checkinCard hidden" id="checkinCard"></div>
 <div class="addRow">
   <button type="button" class="primary" id="openScan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/></svg>Scan barcode</button>
   <button type="button" class="secondary" id="openSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Search food</button>
@@ -225,7 +231,7 @@
     <span>Change photo</span>
   </label>
   <div><h2>Profile</h2><p class="muted small">Used to personalise grades.</p></div>
-</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card helpCard"><h2>Help &amp; legal</h2>
+</div><div class="form2"><label>Name<input id="name"></label><label>Age<input id="age" type="number" min="13" max="100"></label><label>Height (cm)<input id="height" type="number"></label><label>Strength comparison<select id="sex"><option value="male">Male standards</option><option value="female">Female standards</option><option value="none">Don't use sex-based context</option></select></label><label>Weekly goal<select id="weekGoal"><option value="1">1 session a week</option><option value="2">2 sessions a week</option><option value="3">3 sessions a week</option><option value="4">4 sessions a week</option><option value="5">5 sessions a week</option><option value="6">6 sessions a week</option><option value="7">7 sessions a week</option></select></label></div><label class="toggleRow"><input type="checkbox" id="encourageOn"><span><b>Quotes and encouragement</b><small>A daily quote on Home and kind words after workouts, during rest and on the food page.</small></span></label><button class="primary full" id="saveProfile">Save profile</button><p class="tiny muted">Grades are motivational estimates based mainly on your own progress, effort and consistency. They are not medical assessments.</p></div><div class="card helpCard"><h2>Help &amp; legal</h2>
   <a class="helpRow" href="mailto:Nextformstudio@outlook.com?subject=NextForm%20feedback"><span><b>Contact us</b><small>Questions, bugs or ideas: Nextformstudio@outlook.com</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
   <a class="helpRow" href="privacy.html"><span><b>Privacy policy</b><small>What NextForm stores and your rights</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
   <a class="helpRow" href="terms.html"><span><b>Terms of use</b><small>Including: NextForm isn't medical advice</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
@@ -294,7 +300,7 @@
   <div class="restTop"><span id="restLabel">Rest</span><b id="restTime">1:30</b>
     <button type="button" id="restMinus" aria-label="15 seconds less">−15</button><button type="button" id="restPlus" aria-label="15 seconds more">+15</button><button type="button" id="restSkip">Skip</button></div>
   <div class="restTrack"><i id="restBar"></i></div>
-  <p id="restNext" class="restNext"></p>
+  <p id="restNext" class="restNext"></p><p id="restCheer" class="restCheer"></p>
 </div>
 <div id="plateSheet" class="plateSheet hidden" role="dialog" aria-modal="true" aria-labelledby="plateTitle">
   <div class="plateCard">
@@ -311,6 +317,14 @@
   <div class="sheetHead"><span></span><h2 id="logEditTitle">Edit workout</h2><button type="button" class="iconBtn" id="logEditClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody" id="logEditBody"></div>
   <div class="pFoot"><button type="button" class="primary full" id="logEditSave">Save changes</button></div>
+</div>
+<div id="shareSheet" class="sheet hidden shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="sheetHead"><span></span><h2 id="shareTitle">Share your progress</h2><button type="button" class="iconBtn" id="shareClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheetBody">
+    <p class="muted small">Makes an image sized for Instagram Stories. Share it straight to an app, or save it to your photos.</p>
+    <button type="button" class="shareOpt" data-share="level"><span class="soIcon" style="--c:var(--lichen)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8"/></svg></span><span><b>My level</b><small>Your level, rank and XP ring</small></span></button>
+    <button type="button" class="shareOpt" data-share="month"><span class="soIcon" style="--c:var(--glacier)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span><b>My month</b><small>Workouts, time, weight lifted and PBs</small></span></button>
+  </div>
 </div>
 <div id="suggestSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
   <div class="sheetHead"><span></span><h2 id="suggestTitle">Meal ideas</h2><button type="button" class="iconBtn" id="suggestClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -365,6 +379,7 @@
     <p class="rewardKicker" id="rewardTitle">Workout complete</p>
     <div class="rewardMedal"><svg viewBox="0 0 120 120" id="rewardRing" aria-hidden="true"></svg><span id="rewardGrade">A</span></div>
     <p class="rewardXp">+<b id="rewardXp">0</b> XP</p>
+    <p class="rewardAffirm" id="rewardAffirm"></p>
     <div class="rewardLevel">
       <div class="rewardLevelHead"><span id="rewardLevelName">Level 9</span><span id="rewardLevelNext"></span></div>
       <div class="rewardBar"><i id="rewardBar"></i></div>
@@ -373,7 +388,8 @@
     <div id="rewardSkills" class="rewardSkills"></div>
     <div id="rewardRecords" class="rewardRecords"></div>
     <p id="rewardQuests" class="rewardQuests"></p>
+    <button type="button" class="rewardShare" data-share="workout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share this workout</button>
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=offmeals2"></script><script src="rpg.js?v=offmeals2"></script><script src="app.js?v=offmeals2"></script><script src="common-foods.js?v=offmeals2"></script><script src="meal-suggest.js?v=offmeals2"></script><script src="food.js?v=offmeals2"></script><script src="coach.js?v=offmeals2"></script><script src="train.js?v=offmeals2"></script><script src="plans.js?v=offmeals2"></script><script src="log-edit.js?v=offmeals2"></script><script src="insights.js?v=offmeals2"></script><script src="welcome.js?v=offmeals2"></script><script type="module" src="auth.js?v=offmeals2"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=engage1"></script><script src="rpg.js?v=engage1"></script><script src="app.js?v=engage1"></script><script src="common-foods.js?v=engage1"></script><script src="meal-suggest.js?v=engage1"></script><script src="adaptive.js?v=engage1"></script><script src="encourage.js?v=engage1"></script><script src="food.js?v=engage1"></script><script src="coach.js?v=engage1"></script><script src="today-session.js?v=engage1"></script><script src="train.js?v=engage1"></script><script src="plans.js?v=engage1"></script><script src="log-edit.js?v=engage1"></script><script src="insights.js?v=engage1"></script><script src="share.js?v=engage1"></script><script src="welcome.js?v=engage1"></script><script type="module" src="auth.js?v=engage1"></script></body></html>
