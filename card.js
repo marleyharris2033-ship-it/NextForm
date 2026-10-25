@@ -87,20 +87,23 @@
   function renderEditor() {
     $('#cardTitle').textContent = 'Edit profile card';
     const p = prefs(), all = B().all(), earned = all.filter(b => b.earned), c = B().context(), L = lifts();
-    const selB = new Set(chosenBadges().map(b => b.id)), selP = new Set(chosenPrs().map(x => x.n)), selS = new Set(p.stats);
+    const selB = chosenBadges().map(b => b.id), selP = chosenPrs().map(x => x.n), selS = p.stats.filter(k => STATS[k]).slice(0, MAX.stats);
+    // Selected items are filled in and numbered with their position on the card.
+    const mark = (list, v) => { const i = list.indexOf(v); return i < 0 ? { cls: '', num: '', label: 'Not on your card' } : { cls: ' on', num: `<span class="pickNum" aria-hidden="true">${i + 1}</span>`, label: `On your card, position ${i + 1}` }; };
     const socialOn = !!data.profile.social?.on;
     $('#cardBody').innerHTML = `${cardHTML(shared(), me())}
       <label class="toggleRow pcShare"><input type="checkbox" id="cardShare" ${p.share ? 'checked' : ''}><span><b>Friends can see my card</b><small>${socialOn ? 'Friends tap your name to see it. Food, weight and notes are never shown.' : 'Turn on Friends in Profile first, then friends can tap your name to see it.'}</small></span></label>
+      <p class="muted small pickHelp">Tap to add or remove. Ticked items are numbered in the order they appear on your card. To change the order, untick and tick again.</p>
       <p class="fieldLabel">Background</p>
       <div class="bgGrid">${B().BACKGROUNDS.map(bg => { const ok = B().bgUnlocked(bg), ub = bg.unlock && B().byId(bg.unlock);
         return `<button type="button" class="bgOpt${p.bg === bg.id ? ' on' : ''}${ok ? '' : ' locked'}" data-bg="${bg.id}" style="${B().bgStyle(bg)}" aria-label="${esc(bg.name)}${ok ? '' : ', locked'}"><span>${esc(bg.name)}</span>${ok ? '' : `<em>🔒 ${esc(ub?.name || '')}</em>`}</button>`; }).join('')}</div>
       <p class="muted tiny" id="bgHint" role="status">Locked backgrounds unlock with badges.</p>
-      <p class="fieldLabel">Badges <span class="muted">(pick up to ${MAX.badges})</span></p>
-      ${earned.length ? `<div class="pickGrid">${earned.map(b => `<button type="button" class="pick badgePick${selB.has(b.id) ? ' on' : ''}" data-pick-badge="${b.id}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><small>${esc(b.name)}</small></button>`).join('')}</div>` : '<p class="muted small">No badges yet. Log a workout to earn your first.</p>'}
-      <p class="fieldLabel">Stats <span class="muted">(pick up to ${MAX.stats})</span></p>
-      <div class="chips wrapChips">${Object.entries(STATS).map(([k, [label, fn]]) => `<button type="button" class="chip${selS.has(k) ? ' on' : ''}" data-pick-stat="${k}">${esc(label)} <b>${esc(fn(c))}</b></button>`).join('')}</div>
-      <p class="fieldLabel">Best lifts <span class="muted">(pick up to ${MAX.prs})</span></p>
-      ${L.length ? `<div class="chips wrapChips">${L.slice(0, 30).map(x => `<button type="button" class="chip${selP.has(x.n) ? ' on' : ''}" data-pick-pr="${esc(x.n)}">${esc(x.n)} <b>${fmt(x.kg)} kg × ${x.r}</b></button>`).join('')}</div>` : '<p class="muted small">Log a weighted exercise to show your best lifts.</p>'}
+      <p class="fieldLabel">Badges <span class="muted">(${selB.length} of ${MAX.badges} chosen)</span></p>
+      ${earned.length ? `<div class="pickGrid">${earned.map(b => { const m = mark(selB, b.id); return `<button type="button" class="pick badgePick${m.cls}" data-pick-badge="${b.id}" aria-pressed="${!!m.num}" title="${m.label}">${m.num}<span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><small>${esc(b.name)}</small></button>`; }).join('')}</div>` : '<p class="muted small">No badges yet. Log a workout to earn your first.</p>'}
+      <p class="fieldLabel">Stats <span class="muted">(${selS.length} of ${MAX.stats} chosen)</span></p>
+      <div class="chips wrapChips">${Object.entries(STATS).map(([k, [label, fn]]) => { const m = mark(selS, k); return `<button type="button" class="chip pickChip${m.cls}" data-pick-stat="${k}" aria-pressed="${!!m.num}" title="${m.label}">${m.num}${esc(label)} <b>${esc(fn(c))}</b></button>`; }).join('')}</div>
+      <p class="fieldLabel">Best lifts <span class="muted">(${selP.length} of ${MAX.prs} chosen)</span></p>
+      ${L.length ? `<div class="chips wrapChips">${L.slice(0, 30).map(x => { const m = mark(selP, x.n); return `<button type="button" class="chip pickChip${m.cls}" data-pick-pr="${esc(x.n)}" aria-pressed="${!!m.num}" title="${m.label}">${m.num}${esc(x.n)} <b>${fmt(x.kg)} kg × ${x.r}</b></button>`; }).join('')}</div>` : '<p class="muted small">Log a weighted exercise to show your best lifts.</p>'}
       <p class="muted small" id="cardMsg" role="status"></p>`;
   }
   function toggle(listKey, current, value, max) {
