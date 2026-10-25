@@ -1179,3 +1179,20 @@ body.guidedOpen{overflow:hidden}
 .badgeIcon:has(i.art){background:none;box-shadow:none}.badgeIcon i.art{display:block;width:60px;height:60px}
 .achievement .icon i.art{display:inline-block;width:52px;height:52px}
 .badgeList li.locked .nfBadge i.art,.badge.locked .badgeIcon i.art{filter:grayscale(1);opacity:.4}
+/* ---------- Plans+ ---------- */
+.programmeCard h2{margin:0}.programmeCard .row{gap:8px;margin-top:10px}
+.progWeek{font-weight:800;color:var(--pine);background:var(--mist);padding:4px 10px;border-radius:999px;font-size:13px}
+.programmeCard .goalBar{margin:10px 0 8px}.progPhase{margin:6px 0 8px;font-size:14px}
+.progWeekList{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.progWeekList li{display:flex;align-items:center;gap:10px;background:var(--mist);border-radius:12px;padding:8px 10px}
+.progWeekList li>b{width:36px;flex-shrink:0;color:var(--pine)}.progWeekList li>span{flex:1;min-width:0;font-weight:600;font-size:14px}
+.progWeekList small,.planMins{color:var(--stone);font-weight:600}.progWeekList button{min-height:34px;padding:4px 12px}
+.progItem{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(21,48,42,.08)}
+.progItem>div{flex:1;display:flex;flex-direction:column;gap:2px}.progItem small{color:var(--stone);font-weight:600}.progItem p{margin:4px 0 0}
+.progPhases{margin:4px 0 12px;padding-left:18px;font-size:14px}.progPhases li{margin:4px 0}
+.makerOut{margin-top:16px;padding-top:12px;border-top:1px solid rgba(21,48,42,.1)}.makerOut h3{margin:0 0 6px}.makerOut .primary.full{margin:10px 0}
+.swapList{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.swapOpt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border:0;border-radius:12px;background:var(--mist);color:var(--pine-deep,#16352a);font:inherit;text-align:left;cursor:pointer}
+.swapOpt small{color:var(--stone)}
+.importPlanLink{display:block;margin:0 0 10px}
+#planImport{width:100%;margin:6px 0}

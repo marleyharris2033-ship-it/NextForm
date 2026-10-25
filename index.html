@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="NextForm">
 <link rel="preload" href="fonts/bricolage-grotesque.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="welcome.css?v=lic1">
-<link rel="stylesheet" href="ui.css?v=art1">
+<link rel="stylesheet" href="ui.css?v=plans2">
 </head>
 <body class="welcome-open">
 <section id="welcome" aria-label="Welcome to NextForm">
@@ -143,8 +143,9 @@
 
 
 <section id="planner" class="page">
+  <div class="card programmeCard" id="programmeCard"></div>
   <div class="card plannerHero">
-    <p class="muted">Pick a split, then rotate through its sessions. Each one uses different exercises.</p>
+    <p class="muted">Ready-made sessions for the gym, home, dumbbells, kettlebells and more. Start one, or add them to your week.</p>
     <button class="link" type="button" data-go="learn">Browse the exercise library</button>
     <div id="planCategoryChips" class="chips plannerCats"></div>
   </div>
@@ -393,6 +394,10 @@
   </div>
 </div>
 <div id="guided" class="guided hidden" role="dialog" aria-modal="true" aria-label="Guided mode"></div>
+<div id="plansSheet" class="sheet plansSheet hidden" role="dialog" aria-modal="true" aria-labelledby="plansTitle">
+  <div class="sheetHead"><span></span><h2 id="plansTitle">Plans</h2><button type="button" class="iconBtn" id="plansClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheetBody" id="plansBody"></div>
+</div>
 <div id="cardSheet" class="sheet cardSheet hidden" role="dialog" aria-modal="true" aria-labelledby="cardTitle">
   <div class="sheetHead"><span></span><h2 id="cardTitle">Profile card</h2><button type="button" class="iconBtn" id="cardClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheetBody" id="cardBody"></div>
@@ -460,4 +465,4 @@
     <button type="button" class="rewardBtn" id="rewardContinue">Continue</button>
   </div>
 </div>
-<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="videos.js?v=videos1"></script><script src="app.js?v=art1"></script><script src="common-foods.js?v=recipes1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=lic1"></script><script src="label-reader.js?v=photo2"></script><script src="food.js?v=lic1"></script><script src="recipe-data.js?v=recipes1"></script><script src="recipes.js?v=recipes1"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="figures.js?v=guided1"></script><script src="stretch-data.js?v=guided1"></script><script src="train.js?v=guided1"></script><script src="guided.js?v=videos1"></script><script src="stretch.js?v=guided1"></script><script src="plans.js?v=more1"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=ptabs1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=ptabs1"></script><script src="social.js?v=ptabs1"></script><script src="badges.js?v=art1"></script><script src="card.js?v=art1"></script><script src="profile-tabs.js?v=ptabs2"></script><script src="inapp.js?v=ptabs1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=guided1"></script></body></html>
+<datalist id="exerciseNames"></datalist><script src="workout-types.js?v=more1"></script><script src="rpg.js?v=more1"></script><script src="videos.js?v=videos1"></script><script src="app.js?v=plans1"></script><script src="plan-data.js?v=plans2"></script><script src="common-foods.js?v=recipes1"></script><script src="meal-suggest.js?v=more1"></script><script src="adaptive.js?v=more1"></script><script src="encourage.js?v=lic1"></script><script src="label-reader.js?v=photo2"></script><script src="food.js?v=lic1"></script><script src="recipe-data.js?v=recipes1"></script><script src="recipes.js?v=recipes1"></script><script src="coach.js?v=more1"></script><script src="today-session.js?v=more1"></script><script src="figures.js?v=guided1"></script><script src="stretch-data.js?v=guided1"></script><script src="train.js?v=plans1"></script><script src="guided.js?v=videos1"></script><script src="stretch.js?v=guided1"></script><script src="plans.js?v=more1"></script><script src="plans-plus.js?v=plans3"></script><script src="log-edit.js?v=more1"></script><script src="insights.js?v=more1"></script><script src="share.js?v=ptabs1"></script><script src="goals.js?v=more1"></script><script src="story.js?v=ptabs1"></script><script src="social.js?v=ptabs1"></script><script src="badges.js?v=art1"></script><script src="card.js?v=art1"></script><script src="profile-tabs.js?v=ptabs2"></script><script src="inapp.js?v=ptabs1"></script><script src="welcome.js?v=more1"></script><script type="module" src="auth.js?v=guided1"></script></body></html>
