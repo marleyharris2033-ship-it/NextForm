@@ -170,7 +170,7 @@
       <div class="exHead"><div>${skillName ? `<span class="muscleTag">${esc(skillName)}</span>` : ''}<h3>${esc(e.name)}</h3><p class="muted small">${esc(lastTxt)}</p></div>
         <button type="button" class="iconBtn exRemove" data-remove="${i}" aria-label="Remove ${esc(e.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       ${sugHtml}
-      ${session.past ? '' : `<div class="exTools">${barbell ? `<button type="button" class="toolBtn" data-plates="${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20M6 7v10M9 5v14M15 5v14M18 7v10"/></svg>Plates</button>` : ''}
+      ${session.past ? '' : `<div class="exTools"><button type="button" class="toolBtn" data-swap="${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>Swap</button>${barbell ? `<button type="button" class="toolBtn" data-plates="${i}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20M6 7v10M9 5v14M15 5v14M18 7v10"/></svg>Plates</button>` : ''}
         <label class="toolBtn restSel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Rest <b class="restVal">${mmss(rest)}</b><select data-restsel="${i}" aria-label="Rest between sets for ${esc(e.name)}">${restOpts.sort((a, b) => a - b).map(v => `<option value="${v}"${v === rest ? ' selected' : ''}>${mmss(v)}</option>`).join('')}</select></label></div>`}
       <div class="setGrid${session.past ? ' past' : ''}"><span>Set</span><span>kg</span><span>${timed ? 'sec' : 'reps'}</span>${session.past ? '' : '<span aria-hidden="true"></span>'}
         ${e.sets.map((s, j) => `<span class="setNo${s.done ? ' done' : ''}">${j + 1}</span>
@@ -320,6 +320,15 @@
       ex.sugUsed = true; persist(); return render();
     }
     if (e.target.closest('[data-plates]')) return openPlates(+card.dataset.ex);
+    if (e.target.closest('[data-swap]')) {
+      const i = +card.dataset.ex;
+      return window.NextFormPlansPlus?.openSwap(ex.name, name => {
+        const old = session.exercises[i]; if (!old) return;
+        if (old.sets.some(s => s.done) && !confirm(`Swap ${old.name}? Its ticked sets will be cleared.`)) return;
+        const m = EXERCISES.find(x => x.name === name), reps = m?.timed ? '30-45s' : (old.unit === 's' ? '8-12' : old.range || '8-12');
+        session.exercises[i] = newExercise(name, { sets: Math.max(1, old.sets.length), reps }); persist(); render();
+      });
+    }
     if (e.target.closest('[data-addset]')) { const lastSet = ex.sets[ex.sets.length - 1] || { kg: '', reps: '' }; ex.sets.push({ kg: lastSet.kg, reps: lastSet.reps, done: false }); persist(); return render(); }
     if (e.target.closest('[data-delset]')) { ex.sets.pop(); persist(); return render(); }
     if (e.target.closest('[data-remove]')) {
