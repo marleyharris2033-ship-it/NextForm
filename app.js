@@ -608,7 +608,7 @@ const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.l
 function renderAchievements(){
   // Badges (badges.js) replace the old achievement list once loaded; ACH is the fallback before that.
   const B=window.NextFormBadges;
-  const items=B?B.all().sort((a,b)=>(b.earned-a.earned)||String(b.date||"").localeCompare(String(a.date||""))).map(b=>({ic:b.icon,t:b.name,d:b.how,on:b.earned})):ACH.map(([ic,t,d,fn])=>({ic,t,d,on:fn()}));
+  const items=B?B.all().sort((a,b)=>(b.earned-a.earned)||String(b.date||"").localeCompare(String(a.date||""))).map(b=>({ic:B.art(b),t:b.name,d:b.how,on:b.earned})):ACH.map(([ic,t,d,fn])=>({ic,t,d,on:fn()}));
   const card=a=>`<div class="achievement ${a.on?"":"locked"}"><div class="icon">${a.ic}</div><strong>${a.t}</strong><span>${a.on?"Unlocked":a.d}</span></div>`;
   $("#achievements").innerHTML=(B?[...items.filter(a=>a.on).slice(0,6),...items.filter(a=>!a.on).slice(0,2)]:items).map(card).join("");
   const sorted=[...items.filter(a=>a.on),...items.filter(a=>!a.on)];

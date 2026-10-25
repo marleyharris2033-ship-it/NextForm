@@ -119,7 +119,9 @@
   // Artwork sits at the bottom of each image, so anchor it there; a light veil keeps text readable.
   const bgStyle = bg => bg.img ? `background:${bg.grad};background-image:linear-gradient(${bg.dark ? 'rgba(0,0,0,.18),rgba(0,0,0,.05)' : 'rgba(255,255,255,.25),rgba(255,255,255,0)'}),url('cards/${bg.id}.webp');background-size:cover;background-position:center bottom` : `background:${bg.grad}`;
 
-  window.NextFormBadges = { BADGES: B, BACKGROUNDS, all, check, context, byId, bgById, bgUnlocked, bgStyle, earned: () => earnedMap() };
+  // Medal artwork lives in badges/<id>.webp (160×160). The emoji stays as a fallback and for toasts.
+  const art = b => b ? `<i class="art"><img src="badges/${b.id}.webp" alt="" loading="lazy" decoding="async" onerror="this.replaceWith(document.createTextNode('${b.icon}'))"></i>` : '';
+  window.NextFormBadges = { art, BADGES: B, BACKGROUNDS, all, check, context, byId, bgById, bgUnlocked, bgStyle, earned: () => earnedMap() };
   // First run: quietly award what people have already done, so long-time users aren't flooded with toasts.
   check(Object.keys(earnedMap()).length === 0);
   window.addEventListener('nextform-saved', () => setTimeout(() => check(), 0));
