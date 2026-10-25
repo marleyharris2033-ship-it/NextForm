@@ -3,7 +3,7 @@
 // party quest. Needs a Google sign-in. Nothing about food, weight or notes is ever shared.
 (() => {
   const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', PARTY_XP = 200, REFRESH_MS = 5 * 60e3;
-  let friends = [], requests = [], kudos = [], loaded = false, loading = null, pushTimer = null, lastPushed = '';
+  let cardBlocked = false, friends = [], requests = [], kudos = [], loaded = false, loading = null, pushTimer = null, lastPushed = '';
   const cloud = () => window.NextFormCloud?.firestore || null;
   const prefs = () => (data.profile.social = data.profile.social && typeof data.profile.social === 'object' ? data.profile.social : {});
   const sharing = () => !!prefs().on && !!cloud();
@@ -19,13 +19,21 @@
       id: String(w.id).slice(0, 40), type: w.type, label: (allPlans().find(p => p.id === w.planId)?.name || w.name || WORKOUT_TYPES.typeDef(w.type).label).slice(0, 40),
       date: w.date, duration: +w.duration || 0, xp: +w.result?.xp || 0
     }));
-    return { name: myName(), level: lv.level, rank: rankFor(lv.level), weekCount: weekCounts()[thisWeek()] || 0, weekGoal: weekGoal(), streak: weekStreak(), recent, code: prefs().code || '', week: thisWeek() };
+    const out = { name: myName(), level: lv.level, rank: rankFor(lv.level), weekCount: weekCounts()[thisWeek()] || 0, weekGoal: weekGoal(), streak: weekStreak(), recent, code: prefs().code || '', week: thisWeek() };
+    if (window.NextFormCard?.shareOn() && !cardBlocked) out.card = window.NextFormCard.shared();
+    return out;
   }
   async function pushProfile(force = false) {
     const c = cloud(); if (!c || !prefs().on) return;
     const p = publicProfile(), sig = JSON.stringify(p);
     if (!force && sig === lastPushed) return;
-    await c.fs.setDoc(ref(c, 'profiles', c.uid), { ...p, updatedAt: Date.now() });
+    try { await c.fs.setDoc(ref(c, 'profiles', c.uid), { ...p, updatedAt: Date.now() }); }
+    catch (e) {
+      // Older Firestore rules don't allow the card yet: keep friends working without it.
+      if (!p.card || !/permission/i.test(errText(e))) throw e;
+      cardBlocked = true; const { card, ...rest } = p;
+      await c.fs.setDoc(ref(c, 'profiles', c.uid), { ...rest, updatedAt: Date.now() });
+    }
     lastPushed = sig;
   }
   const schedulePush = () => { clearTimeout(pushTimer); if (sharing()) pushTimer = setTimeout(() => pushProfile().catch(e => console.warn('profile', e)), 2500); };
@@ -173,8 +181,8 @@
       <p class="muted small" id="friendMsg" role="status"></p>
       ${requests.length ? `<p class="fieldLabel">Requests</p><ul class="friendList">${requests.map(r => `<li><span class="fAvatar">${initial(r.name)}</span><span class="fText"><b>${esc(r.name)}</b><small>wants to be friends</small></span><button type="button" class="primary small" data-accept="${esc(r.uid)}">Accept</button><button type="button" class="link muted" data-decline="${esc(r.uid)}">Ignore</button></li>`).join('')}</ul>` : ''}
       <p class="fieldLabel">${friends.length ? `${friends.length} friend${friends.length > 1 ? 's' : ''}` : 'No friends yet'}</p>
-      ${friends.length ? `<ul class="friendList">${friends.map(f => `<li><span class="fAvatar">${initial(f.name)}</span><span class="fText"><b>${esc(f.name)}</b><small>${f.hidden ? 'Not sharing right now' : `Level ${+f.level || 1} · ${f.week === thisWeek() ? +f.weekCount || 0 : 0} of ${+f.weekGoal || 3} this week${+f.streak > 1 ? ` · ${f.streak}-week streak` : ''}`}</small></span><button type="button" class="link muted" data-unfriend="${esc(f.uid)}">Remove</button></li>`).join('')}</ul>` : '<p class="muted small">Share your code with a friend, or type theirs above.</p>'}
-      <p class="tiny muted">Friends see your first name, level, weekly sessions, streak and your last 3 workouts (type, name, date, length). Never your food, weight or notes.</p>`;
+      ${friends.length ? `<ul class="friendList">${friends.map(f => `<li><span class="fAvatar">${initial(f.name)}</span><button type="button" class="fText fCardBtn" data-friend-card="${esc(f.uid)}" aria-label="See ${esc(f.name)}’s card"><b>${esc(f.name)}${f.card ? ' <span class="cardTag">Card</span>' : ''}</b><small>${f.hidden ? 'Not sharing right now' : `Level ${+f.level || 1} · ${f.week === thisWeek() ? +f.weekCount || 0 : 0} of ${+f.weekGoal || 3} this week${+f.streak > 1 ? ` · ${f.streak}-week streak` : ''}`}</small></button><button type="button" class="link muted" data-unfriend="${esc(f.uid)}">Remove</button></li>`).join('')}</ul>` : '<p class="muted small">Share your code with a friend, or type theirs above.</p>'}
+      <p class="tiny muted">Friends see your first name, level, weekly sessions, streak and your last 3 workouts (type, name, date, length), plus your profile card if you choose to share it. Never your food, weight or notes. Tap a friend to see their card.</p>`;
   }
 
   // ---------- events ----------
