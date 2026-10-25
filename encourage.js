@@ -1,5 +1,5 @@
 // NextForm encouragement: a daily quote on Home and short, kind lines through the app (reward screen,
-// rest timer, food page). Turn off in Profile ("Quotes and encouragement").
+// rest timer, food page). Turn off in Settings ("Quotes and encouragement").
 // Most lines are our own. The others are proverbs, or quotes from public-domain translations (George Long 1890,
 // Richard Gummere 1917), worded exactly as in those translations.
 (() => {

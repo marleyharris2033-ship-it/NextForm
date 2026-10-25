@@ -170,7 +170,7 @@
   }
   let lastWorkout = null;
   const api = {
-    levelCard, workoutCard, monthCard, monthStats,
+    levelCard, workoutCard, monthCard, monthStats, deliver,
     setWorkout(w, records) { lastWorkout = { w, records }; },
     shareLevel: btn => run(btn, levelCard, `nextform-level-${levelInfo(data.xp).level}`, 'My NextForm level'),
     shareWorkout: btn => lastWorkout && run(btn, () => workoutCard(lastWorkout.w, lastWorkout.records), `nextform-workout-${lastWorkout.w.date}`, 'My workout'),
