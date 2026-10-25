@@ -4,6 +4,7 @@
 (() => {
   // [id, name, how to earn, icon, tier, test(ctx) -> [have, need]]
   const B = [];
+  // \u00AD marks where a long name may break onto a second line on the small card.
   const add = (group, list) => list.forEach(([id, name, how, icon, tier, fn]) => B.push({ id, group, name, how, icon, tier, fn }));
   const steps = (prefix, vals, nameFn, howFn, icon, key, tiers) => vals.map((n, i) => [`${prefix}${n}`, nameFn(n, i), howFn(n), icon, tiers[i], c => [c[key], n]]);
   const T5 = ['bronze', 'bronze', 'silver', 'silver', 'gold', 'gold', 'special'];
@@ -14,11 +15,11 @@
     ['first-weigh', 'On the scale', 'Log your weight for the first time.', '⚖️', 'bronze', c => [c.weighIns, 1]],
     ['first-friend', 'Squad up', 'Add your first friend.', '🤝', 'bronze', c => [c.friends, 1]]
   ]);
-  add('Workouts', steps('workouts-', [10, 25, 50, 100, 250, 500], (n, i) => ['Getting going', 'Regular', 'Committed', 'Centurion', 'Machine', 'Legend'][i], n => `Log ${n} workouts.`, '🏋️', 'workouts', T5));
+  add('Workouts', steps('workouts-', [10, 25, 50, 100, 250, 500], (n, i) => ['Getting going', 'Regular', 'Commit\u00ADted', 'Centu\u00ADrion', 'Machine', 'Legend'][i], n => `Log ${n} workouts.`, '🏋️', 'workouts', T5));
   add('Streaks', steps('streak-', [3, 8, 12, 26, 52], (n, i) => ['Heating up', 'On fire', 'Quarter', 'Half year', 'Full year'][i], n => `Hit your weekly goal ${n} weeks in a row.`, '🔥', 'bestStreak', ['bronze', 'silver', 'gold', 'gold', 'special']));
   add('Levels', steps('level-', [5, 10, 20, 30, 50], (n, i) => ['Rising', 'Double digits', 'Seasoned', 'Veteran', 'Elite'][i], n => `Reach level ${n}.`, '⭐', 'level', ['bronze', 'silver', 'silver', 'gold', 'special']));
-  add('Quests', steps('quests-', [1, 10, 25, 50], (n, i) => ['Quest starter', 'Adventurer', 'Hero', 'Quest master'][i], n => n === 1 ? 'Complete a quest.' : `Complete ${n} quests.`, '🏆', 'quests', ['bronze', 'silver', 'gold', 'special']));
-  add('Story', steps('story-', [1, 3, 12], (n, i) => ['Chapter closed', 'Storyteller', 'Saga'][i], n => n === 1 ? 'Finish all four chapters of a monthly story.' : `Finish ${n} monthly stories.`, '📖', 'stories', ['silver', 'gold', 'special']));
+  add('Quests', steps('quests-', [1, 10, 25, 50], (n, i) => ['Quest starter', 'Adven\u00ADturer', 'Hero', 'Quest master'][i], n => n === 1 ? 'Complete a quest.' : `Complete ${n} quests.`, '🏆', 'quests', ['bronze', 'silver', 'gold', 'special']));
+  add('Story', steps('story-', [1, 3, 12], (n, i) => ['Chapter closed', 'Story\u00ADteller', 'Saga'][i], n => n === 1 ? 'Finish all four chapters of a monthly story.' : `Finish ${n} monthly stories.`, '📖', 'stories', ['silver', 'gold', 'special']));
   add('Distance', steps('km-', [10, 100, 500, 1000], (n, i) => ['First 10', 'Open road', 'Long haul', 'Thousand club'][i], n => `Cover ${n} km in total (runs, rides, walks, swims).`, '🛣️', 'km', ['bronze', 'silver', 'gold', 'special']));
   add('Time', steps('hours-', [10, 50, 100], (n, i) => ['Ten hours', 'Fifty hours', 'Hundred hours'][i], n => `Train for ${n} hours in total.`, '⏱️', 'hours', ['bronze', 'silver', 'gold']));
   add('Strength', [
@@ -26,16 +27,16 @@
     ['volume-100', '100 tonnes', 'Lift 100,000 kg in total.', '🧱', 'silver', c => [c.tonnes, 100]],
     ['volume-1000', 'Mountain mover', 'Lift 1,000,000 kg in total.', '🏔️', 'special', c => [c.tonnes, 1000]],
     ['club-100', '100 kg club', 'Log a set of 100 kg or more on any lift.', '💯', 'gold', c => [c.bestKg, 100]],
-    ['bw-bench', 'Bodyweight bench', 'Bench press your own bodyweight (log your weight first).', '🛋️', 'gold', c => [c.bw ? Math.min(c.benchKg, c.bw) : 0, c.bw || 1]]
+    ['bw-bench', 'Body\u00ADweight bench', 'Bench press your own bodyweight (log your weight first).', '🛋️', 'gold', c => [c.bw ? Math.min(c.benchKg, c.bw) : 0, c.bw || 1]]
   ]);
   add('Milestones', [
-    ['pb-first', 'Breakthrough', 'Set a strength personal best.', '📈', 'silver', c => [c.pbs, 1]],
+    ['pb-first', 'Break\u00ADthrough', 'Set a strength personal best.', '📈', 'silver', c => [c.pbs, 1]],
     ['s-grade', 'S-Class', 'Earn an S grade on a workout.', '👑', 'gold', c => [c.sGrade, 1]],
     ['one-5k', '5K', 'Cover 5 km in one session.', '🏃', 'bronze', c => [c.long5k, 1]],
     ['rounds-10', 'Ten rounds', 'Complete 10 boxing rounds in one session.', '🥊', 'silver', c => [c.rounds10, 1]]
   ]);
   add('Variety', [
-    ['types-5', 'All-rounder', 'Log 5 different kinds of workout.', '🎯', 'silver', c => [c.types, 5]],
+    ['types-5', 'All-\u00ADrounder', 'Log 5 different kinds of workout.', '🎯', 'silver', c => [c.types, 5]],
     ['types-10', 'Jack of all trades', 'Log 10 different kinds of workout.', '🎯', 'gold', c => [c.types, 10]],
     ['stretch-10', 'Bendy', 'Log 10 stretch, yoga or mobility sessions.', '🧘', 'silver', c => [c.mobility, 10]],
     ['stretch-50', 'Zen master', 'Log 50 stretch, yoga or mobility sessions.', '🧘', 'gold', c => [c.mobility, 50]]
@@ -43,7 +44,7 @@
   add('Food', steps('food-', [7, 30, 100], (n, i) => ['Week of logging', 'Month of logging', 'Hundred days'][i], n => `Log food on ${n} different days.`, '🍎', 'foodDays', ['bronze', 'silver', 'gold']));
   add('Friends', [
     ['friends-5', 'Crew', 'Have 5 friends on NextForm.', '👥', 'silver', c => [c.friends, 5]],
-    ['kudos-10', 'Cheerleader', 'Give 10 kudos.', '👏', 'bronze', c => [c.kudos, 10]],
+    ['kudos-10', 'Cheer\u00ADleader', 'Give 10 kudos.', '👏', 'bronze', c => [c.kudos, 10]],
     ['kudos-50', 'Hype squad', 'Give 50 kudos.', '👏', 'silver', c => [c.kudos, 50]]
   ]);
 

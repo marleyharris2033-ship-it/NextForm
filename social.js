@@ -40,7 +40,7 @@
 
   // ---------- turning sharing on and off ----------
   async function enable() {
-    const c = cloud(); if (!c) return alert('Sign in with Google first (Profile, Account).');
+    const c = cloud(); if (!c) return alert('Sign in with Google first (Settings, Account).');
     let code = prefs().code;
     if (code) { const s = await c.fs.getDoc(ref(c, 'codes', code)).catch(() => null); if (!s?.exists() || s.data().uid !== c.uid) code = ''; }
     for (let i = 0; !code && i < 6; i++) {
@@ -173,7 +173,7 @@
   function renderProfileCard() {
     const box = $('#socialCard'); if (!box) return;
     const c = cloud(), p = prefs();
-    if (!c) { box.innerHTML = `<h2>Friends</h2><p class="muted small">Sign in with Google above to add friends, share progress and do party quests together.</p>`; return; }
+    if (!c) { box.innerHTML = `<h2>Friends</h2><p class="muted small">Sign in with Google in Settings to add friends, share progress and do party quests together.</p>`; return; }
     if (!p.on) { box.innerHTML = `<h2>Friends</h2><p class="muted small">Add friends to see each other’s level, weekly sessions and recent workouts, give kudos and do weekly party quests. Your food, weight and notes are never shared. Off until you turn it on.</p><button type="button" class="primary full" data-social-on>Turn on friends</button>`; return; }
     box.innerHTML = `<div class="sectionHead"><h2>Friends</h2><button type="button" class="link muted" data-social-off>Turn off</button></div>
       <div class="codeBox"><span>Your friend code</span><b>${esc(p.code)}</b><button type="button" class="secondary" data-code-share>Share code</button></div>
@@ -191,7 +191,7 @@
     const t = e.target.closest('[data-social-on],[data-social-off],[data-add-friend],[data-accept],[data-decline],[data-unfriend],[data-kudos],[data-kudos-clear],[data-party-claim],[data-code-share],[data-social-open]');
     if (!t) return;
     try {
-      if (t.matches('[data-social-open]')) { go('profile'); setTimeout(() => $('#socialCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
+      if (t.matches('[data-social-open]')) { if (window.NextFormProfileTabs) NextFormProfileTabs.open('friends'); else go('profile'); }
       else if (t.matches('[data-social-on]')) { t.disabled = true; t.textContent = 'Turning on…'; await enable(); }
       else if (t.matches('[data-social-off]')) { if (confirm('Turn off friends? Friends will stop seeing your progress. Your friendships are kept if you turn it back on.')) await disable(); }
       else if (t.matches('[data-add-friend]')) { t.disabled = true; const r = await addByCode($('#friendCode').value); render(); msg(r === 'friends' ? 'You’re now friends!' : 'Request sent. You’ll be friends once they accept.'); }

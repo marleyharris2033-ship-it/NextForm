@@ -68,10 +68,23 @@
   function renderProfileBox() {
     const box = $('#profileCardBox'); if (!box) return;
     const all = B().all(), n = all.filter(b => b.earned).length, socialOn = !!data.profile.social?.on;
-    box.innerHTML = `<div class="sectionHead"><h2>Your profile card</h2><span class="muted small">${shareOn() && socialOn ? 'Friends can see it' : 'Only you'}</span></div>
-      ${cardHTML(shared(), me())}
-      <div class="row pcBtns"><button type="button" class="secondary" data-card-edit>Edit card</button><button type="button" class="secondary" data-badges-open>Badges ${n}/${all.length}</button></div>`;
+    box.innerHTML = `${cardHTML(shared(), me())}
+      <div class="row pcBtns"><button type="button" class="secondary" data-card-edit>Edit card</button><button type="button" class="secondary" data-card-share>Share</button></div>
+      <p class="muted tiny pcVis">${shareOn() && socialOn ? 'Friends can see your card' : 'Only you can see your card'} · ${n} of ${all.length} badges</p>`;
+    if (!$('#ptab-card')?.hidden) renderExtras();
+    if (!$('#ptab-badges')?.hidden) renderBadgesInline();
   }
+  // Card tab: the next few badges you're closest to.
+  function renderExtras() {
+    const box = $('#cardExtras'); if (!box) return;
+    const next = B().all().filter(b => !b.earned && b.have > 0).sort((a, b) => b.have / b.need - a.have / a.need).slice(0, 3);
+    const fresh = B().all().filter(b => b.earned && b.date).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 3);
+    const row = b => `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}</small>${b.earned ? '' : `<span class="goalBar"><i style="width:${Math.round(b.have / b.need * 100)}%"></i></span><small>${fmtN(Math.floor(b.have))} / ${fmtN(b.need)}</small>`}</span></li>`;
+    box.innerHTML = `<div class="sectionHead"><h2>Next badges</h2><button type="button" class="link" data-ptab="badges">See all</button></div>
+      ${next.length ? `<ul class="badgeList">${next.map(row).join('')}</ul>` : '<p class="muted small">Log a workout to start earning badges.</p>'}
+      ${fresh.length ? `<p class="fieldLabel">Recently earned</p><ul class="badgeList">${fresh.map(row).join('')}</ul>` : ''}`;
+  }
+  function renderBadgesInline() { const box = $('#badgesInline'); if (box) box.innerHTML = `<h2>Badges</h2>${badgesHTML()}`; }
 
   // ---------- sheet ----------
   let view = null;
@@ -92,7 +105,7 @@
     const mark = (list, v) => { const i = list.indexOf(v); return i < 0 ? { cls: '', num: '', label: 'Not on your card' } : { cls: ' on', num: `<span class="pickNum" aria-hidden="true">${i + 1}</span>`, label: `On your card, position ${i + 1}` }; };
     const socialOn = !!data.profile.social?.on;
     $('#cardBody').innerHTML = `${cardHTML(shared(), me())}
-      <label class="toggleRow pcShare"><input type="checkbox" id="cardShare" ${p.share ? 'checked' : ''}><span><b>Friends can see my card</b><small>${socialOn ? 'Friends tap your name to see it. Food, weight and notes are never shown.' : 'Turn on Friends in Profile first, then friends can tap your name to see it.'}</small></span></label>
+      <label class="toggleRow pcShare"><input type="checkbox" id="cardShare" ${p.share ? 'checked' : ''}><span><b>Friends can see my card</b><small>${socialOn ? 'Friends tap your name to see it. Food, weight and notes are never shown.' : 'Turn on Friends (Profile, Friends tab) first, then friends can tap your name to see it.'}</small></span></label>
       <p class="muted small pickHelp">Tap to add or remove. Ticked items are numbered in the order they appear on your card. To change the order, untick and tick again.</p>
       <p class="fieldLabel">Background</p>
       <div class="bgGrid">${B().BACKGROUNDS.map(bg => { const ok = B().bgUnlocked(bg), ub = bg.unlock && B().byId(bg.unlock);
@@ -113,10 +126,10 @@
     p[listKey] = list; save(); renderEditor();
   }
 
-  function renderBadges() {
-    $('#cardTitle').textContent = 'Badges';
+  function renderBadges() { $('#cardTitle').textContent = 'Badges'; $('#cardBody').innerHTML = badgesHTML(); }
+  function badgesHTML() {
     const all = B().all(), n = all.filter(b => b.earned).length, groups = [...new Set(all.map(b => b.group))];
-    $('#cardBody').innerHTML = `<p class="muted">${n} of ${all.length} earned. Badges unlock automatically from your workouts, food, quests and friends, and some unlock new card backgrounds.</p>
+    return `<p class="muted">${n} of ${all.length} earned. Badges unlock automatically from your workouts, food, quests and friends, and some unlock new card backgrounds.</p>
       ${groups.map(g => `<p class="fieldLabel">${esc(g)}</p><ul class="badgeList">${all.filter(b => b.group === g).map(b => { const bg = B().BACKGROUNDS.find(x => x.unlock === b.id);
         return `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}${bg ? ` Unlocks the ${esc(bg.name)} background.` : ''}</small>
           ${b.earned ? `<small class="bDone">Earned${b.date ? ` ${new Date(b.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</small>` : `<span class="goalBar"><i style="width:${Math.round(b.have / b.need * 100)}%"></i></span><small>${fmtN(Math.floor(b.have))} / ${fmtN(b.need)}</small>`}</span></li>`; }).join('')}</ul>`).join('')}`;
@@ -131,13 +144,66 @@
       : `${cardHTML({ bg: 'mist' }, { name: f.name, level: f.level, rank: f.rank, streak: f.streak })}<p class="muted small">${esc(f.name)} hasn’t shared a profile card yet.</p>`;
   }
 
+  // ---------- share the card as an image (drawn on a canvas, 1080 × 1440) ----------
+  const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+  async function cardImage() {
+    const W = 1080, H = 1440, FONT = '"Bricolage Grotesque", system-ui, sans-serif', card = shared(), who = me(), bg = B().bgById(card.bg);
+    try { await document.fonts?.load(`800 80px ${FONT}`); } catch {}
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const rr = (l, tp, w, h, r) => { x.beginPath(); x.moveTo(l + r, tp); x.arcTo(l + w, tp, l + w, tp + h, r); x.arcTo(l + w, tp + h, l, tp + h, r); x.arcTo(l, tp + h, l, tp, r); x.arcTo(l, tp, l + w, tp, r); x.closePath(); };
+    const img = bg.img ? await loadImg(`cards/${bg.id}.webp`) : null;
+    if (img) { const s = Math.max(W / img.width, H / img.height), w = img.width * s, h = img.height * s; x.drawImage(img, (W - w) / 2, H - h, w, h); }
+    else { x.fillStyle = '#1f4a3a'; x.fillRect(0, 0, W, H); }
+    const ink = bg.dark ? '#fff' : '#16352a', soft = bg.dark ? 'rgba(255,255,255,.8)' : 'rgba(22,53,42,.75)', box = bg.dark ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.66)';
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, bg.dark ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.35)'); g.addColorStop(.6, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const txt = (s, px, X, Y, { w = 800, col = ink, align = 'left', max } = {}) => { x.font = `${w} ${px}px ${FONT}`; x.fillStyle = col; x.textAlign = align; x.textBaseline = 'alphabetic'; x.fillText(String(s), X, Y, max); };
+    // header
+    x.save(); x.beginPath(); x.arc(150, 170, 80, 0, Math.PI * 2); x.closePath(); x.fillStyle = bg.dark ? 'rgba(255,255,255,.22)' : 'rgba(22,53,42,.1)'; x.fill();
+    const photo = who.photo ? await loadImg(who.photo) : null;
+    if (photo) { x.clip(); const s = Math.max(160 / photo.width, 160 / photo.height); x.drawImage(photo, 150 - photo.width * s / 2, 170 - photo.height * s / 2, photo.width * s, photo.height * s); }
+    else txt(String(who.name || '?').charAt(0).toUpperCase(), 80, 150, 198, { align: 'center' });
+    x.restore();
+    txt(who.name || 'Me', 72, 260, 165, { max: 560 }); txt(`Level ${who.level}${who.rank ? ' · ' + who.rank : ''}`, 36, 260, 220, { w: 600, col: soft, max: 560 });
+    if (who.streak > 1) { x.fillStyle = box; rr(830, 120, 170, 90, 45); x.fill(); txt(`🔥 ${who.streak}`, 42, 915, 180, { align: 'center' }); }
+    // badges
+    let y = 300; const badges = card.badges.map(id => B().byId(id)).filter(Boolean), ring = { bronze: ['#d9a066', '#9a6230'], silver: ['#d7dde2', '#8d99a3'], gold: ['#f3cf5a', '#b88a12'], special: ['#b99cf5', '#6a3fd1'] };
+    if (badges.length) {
+      const step = (W - 160) / 6;
+      badges.forEach((b, i) => { const cx = 80 + step * i + step / 2, cy = y + 70, [f, r] = ring[b.tier] || ring.bronze;
+        x.beginPath(); x.arc(cx, cy, 58, 0, Math.PI * 2); x.fillStyle = f; x.fill(); x.lineWidth = 9; x.strokeStyle = r; x.stroke();
+        txt(b.icon, 54, cx, cy + 19, { w: 400, align: 'center' }); txt(b.name, 24, cx, cy + 102, { w: 700, align: 'center', max: step - 8 }); });
+      y += 200;
+    }
+    // stats
+    const st = card.stats.filter(s => STATS[s.k]);
+    st.forEach((s, i) => { const cw = (W - 160 - 24) / 2, ch = 160, cx = 80 + (i % 2) * (cw + 24), cy = y + Math.floor(i / 2) * (ch + 24);
+      x.fillStyle = box; rr(cx, cy, cw, ch, 28); x.fill(); txt(s.v, 64, cx + 32, cy + 84, { max: cw - 64 }); txt(STATS[s.k][0], 30, cx + 32, cy + 130, { w: 600, col: soft, max: cw - 64 }); });
+    y += Math.ceil(st.length / 2) * 184 + 10;
+    // best lifts
+    if (card.prs.length) {
+      const h = 80 + card.prs.length * 64; x.fillStyle = box; rr(80, y, W - 160, h, 28); x.fill();
+      txt('BEST LIFTS', 26, 112, y + 52, { w: 700, col: soft });
+      card.prs.forEach((p, i) => { const yy = y + 110 + i * 64; txt(p.n, 38, 112, yy, { w: 600, max: 560 }); txt(`${fmt(p.kg)} kg × ${p.r}`, 38, W - 112, yy, { align: 'right' }); });
+    }
+    x.font = `600 28px ${FONT}`; x.fillStyle = bg.dark ? 'rgba(255,255,255,.75)' : 'rgba(22,53,42,.7)'; x.textAlign = 'center'; x.fillText('NextForm', W / 2, H - 46);
+    return c;
+  }
+  async function shareImage(btn) {
+    const label = btn.textContent; btn.disabled = true; btn.textContent = 'Making image…';
+    try {
+      const c = await cardImage();
+      if (window.NextFormShare?.deliver) await window.NextFormShare.deliver(c, 'nextform-card', 'My NextForm card');
+    } catch (e) { console.warn('card share', e); alert('Couldn’t make the image. Please try again.'); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  }
+
   // ---------- events ----------
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-card-edit],[data-badges-open],[data-friend-card],[data-bg],[data-pick-badge],[data-pick-stat],[data-pick-pr],#cardClose');
+    const t = e.target.closest('[data-card-edit],[data-card-share],[data-friend-card],[data-bg],[data-pick-badge],[data-pick-stat],[data-pick-pr],#cardClose');
     if (!t) { if (e.target.id === 'cardSheet') close(); return; }
     if (t.id === 'cardClose') return close();
     if (t.matches('[data-card-edit]')) return open('edit');
-    if (t.matches('[data-badges-open]')) return open('badges');
+    if (t.matches('[data-card-share]')) return shareImage(t);
     if (t.matches('[data-friend-card]')) return open('friend', t.dataset.friendCard);
     if (t.matches('[data-bg]')) {
       const bg = B().bgById(t.dataset.bg);
@@ -152,6 +218,6 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && view) close(); });
   window.addEventListener('nextform-saved', () => { if (!view) renderProfileBox(); });
 
-  window.NextFormCard = { shared, shareOn, cardHTML, open, close, render: renderProfileBox, lifts, STATS };
+  window.NextFormCard = { shared, shareOn, cardHTML, open, close, render: renderProfileBox, renderExtras, renderBadgesInline, cardImage, lifts, STATS };
   renderProfileBox();
 })();

@@ -897,10 +897,10 @@ details.learnCard a{margin:0 16px 16px}
 .rewardSummary{margin:10px 0 0;font-size:15px;color:rgba(255,255,255,.8)}
 .rewardSummary:empty{display:none}
 /* Simple mode: no levels, XP, skills or quests */
-body.simple .game,body.simple .tabbar [data-page="challenges"],body.simple .rewardMedal,body.simple .rewardXp,body.simple .rewardLevel,
+body.simple .game,body.simple .ptab[data-ptab="badges"],body.simple .ptab[data-ptab="quests"],body.simple .rewardMedal,body.simple .rewardXp,body.simple .rewardLevel,
 body.simple #rewardSkills,body.simple #rewardQuests,body.simple #levelUp{display:none!important}
 body.simple .rewardSummary{font:700 22px var(--display);color:#fff;margin-top:18px}
-body.simple .tabbar{grid-template-columns:repeat(6,1fr)}
+body.simple .tabbar{grid-template-columns:repeat(7,1fr)}
 .repeatBtn{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 14px;border:1.5px solid var(--hairline);border-radius:var(--r-md);background:var(--card);text-align:left;font:inherit;color:var(--pine-deep)}
 .repeatBtn svg{width:24px;height:24px;flex-shrink:0;fill:none;stroke:var(--pine);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .repeatBtn span{display:flex;flex-direction:column}.repeatBtn small{color:var(--stone);font-size:13px}
@@ -1161,3 +1161,13 @@ body.guidedOpen{overflow:hidden}
 .pickNum{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:50%;background:#fff;color:var(--pine);font-size:12.5px;font-weight:800;line-height:1}
 .pick .pickNum{position:absolute;top:-8px;right:-8px;background:var(--pine);color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .pickHelp{margin:10px 0 0}
+
+/* ---------- Profile tabs ---------- */
+.ptabs{position:sticky;top:calc(var(--topH,0px) + 6px);z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:5px;margin:0 0 14px;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 6px 18px -8px rgba(21,48,42,.25),0 0 0 1px rgba(21,48,42,.06)}
+.ptab{min-height:40px;border:0;border-radius:12px;background:none;color:#5d6b62;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.ptab.on{background:var(--pine);color:#fff}
+.profileCardBox .pCard{margin-top:0}.pcVis{margin:8px 2px 0;text-align:center}
+.profileCardBox{background:none;box-shadow:none;padding:0;border:0}
+.pcBadges{grid-template-columns:repeat(6,minmax(0,1fr))}
+.pcBadges .nfBadge small{hyphens:manual;-webkit-hyphens:manual;overflow-wrap:normal;font-size:9px;letter-spacing:-.01em}
+.pcBadges .nfBadge small{-webkit-line-clamp:3}
