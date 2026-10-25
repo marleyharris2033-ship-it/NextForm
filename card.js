@@ -58,7 +58,7 @@
       <div class="pcHead">${who.photo ? `<img class="pcAvatar" src="${esc(who.photo)}" alt="">` : `<span class="pcAvatar">${initial(who.name)}</span>`}
         <div><b class="pcName">${esc(who.name || 'Friend')}</b><span class="pcRank">Level ${+who.level || 1}${who.rank ? ` · ${esc(who.rank)}` : ''}</span></div>
         ${+who.streak > 1 ? `<span class="pcStreak" title="Week streak">🔥 ${+who.streak}</span>` : ''}</div>
-      ${badges.length ? `<div class="pcBadges">${badges.map(b => `<span class="badge ${b.tier}" title="${esc(b.name)}"><i>${b.icon}</i><small>${esc(b.name)}</small></span>`).join('')}</div>` : ''}
+      ${badges.length ? `<div class="pcBadges">${badges.map(b => `<span class="nfBadge ${b.tier}" title="${esc(b.name)}"><i>${b.icon}</i><small>${esc(b.name)}</small></span>`).join('')}</div>` : ''}
       ${stats.length ? `<div class="pcStats">${stats.map(s => `<div><b>${esc(s.v)}</b><small>${esc(STATS[s.k][0])}</small></div>`).join('')}</div>` : ''}
       ${prs.length ? `<div class="pcPrs"><small>Best lifts</small>${prs.map(x => `<p><span>${esc(x.n)}</span><b>${fmt(+x.kg)} kg × ${+x.r}</b></p>`).join('')}</div>` : ''}
     </div>`;
@@ -96,7 +96,7 @@
         return `<button type="button" class="bgOpt${p.bg === bg.id ? ' on' : ''}${ok ? '' : ' locked'}" data-bg="${bg.id}" style="${B().bgStyle(bg)}" aria-label="${esc(bg.name)}${ok ? '' : ', locked'}"><span>${esc(bg.name)}</span>${ok ? '' : `<em>🔒 ${esc(ub?.name || '')}</em>`}</button>`; }).join('')}</div>
       <p class="muted tiny" id="bgHint" role="status">Locked backgrounds unlock with badges.</p>
       <p class="fieldLabel">Badges <span class="muted">(pick up to ${MAX.badges})</span></p>
-      ${earned.length ? `<div class="pickGrid">${earned.map(b => `<button type="button" class="pick badgePick${selB.has(b.id) ? ' on' : ''}" data-pick-badge="${b.id}"><span class="badge ${b.tier}"><i>${b.icon}</i></span><small>${esc(b.name)}</small></button>`).join('')}</div>` : '<p class="muted small">No badges yet. Log a workout to earn your first.</p>'}
+      ${earned.length ? `<div class="pickGrid">${earned.map(b => `<button type="button" class="pick badgePick${selB.has(b.id) ? ' on' : ''}" data-pick-badge="${b.id}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><small>${esc(b.name)}</small></button>`).join('')}</div>` : '<p class="muted small">No badges yet. Log a workout to earn your first.</p>'}
       <p class="fieldLabel">Stats <span class="muted">(pick up to ${MAX.stats})</span></p>
       <div class="chips wrapChips">${Object.entries(STATS).map(([k, [label, fn]]) => `<button type="button" class="chip${selS.has(k) ? ' on' : ''}" data-pick-stat="${k}">${esc(label)} <b>${esc(fn(c))}</b></button>`).join('')}</div>
       <p class="fieldLabel">Best lifts <span class="muted">(pick up to ${MAX.prs})</span></p>
@@ -115,7 +115,7 @@
     const all = B().all(), n = all.filter(b => b.earned).length, groups = [...new Set(all.map(b => b.group))];
     $('#cardBody').innerHTML = `<p class="muted">${n} of ${all.length} earned. Badges unlock automatically from your workouts, food, quests and friends, and some unlock new card backgrounds.</p>
       ${groups.map(g => `<p class="fieldLabel">${esc(g)}</p><ul class="badgeList">${all.filter(b => b.group === g).map(b => { const bg = B().BACKGROUNDS.find(x => x.unlock === b.id);
-        return `<li class="${b.earned ? 'earned' : 'locked'}"><span class="badge ${b.tier}"><i>${b.icon}</i></span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}${bg ? ` Unlocks the ${esc(bg.name)} background.` : ''}</small>
+        return `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}${bg ? ` Unlocks the ${esc(bg.name)} background.` : ''}</small>
           ${b.earned ? `<small class="bDone">Earned${b.date ? ` ${new Date(b.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</small>` : `<span class="goalBar"><i style="width:${Math.round(b.have / b.need * 100)}%"></i></span><small>${fmtN(Math.floor(b.have))} / ${fmtN(b.need)}</small>`}</span></li>`; }).join('')}</ul>`).join('')}`;
   }
 
