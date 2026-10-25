@@ -1111,3 +1111,45 @@ body.guidedOpen{overflow:hidden}
 .videoFrame{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}.videoFrame iframe,.videoFrame>div{position:absolute;inset:0;width:100%;height:100%;border:0}
 .videoMsg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center;color:#fff;background:#1f2a24}.videoMsg a{text-decoration:none;padding:10px 16px;border-radius:12px}
 .videoCard p{margin:10px 2px 0}
+/* ---------- profile card ---------- */
+.pCard{border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 6px 20px rgba(0,0,0,.12);margin:6px 0 12px;overflow:hidden}
+.pCard.onDark{color:#fff}.pCard.onLight{color:#16352a}
+.pcHead{display:flex;align-items:center;gap:12px}.pcHead>div{flex:1;min-width:0;display:flex;flex-direction:column}
+.pcAvatar{width:52px;height:52px;border-radius:50%;object-fit:cover;display:grid;place-items:center;font-weight:800;font-size:22px;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);flex-shrink:0}
+.onLight .pcAvatar{background:rgba(22,53,42,.1);border-color:rgba(22,53,42,.25)}
+.pcName{font-size:20px;font-weight:800;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pcRank{font-size:13px;opacity:.85}
+.pcStreak{font-weight:800;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.22)}.onLight .pcStreak{background:rgba(22,53,42,.08)}
+.pcBadges{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pcBadges .nfBadge{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;width:auto;height:auto;box-shadow:none}
+.pcBadges .nfBadge i{width:40px;height:40px}.pcBadges .nfBadge small{color:inherit;font-weight:600;font-size:9.5px;line-height:1.1;text-align:center;opacity:.9;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pcStats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pcStats div{background:rgba(0,0,0,.18);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}.onLight .pcStats div{background:rgba(22,53,42,.07)}
+.pcStats b{font-size:19px;font-weight:800}.pcStats small{font-size:11.5px;opacity:.85}
+.pcPrs{background:rgba(0,0,0,.18);border-radius:12px;padding:8px 12px}.onLight .pcPrs{background:rgba(22,53,42,.07)}
+.pcPrs>small{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.8}.pcPrs p{display:flex;justify-content:space-between;gap:10px;margin:4px 0 0;font-size:14px}
+.pcBtns{gap:10px}.pcBtns button{flex:1}
+.nfBadge i{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;font-style:normal;font-size:21px;background:radial-gradient(circle at 35% 30%,#fff8,transparent 60%),var(--bdg,#c58b52);border:3px solid var(--bdgRing,#8a5a2b);box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.nfBadge.bronze{--bdg:#d9a066;--bdgRing:#9a6230}.nfBadge.silver{--bdg:#d7dde2;--bdgRing:#8d99a3}.nfBadge.gold{--bdg:#f3cf5a;--bdgRing:#b88a12}.nfBadge.special{--bdg:#b99cf5;--bdgRing:#6a3fd1}
+.badgeList{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:10px}
+.badgeList li{display:flex;gap:12px;align-items:flex-start}.badgeList li.locked .nfBadge i{filter:grayscale(1);opacity:.45}
+.bText{flex:1;display:flex;flex-direction:column;gap:3px}.bText small{color:var(--stone);font-size:13px}.bText .bDone{color:var(--pine);font-weight:650}.bText .goalBar{margin-top:4px}
+.bgGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bgOpt{position:relative;height:64px;border-radius:12px;border:3px solid transparent;color:#fff;font:inherit;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:6px 8px;cursor:pointer;text-shadow:0 1px 3px rgba(0,0,0,.5);text-align:left}
+.bgOpt.on{border-color:var(--pine);box-shadow:0 0 0 2px #fff inset}.bgOpt.locked{filter:grayscale(.7) brightness(.8)}.bgOpt em{font-style:normal;font-size:10.5px;font-weight:600;opacity:.95}
+.pickGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pick{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;border:2px solid transparent;background:var(--mist);font:inherit;cursor:pointer;color:inherit}
+.pick small{font-size:11px;text-align:center;line-height:1.15}.pick.on{border-color:var(--pine);background:#e2eedd}
+.wrapChips{flex-wrap:wrap}.wrapChips .chip b{font-weight:700;opacity:.75;margin-left:4px}
+.pcShare{margin-top:4px}
+.fCardBtn{flex:1;min-width:0;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column}
+.cardTag{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--mist);color:var(--pine);vertical-align:middle}
+/* ---------- in-app browser sign-in help ---------- */
+.inAppSheet{position:fixed;inset:0;z-index:1700;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,24,18,.6);padding:16px}
+.inAppSheet.hidden{display:none}
+.inAppCard{width:100%;max-width:480px;background:var(--card,#fff);color:inherit;border-radius:20px;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.inAppCard h2{margin:0 0 8px}.inAppCard ol{padding-left:20px;margin:8px 0}.inAppCard li{margin:4px 0}
+.inAppLink{display:flex;gap:8px;align-items:center;background:var(--mist);border-radius:12px;padding:8px 8px 8px 12px;margin:10px 0 4px}
+.inAppLink code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.inAppCard .row{gap:8px;margin-top:8px}
+.onDark .pcBadges .nfBadge small{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}.onLight .pcBadges .nfBadge small{color:#16352a}
+.onLight .pcStats div,.onLight .pcPrs{background:rgba(255,255,255,.62);backdrop-filter:blur(2px)}.onDark .pcStats div,.onDark .pcPrs{background:rgba(0,0,0,.32);backdrop-filter:blur(2px)}

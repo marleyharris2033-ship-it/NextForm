@@ -25,6 +25,14 @@ service cloud.firestore {
     function me() { return request.auth.uid; }
     function isFriendOf(owner) { return exists(/databases/$(database)/documents/friends/$(owner)/list/$(me())); }
     function shortName(n) { return n is string && n.size() > 0 && n.size() <= 40; }
+    // Optional profile card: background, up to 6 badge ids, 4 stats and 3 best lifts.
+    function validCard(c) {
+      return c is map && c.keys().hasOnly(['v', 'bg', 'badges', 'stats', 'prs'])
+        && c.bg is string && c.bg.size() <= 30
+        && c.badges is list && c.badges.size() <= 6
+        && c.stats is list && c.stats.size() <= 4
+        && c.prs is list && c.prs.size() <= 3;
+    }
 
     // Friend codes: look one up by its exact code (no listing), create your own, delete your own.
     match /codes/{code} {
@@ -37,7 +45,8 @@ service cloud.firestore {
     match /profiles/{uid} {
       allow get: if signedIn() && (me() == uid || isFriendOf(uid));
       allow create, update: if signedIn() && me() == uid
-        && request.resource.data.keys().hasOnly(['name', 'level', 'rank', 'weekCount', 'weekGoal', 'streak', 'recent', 'code', 'week', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['name', 'level', 'rank', 'weekCount', 'weekGoal', 'streak', 'recent', 'code', 'week', 'updatedAt', 'card'])
+        && (!('card' in request.resource.data) || validCard(request.resource.data.card))
         && shortName(request.resource.data.name)
         && request.resource.data.recent is list && request.resource.data.recent.size() <= 5
         && request.resource.data.level is int && request.resource.data.weekCount is int;

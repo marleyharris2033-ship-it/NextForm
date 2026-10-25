@@ -606,11 +606,13 @@ window.addEventListener("nextform-auth",renderBackupNudge);
 navigator.storage?.persist?.().catch(()=>{});
 const ACH=[["⚡","First Step","Complete your first workout",()=>data.workouts.length>=1],["🔟","Double Digits","Complete 10 workouts",()=>data.workouts.length>=10],["🏆","Committed","Complete 50 workouts",()=>data.workouts.length>=50],["🔥","Heating Up","Hit your weekly goal 3 weeks in a row",()=>bestWeekStreak()>=3||bestStreak()>=3],["🔥","On Fire","Hit your weekly goal 8 weeks in a row",()=>bestWeekStreak()>=8||bestStreak()>=7],["📈","Breakthrough","Set a strength PB",()=>data.workouts.some(w=>(w.result?.pbs||0)>0)],["👑","S-Class","Earn an S grade",()=>data.workouts.some(w=>w.result?.grade==="S")],["🥉","Bronze Rank","Reach level 5",()=>levelInfo(data.xp).level>=5],["🏃","5K","Log a 5 km run",()=>data.workouts.some(w=>(w.distance||0)>=5)],["🥊","Ten Rounds","Complete 10 boxing rounds",()=>data.workouts.some(w=>(w.rounds||0)>=10)]];
 function renderAchievements(){
-  const items=ACH.map(([ic,t,d,fn])=>({ic,t,d,on:fn()}));
+  // Badges (badges.js) replace the old achievement list once loaded; ACH is the fallback before that.
+  const B=window.NextFormBadges;
+  const items=B?B.all().sort((a,b)=>(b.earned-a.earned)||String(b.date||"").localeCompare(String(a.date||""))).map(b=>({ic:b.icon,t:b.name,d:b.how,on:b.earned})):ACH.map(([ic,t,d,fn])=>({ic,t,d,on:fn()}));
   const card=a=>`<div class="achievement ${a.on?"":"locked"}"><div class="icon">${a.ic}</div><strong>${a.t}</strong><span>${a.on?"Unlocked":a.d}</span></div>`;
-  $("#achievements").innerHTML=items.map(card).join("");
+  $("#achievements").innerHTML=(B?[...items.filter(a=>a.on).slice(0,6),...items.filter(a=>!a.on).slice(0,2)]:items).map(card).join("");
   const sorted=[...items.filter(a=>a.on),...items.filter(a=>!a.on)];
-  $("#achievementPreview").innerHTML=`<div class="badgeStrip">${sorted.map(a=>`<div class="badge ${a.on?"":"locked"}"><span class="badgeIcon">${a.ic}</span><span>${a.t}</span></div>`).join("")}</div>`;
+  $("#achievementPreview").innerHTML=`<div class="badgeStrip">${sorted.slice(0,B?12:sorted.length).map(a=>`<div class="badge ${a.on?"":"locked"}"><span class="badgeIcon">${a.ic}</span><span>${esc(a.t)}</span></div>`).join("")}</div>`;
 }
 $("#showWeight").onclick=()=>$("#weightEntry").classList.toggle("hidden");$("#saveWeight").onclick=()=>{let v=+$("#weightValue").value;if(!v)return alert("Enter your weight.");data.weights.push({date:$("#weightDate").value||today(),value:v});data.weights.sort((a,b)=>a.date.localeCompare(b.date));$("#weightValue").value="";save()};$("#saveGoal").onclick=()=>{data.profile.goalWeight=+$("#goalWeight").value||null;save()}
 
