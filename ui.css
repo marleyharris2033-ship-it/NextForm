@@ -1171,3 +1171,11 @@ body.guidedOpen{overflow:hidden}
 .pcBadges{grid-template-columns:repeat(6,minmax(0,1fr))}
 .pcBadges .nfBadge small{hyphens:manual;-webkit-hyphens:manual;overflow-wrap:normal;font-size:9px;letter-spacing:-.01em}
 .pcBadges .nfBadge small{-webkit-line-clamp:3}
+
+/* badge artwork: the medal image brings its own rim, so drop the drawn ring */
+.nfBadge i.art{background:none;border:0;box-shadow:none;width:48px;height:48px}
+.nfBadge i.art img,.badgeIcon i.art img,.achievement .icon i.art img{width:100%;height:100%;display:block;object-fit:contain}
+.pcBadges .nfBadge i.art{width:44px;height:44px}
+.badgeIcon:has(i.art){background:none;box-shadow:none}.badgeIcon i.art{display:block;width:60px;height:60px}
+.achievement .icon i.art{display:inline-block;width:52px;height:52px}
+.badgeList li.locked .nfBadge i.art,.badge.locked .badgeIcon i.art{filter:grayscale(1);opacity:.4}

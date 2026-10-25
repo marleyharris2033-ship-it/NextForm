@@ -58,7 +58,7 @@
       <div class="pcHead">${who.photo ? `<img class="pcAvatar" src="${esc(who.photo)}" alt="">` : `<span class="pcAvatar">${initial(who.name)}</span>`}
         <div><b class="pcName">${esc(who.name || 'Friend')}</b><span class="pcRank">Level ${+who.level || 1}${who.rank ? ` · ${esc(who.rank)}` : ''}</span></div>
         ${+who.streak > 1 ? `<span class="pcStreak" title="Week streak">🔥 ${+who.streak}</span>` : ''}</div>
-      ${badges.length ? `<div class="pcBadges">${badges.map(b => `<span class="nfBadge ${b.tier}" title="${esc(b.name)}"><i>${b.icon}</i><small>${esc(b.name)}</small></span>`).join('')}</div>` : ''}
+      ${badges.length ? `<div class="pcBadges">${badges.map(b => `<span class="nfBadge ${b.tier}" title="${esc(b.name)}">${B().art(b)}<small>${esc(b.name)}</small></span>`).join('')}</div>` : ''}
       ${stats.length ? `<div class="pcStats">${stats.map(s => `<div><b>${esc(s.v)}</b><small>${esc(STATS[s.k][0])}</small></div>`).join('')}</div>` : ''}
       ${prs.length ? `<div class="pcPrs"><small>Best lifts</small>${prs.map(x => `<p><span>${esc(x.n)}</span><b>${fmt(+x.kg)} kg × ${+x.r}</b></p>`).join('')}</div>` : ''}
     </div>`;
@@ -79,7 +79,7 @@
     const box = $('#cardExtras'); if (!box) return;
     const next = B().all().filter(b => !b.earned && b.have > 0).sort((a, b) => b.have / b.need - a.have / a.need).slice(0, 3);
     const fresh = B().all().filter(b => b.earned && b.date).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 3);
-    const row = b => `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}</small>${b.earned ? '' : `<span class="goalBar"><i style="width:${Math.round(b.have / b.need * 100)}%"></i></span><small>${fmtN(Math.floor(b.have))} / ${fmtN(b.need)}</small>`}</span></li>`;
+    const row = b => `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}">${B().art(b)}</span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}</small>${b.earned ? '' : `<span class="goalBar"><i style="width:${Math.round(b.have / b.need * 100)}%"></i></span><small>${fmtN(Math.floor(b.have))} / ${fmtN(b.need)}</small>`}</span></li>`;
     box.innerHTML = `<div class="sectionHead"><h2>Next badges</h2><button type="button" class="link" data-ptab="badges">See all</button></div>
       ${next.length ? `<ul class="badgeList">${next.map(row).join('')}</ul>` : '<p class="muted small">Log a workout to start earning badges.</p>'}
       ${fresh.length ? `<p class="fieldLabel">Recently earned</p><ul class="badgeList">${fresh.map(row).join('')}</ul>` : ''}`;
@@ -112,7 +112,7 @@
         return `<button type="button" class="bgOpt${p.bg === bg.id ? ' on' : ''}${ok ? '' : ' locked'}" data-bg="${bg.id}" style="${B().bgStyle(bg)}" aria-label="${esc(bg.name)}${ok ? '' : ', locked'}"><span>${esc(bg.name)}</span>${ok ? '' : `<em>🔒 ${esc(ub?.name || '')}</em>`}</button>`; }).join('')}</div>
       <p class="muted tiny" id="bgHint" role="status">Locked backgrounds unlock with badges.</p>
       <p class="fieldLabel">Badges <span class="muted">(${selB.length} of ${MAX.badges} chosen)</span></p>
-      ${earned.length ? `<div class="pickGrid">${earned.map(b => { const m = mark(selB, b.id); return `<button type="button" class="pick badgePick${m.cls}" data-pick-badge="${b.id}" aria-pressed="${!!m.num}" title="${m.label}">${m.num}<span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><small>${esc(b.name)}</small></button>`; }).join('')}</div>` : '<p class="muted small">No badges yet. Log a workout to earn your first.</p>'}
+      ${earned.length ? `<div class="pickGrid">${earned.map(b => { const m = mark(selB, b.id); return `<button type="button" class="pick badgePick${m.cls}" data-pick-badge="${b.id}" aria-pressed="${!!m.num}" title="${m.label}">${m.num}<span class="nfBadge ${b.tier}">${B().art(b)}</span><small>${esc(b.name)}</small></button>`; }).join('')}</div>` : '<p class="muted small">No badges yet. Log a workout to earn your first.</p>'}
       <p class="fieldLabel">Stats <span class="muted">(${selS.length} of ${MAX.stats} chosen)</span></p>
       <div class="chips wrapChips">${Object.entries(STATS).map(([k, [label, fn]]) => { const m = mark(selS, k); return `<button type="button" class="chip pickChip${m.cls}" data-pick-stat="${k}" aria-pressed="${!!m.num}" title="${m.label}">${m.num}${esc(label)} <b>${esc(fn(c))}</b></button>`; }).join('')}</div>
       <p class="fieldLabel">Best lifts <span class="muted">(${selP.length} of ${MAX.prs} chosen)</span></p>
@@ -131,7 +131,7 @@
     const all = B().all(), n = all.filter(b => b.earned).length, groups = [...new Set(all.map(b => b.group))];
     return `<p class="muted">${n} of ${all.length} earned. Badges unlock automatically from your workouts, food, quests and friends, and some unlock new card backgrounds.</p>
       ${groups.map(g => `<p class="fieldLabel">${esc(g)}</p><ul class="badgeList">${all.filter(b => b.group === g).map(b => { const bg = B().BACKGROUNDS.find(x => x.unlock === b.id);
-        return `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}"><i>${b.icon}</i></span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}${bg ? ` Unlocks the ${esc(bg.name)} background.` : ''}</small>
+        return `<li class="${b.earned ? 'earned' : 'locked'}"><span class="nfBadge ${b.tier}">${B().art(b)}</span><span class="bText"><b>${esc(b.name)}</b><small>${esc(b.how)}${bg ? ` Unlocks the ${esc(bg.name)} background.` : ''}</small>
           ${b.earned ? `<small class="bDone">Earned${b.date ? ` ${new Date(b.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</small>` : `<span class="goalBar"><i style="width:${Math.round(b.have / b.need * 100)}%"></i></span><small>${fmtN(Math.floor(b.have))} / ${fmtN(b.need)}</small>`}</span></li>`; }).join('')}</ul>`).join('')}`;
   }
 
@@ -167,11 +167,13 @@
     if (who.streak > 1) { x.fillStyle = box; rr(830, 120, 170, 90, 45); x.fill(); txt(`🔥 ${who.streak}`, 42, 915, 180, { align: 'center' }); }
     // badges
     let y = 300; const badges = card.badges.map(id => B().byId(id)).filter(Boolean), ring = { bronze: ['#d9a066', '#9a6230'], silver: ['#d7dde2', '#8d99a3'], gold: ['#f3cf5a', '#b88a12'], special: ['#b99cf5', '#6a3fd1'] };
+    const arts = await Promise.all(badges.map(b => loadImg(`badges/${b.id}.webp`)));
     if (badges.length) {
       const step = (W - 160) / 6;
       badges.forEach((b, i) => { const cx = 80 + step * i + step / 2, cy = y + 70, [f, r] = ring[b.tier] || ring.bronze;
-        x.beginPath(); x.arc(cx, cy, 58, 0, Math.PI * 2); x.fillStyle = f; x.fill(); x.lineWidth = 9; x.strokeStyle = r; x.stroke();
-        txt(b.icon, 54, cx, cy + 19, { w: 400, align: 'center' }); txt(b.name, 24, cx, cy + 102, { w: 700, align: 'center', max: step - 8 }); });
+        const pic = arts[i];
+        if (pic) x.drawImage(pic, cx - 66, cy - 66, 132, 132);
+        else { x.beginPath(); x.arc(cx, cy, 58, 0, Math.PI * 2); x.fillStyle = f; x.fill(); x.lineWidth = 9; x.strokeStyle = r; x.stroke(); txt(b.icon, 54, cx, cy + 19, { w: 400, align: 'center' }); } txt(b.name, 24, cx, cy + 102, { w: 700, align: 'center', max: step - 8 }); });
       y += 200;
     }
     // stats
